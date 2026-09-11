@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FULLTIME · League Tables</title>
+<meta name="description" content="Premier League, La Liga & Champions League standings — live, auto-updated from open data.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d1117;
+    --surface:#151b23;
+    --surface-2:#1b232e;
+    --line:rgba(240,246,252,.09);
+    --ink:#e6edf3;
+    --dim:#9198a1;
+    --faint:#6a737d;
+    --accent:#00ff85;
+    --accent-ink:#062b18;
+    --q1:#3fb950;   /* Champions League places */
+    --q2:#58a6ff;   /* other Europe */
+    --drop:#f85149; /* relegation / eliminated */
+    --win:#3fb950; --draw:#8b949e; --loss:#f85149;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,sans-serif;
+    font-feature-settings:"tnum" 1,"cv05" 1;
+    letter-spacing:-.011em;
+    min-height:100vh;
+  }
+  ::selection{background:var(--accent);color:var(--accent-ink)}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+
+  /* ---------- app bar ---------- */
+  .appbar{padding:20px 0 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .mark{
+    width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+    background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:13px;letter-spacing:0;
+  }
+  .brand .name{font-weight:800;font-size:15px;letter-spacing:.02em}
+  .brand .name span{color:var(--dim);font-weight:600}
+  .status{
+    display:inline-flex;align-items:center;gap:7px;
+    font-size:12px;font-weight:600;color:var(--dim);
+    background:var(--surface);border:1px solid var(--line);border-radius:999px;
+    padding:6px 12px;white-space:nowrap;
+  }
+  .status .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:none}
+  .status.live .dot{background:var(--q1);box-shadow:0 0 8px var(--q1)}
+  .status.stale .dot{background:#d29922}
+
+  /* ---------- tabs ---------- */
+  .tabbar{
+    position:sticky;top:0;z-index:20;
+    background:color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .tabs{display:flex;gap:6px;padding:10px 0}
+  .tab{
+    flex:1;border:1px solid transparent;border-radius:10px;
+    background:transparent;color:var(--dim);cursor:pointer;
+    font:inherit;font-size:13px;font-weight:700;letter-spacing:.01em;
+    padding:10px 6px;transition:color .12s,background .12s;
+    white-space:nowrap;
+  }
+  .tab:hover{color:var(--ink);background:var(--surface)}
+  .tab[aria-selected="true"]{
+    color:var(--ink);background:var(--surface);border-color:var(--line);
+    box-shadow:inset 0 -2px 0 var(--accent);
+  }
+
+  /* ---------- panel head ---------- */
+  main{padding:22px 0 8px}
+  .panel-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
+  h1{font-size:clamp(24px,5.4vw,32px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 18px}
+  .chip{
+    font-size:11.5px;font-weight:600;color:var(--dim);
+    border:1px solid var(--line);background:var(--surface);
+    border-radius:999px;padding:4px 10px;
+  }
+  .chip b{color:var(--ink);font-weight:700}
+  .chip.acc{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 35%, transparent)}
+
+  .seasons{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+  .seasons button{
+    font:inherit;font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;
+    background:transparent;color:var(--dim);border:none;white-space:nowrap;
+  }
+  .seasons button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+  .seasons button + button{border-left:1px solid var(--line)}
+
+  /* ---------- stat strip ---------- */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+  .stat{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 14px;min-width:0;
+  }
+  .stat .k{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .stat .v{margin-top:5px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;min-width:0}
+  .stat .v .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat .n{color:var(--accent);font-weight:800}
+  .stat .sub{margin-top:3px;font-size:11.5px;color:var(--dim);line-height:1.4}
+
+  /* ---------- table ---------- */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .thead,.trow{
+    display:grid;align-items:center;gap:8px;padding:0 14px;
+    grid-template-columns:26px minmax(0,1fr) repeat(4,26px) 40px 40px 64px;
+  }
+  .thead{
+    height:36px;font-size:10.5px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint);
+    border-bottom:1px solid var(--line);
+  }
+  .thead .num,.trow .num{text-align:center}
+  .thead .pts-h,.trow .pts{text-align:right}
+  .thead .form-h{text-align:right}
+  .trow{
+    height:46px;border-bottom:1px solid var(--line);
+    border-left:3px solid transparent;padding-left:11px;
+    transition:background .1s;
+  }
+  .trow:last-child{border-bottom:none}
+  .trow:hover{background:var(--surface-2)}
+  .trow.z-q1{border-left-color:var(--q1)}
+  .trow.z-q2{border-left-color:var(--q2)}
+  .trow.z-r{border-left-color:var(--drop)}
+  .trow.leader{background:linear-gradient(90deg, color-mix(in srgb, var(--q1) 8%, transparent), transparent 60%)}
+  .pos{font-size:12.5px;font-weight:700;color:var(--dim);text-align:center}
+  .trow.leader .pos{color:var(--q1)}
+  .club{display:flex;align-items:center;gap:9px;min-width:0}
+  .crest{
+    width:24px;height:24px;border-radius:50%;flex:none;
+    display:grid;place-items:center;
+    font-size:8.5px;font-weight:800;letter-spacing:.02em;
+    background:var(--surface-2);color:var(--ink);
+    border:1px solid rgba(255,255,255,.08);
+    overflow:hidden;
+  }
+  .crest{position:relative}
+  .crest img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:var(--surface-2)}
+  .club .nm{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .club .tag{
+    flex:none;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:2px 7px;
+  }
+  .club .tag.gold{color:#e3b341;border-color:color-mix(in srgb,#e3b341 40%,transparent)}
+  .num{font-size:12.5px;color:var(--dim)}
+  .gd{font-size:12.5px;text-align:right;color:var(--dim)}
+  .gd.up{color:var(--q1)}.gd.down{color:var(--drop)}
+  .pts{font-size:13.5px;font-weight:800}
+  .form{display:flex;gap:3px;justify-content:flex-end}
+  .form i{
+    width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--surface-2);
+  }
+  .form i.W{background:var(--win)}
+  .form i.D{background:var(--draw)}
+  .form i.L{background:var(--loss)}
+
+  /* legend + notes */
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--dim)}
+  .legend i{width:8px;height:8px;border-radius:2.5px;display:inline-block}
+  .note{margin:10px 2px 0;font-size:12px;color:var(--dim);line-height:1.55}
+  .note b{color:var(--ink);font-weight:600}
+
+  /* empty state */
+  .empty{
+    background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius);
+    padding:26px 20px;text-align:center;margin-bottom:16px;
+  }
+  .empty .big{font-size:15px;font-weight:700}
+  .empty p{margin-top:6px;font-size:12.5px;color:var(--dim);line-height:1.5}
+
+  /* wrapped extras */
+  .stories{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .story{
+    font-size:11.5px;font-weight:600;color:var(--dim);
+    border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;
+  }
+  .story b{color:var(--ink)}
+  .out{margin-top:14px}
+  .out h3{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--drop);margin-bottom:8px}
+  .out .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .out .chips span{
+    font-size:11.5px;font-weight:600;color:var(--dim);
+    border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;
+  }
+  .out .chips b{color:var(--drop);margin-right:5px}
+
+  /* ---------- team page ---------- */
+  .trow.clickable{cursor:pointer}
+  .back{
+    display:inline-flex;align-items:center;gap:7px;margin-bottom:14px;
+    font:inherit;font-size:12.5px;font-weight:700;color:var(--dim);cursor:pointer;
+    background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 14px;
+  }
+  .back:hover{color:var(--ink)}
+  .team-hero{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+  .team-hero .crest{width:46px;height:46px;font-size:14px;flex:none}
+  .team-hero h2{font-size:clamp(20px,5vw,28px);font-weight:800;letter-spacing:-.025em;line-height:1.1}
+  .team-hero .sub{margin-top:4px;font-size:12px;color:var(--dim)}
+  .team-hero .sub b{color:var(--ink);font-weight:700}
+
+  .rec{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:12px}
+  .rec .cell{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 6px;text-align:center}
+  .rec .k{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .rec .v{margin-top:3px;font-size:15px;font-weight:800}
+  .splits{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;align-items:center}
+  .splits .chip .form{display:inline-flex;gap:3px;margin-left:6px;vertical-align:-1px}
+
+  .fx-group{margin-bottom:12px}
+  .fx-month{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--dim);margin:0 2px 6px}
+  .fx-list{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .fx{
+    display:grid;grid-template-columns:34px 78px 22px minmax(0,1fr) 60px;
+    align-items:center;gap:9px;padding:0 13px;height:44px;
+    border-bottom:1px solid var(--line);border-left:3px solid transparent;
+  }
+  .fx:last-child{border-bottom:none}
+  .fx.W{border-left-color:var(--win)}
+  .fx.D{border-left-color:var(--draw)}
+  .fx.L{border-left-color:var(--loss)}
+  .fx.next{background:color-mix(in srgb, var(--accent) 9%, transparent);border-left-color:var(--accent)}
+  .fx .md{font-size:10px;font-weight:700;color:var(--faint);letter-spacing:.03em}
+  .fx .dt{font-size:11.5px;font-weight:600;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fx .dt .wd{color:var(--faint)}
+  .fx .ha{
+    font-size:9.5px;font-weight:700;color:var(--faint);text-align:center;
+    border:1px solid var(--line);border-radius:5px;padding:1.5px 0;
+  }
+  .fx .opp{display:flex;align-items:center;gap:8px;min-width:0}
+  .fx .opp .crest{width:22px;height:22px;font-size:8px}
+  .fx .opp .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fx .tag{
+    flex:none;font-size:8.5px;font-weight:800;letter-spacing:.06em;
+    color:var(--accent-ink);background:var(--accent);border-radius:4px;padding:1.5px 5px;
+  }
+  .fx .res{text-align:right;font-size:13px;font-weight:800;white-space:nowrap}
+  .fx .res.W{color:var(--win)}
+  .fx .res.L{color:var(--loss)}
+  .fx .res.D{color:var(--dim)}
+  .fx .res.kick{font-weight:600;font-size:11.5px;color:var(--faint)}
+
+  footer{
+    margin-top:28px;border-top:1px solid var(--line);
+    padding:20px 0 40px;font-size:11.5px;color:var(--faint);line-height:1.7;
+  }
+  footer b{color:var(--dim);font-weight:600}
+
+  @media (max-width:520px){
+    .thead,.trow{grid-template-columns:24px minmax(0,1fr) 26px 34px 34px 58px;gap:6px;padding-right:10px}
+    .hide-m{display:none}
+    .form i{width:7px;height:7px}
+    .club .nm{font-size:13px}
+    .club .tag{display:none}
+    .stats{grid-template-columns:1fr;gap:6px}
+    .stat{display:flex;align-items:baseline;gap:10px;padding:10px 14px}
+    .stat .sub{display:none}
+    .stat .v{margin-top:0}
+    .rec{grid-template-columns:repeat(3,1fr)}
+    .fx{grid-template-columns:56px 22px minmax(0,1fr) 54px;gap:8px;padding:0 11px}
+    .fx .dt .wd{display:none}
+    .fx .md{display:none}
+    .fx .opp .nm{font-size:12.5px}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="appbar">
+    <div class="brand">
+      <div class="mark">FT</div>
+      <div class="name">FULLTIME <span>· tables</span></div>
+    </div>
+    <div class="status" id="status"><span class="dot"></span><span id="status-txt">loading…</span></div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="wrap">
+    <div class="tabs" role="tablist" aria-label="Competition">
+      <button class="tab" role="tab" id="tab-epl" aria-selected="true">Premier League</button>
+      <button class="tab" role="tab" id="tab-liga" aria-selected="false">La Liga</button>
+      <button class="tab" role="tab" id="tab-ucl" aria-selected="false">Champions League</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="panel-top">
+    <h1 id="title">Premier League</h1>
+    <div class="seasons" role="group" aria-label="Season">
+      <button id="mode-live" aria-pressed="true">Live</button>
+      <button id="mode-wrapped" aria-pressed="false">25/26 Final</button>
+    </div>
+  </div>
+  <div class="meta" id="meta"></div>
+  <div id="content"></div>
+</main>
+
+<div class="wrap">
+  <footer id="footer">
+    <b>FULLTIME</b> — standings refresh automatically: a scheduled GitHub Action pulls current
+    tables (ESPN public feed, with <a style="color:inherit" href="https://github.com/openfootball/football.json">openfootball</a>
+    open data as fallback) and this page always loads the newest snapshot at runtime.
+    No hands involved.<br>
+    European qualification zones are shown as the standard allocation; extra spots via cup winners
+    and coefficients can shift them. 25/26 final tables compiled from public season reports.
+  </footer>
+</div>
+
+<script>
+/* ================= club colors & monograms ================= */
+const CLUB_STYLE = {
+  "Arsenal":["#EF0107"], "Aston Villa":["#7A003C"], "Bournemouth":["#B50E12"],
+  "Brentford":["#E30613"], "Brighton":["#0057B8"], "Chelsea":["#034694"],
+  "Coventry":["#59C3F0","#08222f"], "Crystal Palace":["#1B458F"], "Everton":["#003399"],
+  "Fulham":["#ececec","#171717"], "Hull City":["#F5A12D","#231400"], "Ipswich":["#1C5BA8"],
+  "Leeds":["#FFCD00","#1D428A"], "Liverpool":["#C8102E"], "Man City":["#6CABDD","#0b2a3c"],
+  "Man United":["#DA291C"], "Newcastle":["#2b2f36"], "Nott'm Forest":["#DD0000"],
+  "Sunderland":["#EB172B"], "Tottenham":["#eef0f5","#132257"],
+  "West Ham":["#7A263A"], "Burnley":["#6C1D45"], "Wolves":["#FDB913","#231F20"],
+  "Athletic Club":["#EE2523"], "Osasuna":["#D0122B"], "Atlético Madrid":["#CB3524"],
+  "Alavés":["#0761AF"], "Elche":["#0A7A3C"], "Barcelona":["#A50044"],
+  "Getafe":["#0E5CA8"], "Levante":["#A61B37"], "Málaga":["#29AFE0","#0a2a3d"],
+  "Celta Vigo":["#8AC3EE","#0d2c47"], "Deportivo":["#0075BF"], "Espanyol":["#007FC8"],
+  "Rayo Vallecano":["#E53027"], "Real Betis":["#00954C"], "Real Madrid":["#f2f2f2","#1f2a6b"],
+  "Racing Santander":["#17A05A"], "Real Sociedad":["#0067B1"], "Sevilla":["#eaeaea","#C40000"],
+  "Valencia":["#eee8d8","#1c1c1c"], "Villarreal":["#FFE667","#005187"],
+  "Mallorca":["#E20613"], "Girona":["#CD2534"], "Real Oviedo":["#0053A5"],
+  "Bayern Munich":["#DC052D"], "PSG":["#004170"], "Inter":["#0068A8"],
+  "Juventus":["#1f1f24"], "Dortmund":["#FDE100","#1a1a1a"], "Leverkusen":["#E32221"],
+  "Sporting CP":["#008057"], "Benfica":["#DD0000"], "Monaco":["#E63312"],
+  "Marseille":["#2FAEE0","#0a2a3d"], "Napoli":["#12A0D7","#0a2a3d"],
+  "Galatasaray":["#A90432"], "Olympiacos":["#DA1212"], "Club Brugge":["#0070B3"],
+  "Bodø/Glimt":["#FFD500","#1a1a1a"], "PSV":["#ED1C24"], "Ajax":["#efefef","#D2122E"],
+  "Frankfurt":["#E1000F"], "Slavia Prague":["#E4022D"], "Copenhagen":["#e8e8e8","#12325a"],
+  "Kairat":["#FFD200","#1a1a1a"], "Union SG":["#FFD800","#1a3a8f"], "Pafos":["#1B4A9C"],
+  "Qarabağ":["#2f3038"]
+};
+const FALLBACK_COLORS = ["#365f8c","#5c4d7d","#7d4d4d","#4d7d5c","#7d6b4d","#4d6b7d","#6b4d7d","#556066"];
+function clubStyle(short){
+  if (CLUB_STYLE[short]) return CLUB_STYLE[short];
+  let h=0; for (const ch of short) h=(h*31+ch.charCodeAt(0))>>>0;
+  return [FALLBACK_COLORS[h%FALLBACK_COLORS.length]];
+}
+function monogram(short){
+  const words = short.replace(/[^\p{L}\p{N} ]/gu," ").trim().split(/\s+/);
+  if (!words[0]) return "?";
+  if (words.length===1) return words[0].slice(0,3).toUpperCase();
+  return (words[0][0]+words[1][0]).toUpperCase();
+}
+
+/* ================= 25/26 final season (verified snapshot) ================= */
+const WRAPPED = {
+  season:"2025/26",
+  epl:{
+    stories:[
+      "<b>Arsenal</b> champions — first title in 22 years",
+      "<b>Haaland</b> Golden Boot, 3rd in 4 seasons",
+      "<b>West Ham</b> down with 39 pts — most since 2011",
+      "<b>Thiago</b>: 22 goals, a Brentford record"
+    ],
+    rows:[
+      [1,"Arsenal",85,"q1","champions"],[2,"Man City",78,"q1",""],[3,"Man United",71,"q1",""],
+      [4,"Aston Villa",65,"q1",""],[5,"Liverpool",60,"q1",""],[6,"Bournemouth",57,"q2",""],
+      [7,"Sunderland",54,"q2",""],[8,"Brighton",53,"q2",""],[9,"Brentford",53,"",""],
+      [10,"Chelsea",52,"",""],[11,"Fulham",52,"",""],[12,"Newcastle",49,"",""],
+      [13,"Everton",49,"",""],[14,"Leeds",47,"",""],[15,"Crystal Palace",45,"q2","UECL winners"],
+      [16,"Nott'm Forest",44,"",""],[17,"Tottenham",41,"",""],[18,"West Ham",39,"r",""],
+      [19,"Burnley",22,"r",""],[20,"Wolves",20,"r",""]
+    ],
+    note:"1–5 → Champions League · 6–7 → Europa League · 8 → Conference League. <b>Crystal Palace</b> reached the Europa League by winning the Conference League. <b>Spurs</b>: 17th at home, top-4 in Europe."
+  },
+  liga:{
+    stories:[
+      "<b>Barcelona</b> back-to-back — title #29, 94 pts",
+      "<b>Mbappé</b> Pichichi with 25",
+      "<b>Mallorca</b> relegated on head-to-head, level on 42"
+    ],
+    rows:[
+      [1,"Barcelona",94,"q1","champions"],[2,"Real Madrid",86,"q1",""],[3,"Villarreal",72,"q1",""],
+      [4,"Atlético Madrid",69,"q1",""],[5,"Real Betis",60,"q2",""],[6,"Celta Vigo",54,"q2",""],
+      [7,"Getafe",51,"",""],[8,"Rayo Vallecano",50,"",""],[9,"Valencia",49,"",""],
+      [10,"Real Sociedad",46,"",""],[11,"Espanyol",46,"",""],[12,"Athletic Club",45,"",""],
+      [13,"Sevilla",43,"",""],[14,"Alavés",43,"",""],[15,"Elche",43,"",""],
+      [16,"Osasuna",42,"",""],[17,"Levante",42,"",""],[18,"Mallorca",42,"r","H2H"],
+      [19,"Girona",29,"r",""],[20,"Real Oviedo",29,"r",""]
+    ],
+    note:"1–4 → Champions League · 5–6 → Europe. <b>Mallorca</b> won 3–0 on the final day and still went down on the head-to-head rule, level on 42 with Osasuna and Levante."
+  },
+  ucl:{
+    stories:[
+      "<b>PSG</b> back-to-back champions — from 11th, 4–3 on pens vs Arsenal",
+      "<b>Arsenal</b>: perfect 8/8 league phase, lost the final",
+      "<b>Kairat</b>: 1 point, longest away trips in UCL history"
+    ],
+    rows:[
+      [1,"Arsenal",24,"q1","8/8"],[2,"Bayern Munich",21,"q1",""],[3,"Liverpool",18,"q1",""],
+      [4,"Tottenham",17,"q1",""],[5,"Barcelona",16,"q1",""],[6,"Chelsea",16,"q1",""],
+      [7,"Sporting CP",16,"q1",""],[8,"Man City",16,"q1",""],[9,"Real Madrid",15,"q2",""],
+      [10,"Inter",15,"q2",""],[11,"PSG",14,"q2","won it all"],[12,"Newcastle",14,"q2",""],
+      [13,"Juventus",13,"q2",""],[14,"Atlético Madrid",13,"q2",""],[15,"Atalanta",13,"q2",""],
+      [16,"Leverkusen",12,"q2",""],[17,"Dortmund",11,"q2",""],[18,"Olympiacos",11,"q2",""],
+      [19,"Club Brugge",10,"q2",""],[20,"Galatasaray",10,"q2",""],[21,"Monaco",10,"q2",""],
+      [22,"Qarabağ",10,"q2",""],[23,"Bodø/Glimt",9,"q2",""],[24,"Benfica",9,"q2",""]
+    ],
+    out:[[25,"Marseille"],[26,"Pafos"],[27,"Union SG"],[28,"PSV"],[29,"Athletic Club"],[30,"Napoli"],
+         [31,"Copenhagen"],[32,"Ajax"],[33,"Frankfurt"],[34,"Slavia Prague"],[35,"Villarreal"],[36,"Kairat"]],
+    note:"Top 8 straight to the round of 16 · 9–24 to the knockout playoffs · 25–36 out of Europe. <b>PSG</b> finished 11th and won the whole thing anyway."
+  }
+};
+
+/* ================= config ================= */
+const COMP = {
+  epl:{ title:"Premier League", region:"England",
+        zones:p=>p<=4?"q1":p===5?"q2":p>=18?"r":"",
+        legend:[["q1","Champions League"],["q2","Europe"],["r","Relegation"]] },
+  liga:{ title:"La Liga", region:"Spain",
+        zones:p=>p<=4?"q1":p===5?"q2":p>=18?"r":"",
+        legend:[["q1","Champions League"],["q2","Europe"],["r","Relegation"]] },
+  ucl:{ title:"Champions League", region:"Europe",
+        zones:p=>p<=8?"q1":p<=24?"q2":"r",
+        legend:[["q1","Round of 16 (top 8)"],["q2","Playoffs (9–24)"],["r","Out (25–36)"]] }
+};
+
+const DATA_URLS = [
+  "https://raw.githubusercontent.com/lazizbekravshanov/fulltime/main/data.json",
+  "./data.json"
+];
+
+/* ================= state ================= */
+let LIVE = null;      // loaded data.json
+let league = "epl";
+let mode = "live";
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ================= rendering ================= */
+function crest(short, logo){
+  const [bg, fg] = clubStyle(short);
+  // Monogram is always rendered; a crest image layers over it and removes
+  // itself on load failure, so the chip never ends up blank.
+  const img = logo ? `<img src="${esc(logo)}" alt="" loading="lazy" onerror="this.remove()">` : "";
+  return `<span class="crest" style="background:${bg};color:${fg||"#fff"}">${esc(monogram(short))}${img}</span>`;
+}
+
+function gdCell(gd){
+  if (gd == null) return `<span class="gd">–</span>`;
+  const cls = gd > 0 ? "up" : gd < 0 ? "down" : "";
+  return `<span class="gd ${cls}">${gd > 0 ? "+" : ""}${gd}</span>`;
+}
+
+function formCell(form){
+  const dots = (form || "").slice(-5).split("");
+  while (dots.length < 5) dots.unshift("");
+  return `<span class="form">${dots.map(d=>`<i class="${d}" title="${d==="W"?"Win":d==="D"?"Draw":d==="L"?"Loss":""}"></i>`).join("")}</span>`;
+}
+
+function liveTable(comp){
+  const cfg = COMP[league];
+  let h = `<div class="card" role="table" aria-label="${cfg.title} table">
+    <div class="thead" role="row">
+      <span>#</span><span>Club</span>
+      <span class="num hide-m">P</span><span class="num hide-m">W</span><span class="num hide-m">D</span>
+      <span class="num" style="text-align:center">${window.matchMedia("(max-width:520px)").matches?"P":"L"}</span>
+      <span class="pts-h" style="text-align:right">GD</span><span class="pts-h">Pts</span><span class="form-h">Form</span>
+    </div>`;
+  // On mobile the grid collapses: P column doubles as the only played-count.
+  for (const r of comp.rows){
+    const z = cfg.zones(r.pos);
+    h += `<div class="trow ${z?"z-"+z:""} ${r.pos===1?"leader":""}" role="row"`
+      + ` data-short="${esc(r.short)}" data-lg="${league}" data-mode="live" data-logo="${esc(r.logo ?? "")}">`
+      + `
+      <span class="pos" role="cell">${r.pos}</span>
+      <span class="club" role="cell">${crest(r.short, r.logo)}<span class="nm">${esc(r.short)}</span></span>
+      <span class="num hide-m" role="cell">${r.p ?? "–"}</span>
+      <span class="num hide-m" role="cell">${r.w ?? "–"}</span>
+      <span class="num hide-m" role="cell">${r.d ?? "–"}</span>
+      <span class="num" role="cell" style="text-align:center">${window.matchMedia("(max-width:520px)").matches ? (r.p ?? "–") : (r.l ?? "–")}</span>
+      <span role="cell" style="text-align:right">${gdCell(r.gd)}</span>
+      <span class="pts" role="cell">${r.pts ?? "–"}</span>
+      <span role="cell">${formCell(r.form)}</span>
+    </div>`;
+  }
+  h += `</div>`;
+  h += legendHTML(cfg.legend);
+  return h;
+}
+
+function legendHTML(items){
+  const colors = {q1:"var(--q1)", q2:"var(--q2)", r:"var(--drop)"};
+  return `<div class="legend">${items.map(([z,l])=>`<span><i style="background:${colors[z]}"></i>${l}</span>`).join("")}</div>`;
+}
+
+function statStrip(comp){
+  const rows = comp.rows.filter(r => (r.p ?? 0) > 0);
+  if (!rows.length) return "";
+  const leader = comp.rows[0];
+  const attack = [...rows].sort((a,b)=>(b.gf??0)-(a.gf??0))[0];
+  const defence = [...rows].sort((a,b)=>(a.ga??99)-(b.ga??99))[0];
+  const s = (label, r, val, sub) => `<div class="stat"><div class="k">${label}</div>
+    <div class="v">${crest(r.short, r.logo)}<span class="txt">${esc(r.short)}</span><span class="n">${val}</span></div>
+    <div class="sub">${sub}</div></div>`;
+  return `<div class="stats">
+    ${s("Leader", leader, (leader.pts ?? 0)+" pts", "Top of the table right now")}
+    ${s("Best attack", attack, (attack.gf ?? 0), "Goals scored")}
+    ${s("Best defence", defence, (defence.ga ?? 0), "Goals conceded")}
+  </div>`;
+}
+
+function wrappedTable(key){
+  const w = WRAPPED[key];
+  const cfg = COMP[key];
+  let h = `<div class="stories">${w.stories.map(s=>`<span class="story">${s}</span>`).join("")}</div>`;
+  h += `<div class="card" role="table" aria-label="${cfg.title} 2025/26 final table">
+    <div class="thead" role="row" style="grid-template-columns:26px minmax(0,1fr) 60px">
+      <span>#</span><span>Club</span><span class="pts-h">Pts</span>
+    </div>`;
+  for (const [pos, short, pts, z, tag] of w.rows){
+    const clickable = key === "epl" || key === "liga";
+    h += `<div class="trow ${z?"z-"+z:""} ${pos===1&&key!=="ucl"?"leader":""}" role="row"`
+      + (clickable ? ` data-short="${esc(short)}" data-lg="${key}" data-mode="wrapped"` : "")
+      + ` style="grid-template-columns:26px minmax(0,1fr) 60px;height:42px">
+      <span class="pos" role="cell">${pos}</span>
+      <span class="club" role="cell">${crest(short)}<span class="nm">${esc(short)}</span>
+        ${tag?`<span class="tag ${tag==="champions"||tag==="won it all"?"gold":""}">${esc(tag)}</span>`:""}</span>
+      <span class="pts" role="cell" style="text-align:right">${pts}</span>
+    </div>`;
+  }
+  h += `</div>`;
+  if (w.out){
+    h += `<div class="out"><h3>Out of Europe · 25–36</h3><div class="chips">${
+      w.out.map(([p,n])=>`<span><b>${p}</b>${esc(n)}</span>`).join("")}</div></div>`;
+  }
+  h += legendHTML(cfg.legend);
+  h += `<p class="note">${w.note}</p>`;
+  return h;
+}
+
+/* ================= team page ================= */
+const MATCH_CACHE = new Map();
+const OF_FILES = { epl:"en.1.json", liga:"es.1.json" };
+let teamView = null; // {league, mode, short, logo}
+
+/* Club naming mirrors scripts/update-standings.mjs, so openfootball's full
+   club names resolve to the same short names the tables show. */
+const SHORT_NAMES = {
+  "afc bournemouth": "Bournemouth",
+  "brighton & hove albion": "Brighton",
+  "brighton and hove albion": "Brighton",
+  "coventry city": "Coventry",
+  "crystal palace": "Crystal Palace",
+  "hull city": "Hull City",
+  "ipswich town": "Ipswich",
+  "leeds united": "Leeds",
+  "manchester city": "Man City",
+  "manchester united": "Man United",
+  "newcastle united": "Newcastle",
+  "nottingham forest": "Nott'm Forest",
+  "tottenham hotspur": "Tottenham",
+  "west ham united": "West Ham",
+  "wolverhampton wanderers": "Wolves",
+  "ca osasuna": "Osasuna",
+  "club atletico de madrid": "Atlético Madrid",
+  "atletico madrid": "Atlético Madrid",
+  "deportivo alaves": "Alavés",
+  "fc barcelona": "Barcelona",
+  "levante ud": "Levante",
+  "malaga cf": "Málaga",
+  "rc celta de vigo": "Celta Vigo",
+  "celta vigo": "Celta Vigo",
+  "rc deportivo la coruna": "Deportivo",
+  "deportivo la coruna": "Deportivo",
+  "rcd espanyol de barcelona": "Espanyol",
+  "rayo vallecano de madrid": "Rayo Vallecano",
+  "real betis balompie": "Real Betis",
+  "real madrid cf": "Real Madrid",
+  "real racing club de santander": "Racing Santander",
+  "racing santander": "Racing Santander",
+  "real sociedad de futbol": "Real Sociedad",
+  "athletic club": "Athletic Club",
+  "rcd mallorca": "Mallorca",
+  "paris saint-germain": "PSG",
+  "bayern munich": "Bayern Munich",
+  "fc bayern munchen": "Bayern Munich",
+  "borussia dortmund": "Dortmund",
+  "bayer leverkusen": "Leverkusen",
+  "internazionale": "Inter",
+  "inter milan": "Inter",
+  "sporting cp": "Sporting CP",
+  "sl benfica": "Benfica",
+  "fc porto": "Porto",
+  "as monaco": "Monaco",
+  "olympique marseille": "Marseille",
+  "club brugge": "Club Brugge",
+  "union saint-gilloise": "Union SG",
+  "psv eindhoven": "PSV",
+  "afc ajax": "Ajax",
+  "eintracht frankfurt": "Frankfurt",
+  "slavia prague": "Slavia Prague",
+  "bodo/glimt": "Bodø/Glimt",
+};
+const DROP = new Set(["fc","afc","cf","cd","ca","ud","rc","rcd","sc","ac","as","sl","club","de","the","balompie"]);
+const flat = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[.,']/g,"").trim();
+function clubShort(name){
+  const key = flat(name);
+  if (SHORT_NAMES[key]) return SHORT_NAMES[key];
+  const cleaned = key.split(/\s+/).filter(t => !DROP.has(t)).join(" ");
+  if (SHORT_NAMES[cleaned]) return SHORT_NAMES[cleaned];
+  const kept = name.replace(/[.,]/g,"").split(/\s+/).filter(t => !DROP.has(flat(t)));
+  return kept.join(" ") || name;
+}
+
+/* Fixture tuples baked into data.json:
+   [matchday, date, time, opponent, home?1:0, goalsFor, goalsAgainst] */
+function bakedFixtures(lg, short){
+  const raw = LIVE?.comps?.[lg]?.fixtures?.[short];
+  if (!Array.isArray(raw) || !raw.length) return null;
+  return raw.map(([md, date, time, opp, home, gf, ga]) => ({
+    md, date, time, opp, home: !!home,
+    gf: gf ?? null, ga: ga ?? null,
+    done: gf != null && ga != null,
+  }));
+}
+
+/* Fallback for seasons the snapshot doesn't carry (e.g. the 25/26 archive). */
+async function openfootballFixtures(lg, seasonDir, short){
+  if (!OF_FILES[lg]) return null;
+  const key = lg + ":" + seasonDir;
+  let matches = MATCH_CACHE.get(key);
+  if (!matches){
+    const of = await fetchJSON(`${OF_BASE}/${seasonDir}/${OF_FILES[lg]}`);
+    matches = of.matches ?? [];
+    MATCH_CACHE.set(key, matches);
+  }
+  const out = [];
+  for (const m of matches){
+    const h = clubShort(m.team1 ?? ""), a = clubShort(m.team2 ?? "");
+    const home = h === short;
+    if (!home && a !== short) continue;
+    const ft = Array.isArray(m?.score?.ft) ? m.score.ft : null;
+    out.push({
+      md: parseInt(String(m.round ?? "").replace(/\D+/g,""), 10) || null,
+      date: m.date ?? null, time: m.time ?? null,
+      opp: home ? a : h, home,
+      gf: ft ? (home ? ft[0] : ft[1]) : null,
+      ga: ft ? (home ? ft[1] : ft[0]) : null,
+      done: !!ft,
+    });
+  }
+  out.sort((x, y) => String(x.date).localeCompare(String(y.date)));
+  return out.length ? out : null;
+}
+
+/* ESPN kickoff times carry a Z; openfootball's are already league-local. */
+function kickoff(f){
+  if (!f.date) return null;
+  const utc = f.time && /Z$/.test(f.time);
+  const dt = new Date(`${f.date}T${utc ? f.time : (f.time || "12:00")}`);
+  return isNaN(dt) ? null : { dt, utc };
+}
+function fxDate(f){
+  const k = kickoff(f);
+  if (!k) return f.date ? esc(f.date) : "TBC";
+  const wd = k.dt.toLocaleDateString("en-GB", {weekday:"short"});
+  const dm = k.dt.toLocaleDateString("en-GB", {day:"numeric", month:"short"});
+  return `<span class="wd">${esc(wd)} </span>${esc(dm)}`;
+}
+function fxTime(f){
+  if (!f.time) return "TBC";
+  const k = kickoff(f);
+  if (k && k.utc) return k.dt.toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit"});
+  return f.time;
+}
+function outcomeOf(f){
+  if (!f.done) return "";
+  return f.gf > f.ga ? "W" : f.gf < f.ga ? "L" : "D";
+}
+/* Result feeds can lag kick-off, so a past match without a score is pending
+   rather than upcoming — it should not be billed as the next fixture. */
+function isPending(f){
+  if (f.done) return false;
+  const k = kickoff(f);
+  return !!k && k.dt.getTime() < Date.now();
+}
+function monthOf(f){
+  const k = kickoff(f);
+  return k ? k.dt.toLocaleDateString("en-GB", {month:"long", year:"numeric"}) : "Date to be confirmed";
+}
+
+function fxRow(f, isNext){
+  const o = outcomeOf(f);
+  const res = f.done
+    ? `<span class="res ${o}">${f.gf}–${f.ga}</span>`
+    : `<span class="res kick" ${isPending(f) ? 'title="Result not published yet"' : ""}>${
+        isPending(f) ? "—" : esc(fxTime(f))}</span>`;
+  return `<div class="fx ${o} ${isNext ? "next" : ""}" role="row">
+    <span class="md">${f.md ? "MD" + f.md : ""}</span>
+    <span class="dt">${fxDate(f)}</span>
+    <span class="ha" title="${f.home ? "Home" : "Away"}">${f.home ? "H" : "A"}</span>
+    <span class="opp">${crest(f.opp)}<span class="nm">${esc(f.opp)}</span>${isNext ? `<span class="tag">NEXT</span>` : ""}</span>
+    ${res}
+  </div>`;
+}
+
+function recordOf(list){
+  const w = list.filter(f => f.gf > f.ga).length;
+  const d = list.filter(f => f.gf === f.ga).length;
+  return `${w}W ${d}D ${list.length - w - d}L`;
+}
+
+function backToTable(){
+  teamView = null;
+  history.replaceState(null, "", location.pathname + location.search);
+  render();
+}
+
+async function renderTeam(){
+  const { league: lg, mode: md, short, logo } = teamView;
+  const cfg = COMP[lg];
+  $("title").textContent = cfg.title;
+  $("meta").innerHTML = "";
+  const content = $("content");
+
+  const comp = md === "live" ? LIVE?.comps?.[lg] : null;
+  const row = comp?.rows?.find(r => r.short === short);
+  const seasonLabel = md === "live" ? (LIVE?.season ?? "") : "2025/26";
+  const bits = [
+    row ? `Position <b>${row.pos}</b>` : "",
+    row ? `<b>${row.pts}</b> pts` : "",
+    `${esc(seasonLabel)} · ${esc(cfg.title)}`,
+  ].filter(Boolean);
+
+  const head = `<button class="back" id="back">← ${esc(cfg.title)} table</button>
+    <div class="team-hero">${crest(short, logo)}
+      <div><h2>${esc(short)}</h2><div class="sub">${bits.join(" · ")}</div></div>
+    </div>`;
+  const show = (html) => {
+    content.innerHTML = head + html;
+    $("back").onclick = backToTable;
+  };
+
+  show(`<div class="empty"><div class="big">Loading fixtures…</div></div>`);
+
+  let fx = md === "live" ? bakedFixtures(lg, short) : null;
+  if (!fx){
+    try { fx = await openfootballFixtures(lg, md === "live" ? seasonSlug() : "2025-26", short); }
+    catch { fx = null; }
+  }
+  if (teamView?.short !== short || teamView?.league !== lg) return; // superseded
+
+  if (!fx){
+    show(`<div class="empty">
+        <div class="big">No fixture list for ${esc(short)} yet</div>
+        <p>${lg === "ucl"
+          ? "Champions League fixtures appear here once the schedule reaches the data feed."
+          : "The fixture feed couldn't be reached. Check your connection and try again."}</p>
+      </div>`);
+    return;
+  }
+
+  const played = fx.filter(f => f.done);
+  const gf = played.reduce((n, f) => n + f.gf, 0);
+  const ga = played.reduce((n, f) => n + f.ga, 0);
+  const gd = gf - ga;
+  const w = played.filter(f => f.gf > f.ga).length;
+  const d = played.filter(f => f.gf === f.ga).length;
+  const cell = (k, v) => `<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  const stats = `<div class="rec">
+      ${cell("Played", played.length)}${cell("Won", w)}${cell("Drawn", d)}
+      ${cell("Lost", played.length - w - d)}${cell("Goals", `${gf}:${ga}`)}
+      ${cell("GD", (gd > 0 ? "+" : "") + gd)}
+    </div>`;
+
+  const formHTML = played.length
+    ? `<span class="chip">Form ${formCell(played.slice(-5).map(outcomeOf).join(""))}</span>` : "";
+  const splits = `<div class="splits">
+      <span class="chip">Home <b>${recordOf(played.filter(f => f.home))}</b></span>
+      <span class="chip">Away <b>${recordOf(played.filter(f => !f.home))}</b></span>
+      ${formHTML}
+      <span class="chip"><b>${fx.length - played.length}</b> to play</span>
+    </div>`;
+
+  let nextIdx = fx.findIndex(f => !f.done && !isPending(f));
+  if (nextIdx < 0) nextIdx = fx.findIndex(f => !f.done);
+  const groups = [];
+  fx.forEach((f, i) => {
+    const label = monthOf(f);
+    if (!groups.length || groups[groups.length - 1].label !== label) groups.push({ label, items: [] });
+    groups[groups.length - 1].items.push({ f, i });
+  });
+  const list = groups.map(g =>
+    `<div class="fx-group">
+       <div class="fx-month">${esc(g.label)}</div>
+       <div class="fx-list" role="table" aria-label="${esc(g.label)} fixtures">
+         ${g.items.map(({ f, i }) => fxRow(f, i === nextIdx)).join("")}
+       </div>
+     </div>`).join("");
+
+  show(stats + splits + `<div style="height:6px"></div>` + list
+    + `<p class="note">Full ${esc(seasonLabel)} schedule — ${fx.length} matches. Results carry the score; upcoming fixtures show kick-off.</p>`);
+}
+
+const slug = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
+  .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+
+function openTeam(lg, md, short, logo){
+  teamView = { league: lg, mode: md, short, logo };
+  league = lg;
+  history.replaceState(null, "", "#" + lg + "/" + slug(short));
+  window.scrollTo(0, 0);
+  renderTeam();
+}
+
+function wireRows(){
+  document.querySelectorAll(".trow[data-short]").forEach(el => {
+    el.classList.add("clickable");
+    el.addEventListener("click", () => {
+      openTeam(el.dataset.lg, el.dataset.mode, el.dataset.short, el.dataset.logo || null);
+    });
+  });
+}
+
+function timeAgo(iso){
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime())/60000));
+  if (mins < 60) return `${mins}m ago`;
+  const h = Math.round(mins/60);
+  if (h < 48) return `${h}h ago`;
+  return `${Math.round(h/24)}d ago`;
+}
+
+function render(){
+  if (teamView){ renderTeam(); return; }
+  const cfg = COMP[league];
+  $("title").textContent = cfg.title;
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected", t.id === "tab"+"-"+league ? "true":"false"));
+  $("mode-live").setAttribute("aria-pressed", mode==="live" ? "true":"false");
+  $("mode-wrapped").setAttribute("aria-pressed", mode==="wrapped" ? "true":"false");
+
+  const meta = $("meta");
+  const content = $("content");
+
+  if (mode === "wrapped"){
+    meta.innerHTML = `<span class="chip"><b>2025/26</b> · final</span><span class="chip">${cfg.region}</span>`;
+    content.innerHTML = wrappedTable(league);
+    wireRows();
+    return;
+  }
+
+  const comp = LIVE?.comps?.[league];
+  if (!LIVE){
+    meta.innerHTML = `<span class="chip">${cfg.region}</span>`;
+    content.innerHTML = `<div class="empty"><div class="big">Loading standings…</div></div>`;
+    return;
+  }
+  if (!comp || comp.notStarted){
+    meta.innerHTML = `<span class="chip"><b>${esc(LIVE.season)}</b></span><span class="chip">${cfg.region}</span>`;
+    content.innerHTML = `<div class="empty">
+        <div class="big">The ${esc(LIVE.season)} league phase hasn't kicked off yet</div>
+        <p>It starts in mid-September. This page updates itself — the table will appear here as soon as the first round is played. Meanwhile, last season's final standings:</p>
+      </div>` + wrappedTable(league);
+    wireRows();
+    return;
+  }
+  meta.innerHTML = `<span class="chip"><b>${esc(LIVE.season)}</b> · live</span>`
+    + `<span class="chip">Matchday <b>${comp.matchday}</b></span>`
+    + `<span class="chip">${cfg.region}</span>`
+    + `<span class="chip acc">auto-updated</span>`;
+  content.innerHTML = statStrip(comp) + liveTable(comp)
+    + `<p class="note">Tap any club for its full season fixture list. Zones shown as the standard allocation. Source: ${comp.source === "espn" ? "ESPN public feed" : "openfootball open data (table computed from results)"} · refreshed ${timeAgo(LIVE.generated)}.</p>`;
+  wireRows();
+}
+
+/* ================= data loading ================= */
+async function fetchJSON(url){
+  const res = await fetch(url, {cache:"no-cache", signal: AbortSignal.timeout(6000)});
+  if (!res.ok) throw new Error(String(res.status));
+  return res.json();
+}
+
+async function load(){
+  const results = await Promise.allSettled(DATA_URLS.map(fetchJSON));
+  const ok = results.filter(r=>r.status==="fulfilled").map(r=>r.value)
+    .filter(d=>d && d.generated && d.comps);
+  if (ok.length){
+    ok.sort((a,b)=> new Date(b.generated) - new Date(a.generated));
+    LIVE = ok[0];
+    const age = Date.now() - new Date(LIVE.generated).getTime();
+    const st = $("status");
+    st.className = "status " + (age < 24*3600e3 ? "live" : "stale");
+    $("status-txt").textContent = "updated " + timeAgo(LIVE.generated);
+  } else {
+    $("status").className = "status stale";
+    $("status-txt").textContent = "offline · 25/26 snapshot";
+    mode = "wrapped";
+  }
+  // Deep link: #<league>/<team-slug> reopens a club's timeline.
+  const m = location.hash.match(/^#(epl|liga|ucl)\/([a-z0-9-]+)$/);
+  if (m && LIVE){
+    const row = LIVE.comps?.[m[1]]?.rows?.find(r => slug(r.short) === m[2]);
+    if (row){ league = m[1]; teamView = {league:m[1], mode:"live", short:row.short, logo:row.logo}; }
+  }
+  render();
+  refreshInBrowser();
+}
+
+/* If the committed snapshot is stale, recompute the league tables right here
+   in the browser from openfootball's raw JSON (CORS-open) — the page stays
+   current even if no scheduled job ever runs. */
+const OF_BASE = "https://raw.githubusercontent.com/openfootball/football.json/master";
+function seasonSlug(){
+  const n = new Date();
+  const y = n.getUTCMonth() >= 6 ? n.getUTCFullYear() : n.getUTCFullYear() - 1;
+  return `${y}-${String((y + 1) % 100).padStart(2,"0")}`;
+}
+const normKey = s => s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()
+  .replace(/&/g,"and").replace(/[^a-z0-9 ]/g,"")
+  .split(/\s+/).filter(t=>!["fc","afc","cf","cd","ca","ud","rc","rcd","sc","ac","as","sl","club","de","the","balompie"].includes(t))
+  .sort().join(" ");
+function computeTable(matches){
+  const table = new Map();
+  const t = n => { if(!table.has(n)) table.set(n,{team:n,p:0,w:0,d:0,l:0,gf:0,ga:0,res:[]}); return table.get(n); };
+  let matchday = 0;
+  for (const m of matches ?? []){
+    if (m.team1) t(m.team1);
+    if (m.team2) t(m.team2);
+    const ft = m?.score?.ft;
+    if (!Array.isArray(ft) || ft.length !== 2) continue;
+    const [g1,g2] = ft, a = t(m.team1), b = t(m.team2);
+    a.p++; b.p++; a.gf+=g1; a.ga+=g2; b.gf+=g2; b.ga+=g1;
+    if (g1>g2){a.w++;b.l++;a.res.push([m.date,"W"]);b.res.push([m.date,"L"]);}
+    else if (g1<g2){b.w++;a.l++;a.res.push([m.date,"L"]);b.res.push([m.date,"W"]);}
+    else {a.d++;b.d++;a.res.push([m.date,"D"]);b.res.push([m.date,"D"]);}
+    const md = parseInt(String(m.round ?? "").replace(/\D+/g,""),10);
+    if (md > matchday) matchday = md;
+  }
+  const rows = [...table.values()].map(r=>({ ...r, gd:r.gf-r.ga, pts:r.w*3+r.d,
+    form:r.res.sort((x,y)=>String(x[0]).localeCompare(String(y[0]))).slice(-5).map(x=>x[1]).join("") }));
+  rows.sort((x,y)=>y.pts-x.pts || y.gd-x.gd || y.gf-x.gf || x.team.localeCompare(y.team));
+  return { matchday, rows: rows.map((r,i)=>({pos:i+1, team:r.team, short:r.team,
+    p:r.p,w:r.w,d:r.d,l:r.l,gf:r.gf,ga:r.ga,gd:r.gd,pts:r.pts,form:r.form,logo:null})) };
+}
+async function refreshInBrowser(){
+  if (!LIVE) return;
+  if (Date.now() - new Date(LIVE.generated).getTime() < 24*3600e3) return;
+  const files = { epl:"en.1.json", liga:"es.1.json" };
+  let touched = false;
+  for (const [key,file] of Object.entries(files)){
+    try {
+      const of = await fetchJSON(`${OF_BASE}/${seasonSlug()}/${file}`);
+      const fresh = computeTable(of.matches);
+      if (!fresh.rows.some(r=>r.p>0)) continue;
+      // Reuse the snapshot's short names and crest URLs where clubs match.
+      const old = new Map((LIVE.comps[key]?.rows ?? []).map(r=>[normKey(r.team), r]));
+      for (const r of fresh.rows){
+        const o = old.get(normKey(r.team));
+        if (o){ r.short = o.short; r.logo = o.logo; }
+      }
+      LIVE.comps[key] = { name: COMP[key].title, source:"openfootball (live, in-browser)",
+        matchday: fresh.matchday, rows: fresh.rows };
+      touched = true;
+    } catch (e) { /* keep the snapshot */ }
+  }
+  if (touched){
+    LIVE.generated = new Date().toISOString();
+    const st = $("status");
+    st.className = "status live";
+    $("status-txt").textContent = "recomputed just now";
+    render();
+  }
+}
+
+/* Label the live toggle with the season currently in play (Aug–May). */
+{
+  const n = new Date();
+  const y = n.getUTCMonth() >= 6 ? n.getUTCFullYear() : n.getUTCFullYear() - 1;
+  $("mode-live").textContent = `${String(y % 100)}/${String((y + 1) % 100).padStart(2,"0")} Live`;
+}
+
+/* ================= events ================= */
+for (const key of ["epl","liga","ucl"]){
+  $("tab-"+key).addEventListener("click", ()=>{ league = key; teamView = null; history.replaceState(null,"",location.pathname); render(); });
+}
+$("mode-live").addEventListener("click", ()=>{ mode="live"; backToTable(); });
+$("mode-wrapped").addEventListener("click", ()=>{ mode="wrapped"; backToTable(); });
+window.matchMedia("(max-width:520px)").addEventListener?.("change", render);
+
+render();
+load();
+</script>
+</body>
+</html>
