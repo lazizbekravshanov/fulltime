@@ -1553,7 +1553,7 @@ function viewTable(){
       <span class="chip">Matchday <b>${c.matchday}</b></span>
       <span class="chip">${esc(cfg.region)}</span>
       ${TZ_LABEL ? `<span class="chip">Times in <b>${esc(TZ_LABEL)}</b></span>` : ""}
-      <span class="chip acc">refreshed ${esc(timeAgo(LIVE.generated))}</span>
+      <span class="chip acc">${freshnessLabel()}</span>
     </div>`;
 
   const seg = `<div class="seg" role="group" aria-label="Table split">${
@@ -1586,8 +1586,9 @@ function viewTable(){
     + pin + body
     + legendHTML(cfg.legend, hasFx
         ? `<span><i style="background:var(--line-2)"></i>Next 5: bar shows how high the opponent sits, faded means away</span>` : "")
-    + `<p class="note">${explain} Tap a club for its full season. Source: ${
-        c.source === "espn" ? "ESPN public feed" : "openfootball open data"}${
+    + `<p class="note">${explain} Tap a club for its full season. ${
+        refreshedAt ? "The table was read from ESPN when you opened this page."
+                    : "Showing the last committed snapshot — the live feed couldn't be reached."}${
         q ? ` · showing ${hits.length} of ${rows.length} clubs` : ""}.</p>`
     + recordsHTML(state.lg) + performersHTML(state.lg);
 }
@@ -2143,12 +2144,19 @@ async function refreshLeague(lg, { force = false } = {}){
   if (changed) render();
 }
 
+/* One sentence about where these numbers came from, used by the chip beside the
+   table and by the status pill, so the two can never disagree. */
+function freshnessLabel(){
+  if (!refreshedAt) return `snapshot · ${esc(timeAgo(LIVE.generated))}`;
+  const secs = Math.round((Date.now() - refreshedAt) / 1000);
+  return secs < 90 ? "live · checked just now"
+    : `live · checked ${esc(timeAgo(new Date(refreshedAt).toISOString()))}`;
+}
+
 function markFresh(){
   if (!refreshedAt) return;
-  const secs = Math.round((Date.now() - refreshedAt) / 1000);
   $("status").className = "status live";
-  $("status-txt").textContent = secs < 90 ? "live · just now"
-    : "live · " + timeAgo(new Date(refreshedAt).toISOString());
+  $("status-txt").textContent = freshnessLabel().replace("checked ", "");
 }
 
 /* ===================== theme ===================== */
