@@ -1,37 +1,77 @@
 # FULLTIME
 
-Live league tables for the **Premier League**, **La Liga** and the **UEFA
-Champions League**, plus the full season fixture list for every club.
+League tables for the **Premier League**, **La Liga** and the **UEFA Champions
+League** — standings, every club's full season, and round-by-round results.
 
 Live: https://lazizbekravshanov.github.io/fulltime/
 
-- Current standings with form, goal difference and qualification zones.
-- Click any club for its whole season: every match in date order, grouped by
-  month, with results, home/away and kick-off times for what's still to come.
-- A 2025/26 archive view with the final tables from last season.
+## What it does
+
+**Tables.** Overall standings come straight from the competition's own table,
+so the tiebreaks are the real ones. Home, Away, Last 5 and Projected are
+recomputed in the browser from the fixture list, and each row marks how far the
+club has moved against the real table. Projected carries points-per-game across
+every remaining fixture and shows the current total beside it.
+
+**Next five.** Every row carries its next five opponents as crests, underlined
+by how high that opponent currently sits — a fixture-difficulty read at a
+glance. Faded means away.
+
+**Matchdays.** Every match in a round, league-wide, with prev/next and a jump
+back to the current round. Tap a match to see both legs between the two clubs
+with the head-to-head record.
+
+**Clubs.** Tap any club for its whole season: every match in date order grouped
+by month, results and kick-offs, home/away splits, form, and a season-shape
+chart of its position after each matchday. Clubs in two competitions can merge
+both schedules into one chronological season. Any club's fixtures export as an
+`.ics` calendar, generated in the browser.
+
+**Season records.** Longest current unbeaten run, longest winless run, biggest
+win and most clean sheets, per competition.
+
+**Top scorers and assists**, when ESPN publishes them for the competition.
+
+**Live scores.** If a match is kicking off around now, the page fetches that
+day's scoreboard directly and overlays live scores while it plays. Entirely
+opportunistic: any failure is silent and the committed snapshot stands.
+
+**Yours.** Star a club and it pins above its table and becomes the landing
+view. Search filters as you type (`/` focuses it, Enter opens the top hit).
+Light and dark both first-class, following the system preference until you
+choose. Installable to a phone home screen — but no service worker, because
+stale standings are worse than no offline mode.
+
+Kick-offs are stored in UTC and rendered in your own time zone, which the page
+names so you know what you're reading.
 
 ## It updates itself
 
-A scheduled GitHub Action runs every 6 hours, pulls current standings and
+A scheduled GitHub Action runs every hour, pulls current standings and
 fixtures, and commits `data.json`. The page loads the newest `data.json` at
 view time, so there is nothing to redeploy and nothing to do by hand. The
-season rolls over automatically each August.
+season rolls over automatically each August. If the snapshot ever goes more
+than a day stale, the page recomputes the domestic tables in the browser from
+open data rather than showing old numbers.
 
-Sources: ESPN's public feed for standings, crests and Champions League
-fixtures; [openfootball](https://github.com/openfootball/football.json) open
-data for domestic fixtures and matchday numbers. Where the two disagree on a
-club's name, fixtures are re-keyed onto the name the table shows.
+Sources: ESPN's public feed for standings, crests, kick-off instants, scoring
+leaders and Champions League fixtures;
+[openfootball](https://github.com/openfootball/football.json) open data for
+domestic fixtures and matchday numbers. Where the two disagree on a club's
+name, fixtures are re-keyed onto the name the table shows; where they disagree
+on a result, ESPN wins, because openfootball posts scores about a week late.
 
 ## Files
 
 - `index.html` — the entire site (vanilla HTML/CSS/JS, no build step)
-- `data.json` — standings + fixtures snapshot, committed by the Action
+- `data.json` — standings, fixtures and leaders snapshot, committed by the Action
 - `scripts/update-standings.mjs` — the updater (Node 18+, zero dependencies)
+- `manifest.webmanifest`, `icon*.png`, `icon.svg` — home-screen install
 - `vercel.json` — config if you'd rather host it on Vercel
 
 Fixture tuples are `[matchday, date, time, opponent, home, goalsFor,
-goalsAgainst]`; a trailing `Z` on the time marks a UTC kick-off, and null
-goals mean the match hasn't been played.
+goalsAgainst]`; the time is UTC with a trailing `Z`, and null goals mean the
+match hasn't been played.
 
 ## Run it locally
 

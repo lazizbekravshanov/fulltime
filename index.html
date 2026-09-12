@@ -4,73 +4,131 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FULLTIME · League Tables</title>
-<meta name="description" content="Premier League, La Liga & Champions League standings — live, auto-updated from open data.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<meta name="description" content="Premier League, La Liga and Champions League standings, fixtures and form — auto-updated every hour from open data.">
+<meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+  /* ---------------- tokens ---------------- */
   :root{
+    color-scheme:dark;
     --bg:#0d1117;
     --surface:#151b23;
     --surface-2:#1b232e;
+    --raise:rgba(240,246,252,.06);
     --line:rgba(240,246,252,.09);
+    --line-2:rgba(240,246,252,.16);
     --ink:#e6edf3;
     --dim:#9198a1;
     --faint:#6a737d;
     --accent:#00ff85;
     --accent-ink:#062b18;
-    --q1:#3fb950;   /* Champions League places */
-    --q2:#58a6ff;   /* other Europe */
-    --drop:#f85149; /* relegation / eliminated */
+    --q1:#3fb950;
+    --q2:#58a6ff;
+    --drop:#f85149;
+    --warm:#d29922;
     --win:#3fb950; --draw:#8b949e; --loss:#f85149;
     --radius:14px;
+    --row:46px;
   }
+  /* Light is a first-class variant: same tokens, different values. The system
+     preference decides unless the reader has chosen explicitly. */
+  @media (prefers-color-scheme:light){
+    :root:not([data-theme="dark"]){
+      color-scheme:light;
+      --bg:#f4f6f8; --surface:#ffffff; --surface-2:#f0f2f5;
+      --raise:rgba(13,17,23,.04);
+      --line:rgba(13,17,23,.10); --line-2:rgba(13,17,23,.18);
+      --ink:#0d1117; --dim:#586069; --faint:#858e99;
+      --accent:#00a05a; --accent-ink:#ffffff;
+      --q1:#1a7f37; --q2:#0969da; --drop:#cf222e; --warm:#9a6700;
+      --win:#1a7f37; --draw:#6e7781; --loss:#cf222e;
+    }
+  }
+  :root[data-theme="light"]{
+    color-scheme:light;
+    --bg:#f4f6f8; --surface:#ffffff; --surface-2:#f0f2f5;
+    --raise:rgba(13,17,23,.04);
+    --line:rgba(13,17,23,.10); --line-2:rgba(13,17,23,.18);
+    --ink:#0d1117; --dim:#586069; --faint:#858e99;
+    --accent:#00a05a; --accent-ink:#ffffff;
+    --q1:#1a7f37; --q2:#0969da; --drop:#cf222e; --warm:#9a6700;
+    --win:#1a7f37; --draw:#6e7781; --loss:#cf222e;
+  }
+
   *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
+  [hidden]{display:none !important}
   body{
     background:var(--bg);color:var(--ink);
     font-family:"Inter",system-ui,-apple-system,sans-serif;
-    font-feature-settings:"tnum" 1,"cv05" 1;
+    font-variant-numeric:tabular-nums;
     letter-spacing:-.011em;
     min-height:100vh;
   }
   ::selection{background:var(--accent);color:var(--accent-ink)}
-  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 
-  /* ---------- app bar ---------- */
-  .appbar{padding:20px 0 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .brand{display:flex;align-items:center;gap:10px}
+  /* ---------------- app bar ---------------- */
+  .bar{padding:16px 0 12px}
+  .barin{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex:none}
   .brand .mark{
     width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
     background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:13px;letter-spacing:0;
   }
   .brand .name{font-weight:800;font-size:15px;letter-spacing:.02em}
   .brand .name span{color:var(--dim);font-weight:600}
+  .tools{display:flex;align-items:center;gap:8px;margin-left:auto;min-width:0}
+  .search{position:relative;flex:0 1 220px;min-width:0}
+  .search input{
+    width:100%;font:inherit;font-size:13px;font-weight:500;color:var(--ink);
+    background:var(--surface);border:1px solid var(--line);border-radius:999px;
+    padding:8px 12px 8px 30px;
+  }
+  .search input::placeholder{color:var(--faint)}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--faint);pointer-events:none}
+  .search kbd{
+    position:absolute;right:9px;top:50%;transform:translateY(-50%);
+    font:inherit;font-size:10px;font-weight:700;color:var(--faint);
+    border:1px solid var(--line);border-radius:4px;padding:1px 4px;pointer-events:none;
+  }
+  .search input:focus + kbd, .search input:not(:placeholder-shown) + kbd{display:none}
+  .ibtn{
+    flex:none;display:grid;place-items:center;width:34px;height:34px;
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    color:var(--dim);cursor:pointer;
+  }
+  .ibtn:hover{color:var(--ink);border-color:var(--line-2)}
   .status{
-    display:inline-flex;align-items:center;gap:7px;
+    display:inline-flex;align-items:center;gap:7px;flex:none;
     font-size:12px;font-weight:600;color:var(--dim);
     background:var(--surface);border:1px solid var(--line);border-radius:999px;
-    padding:6px 12px;white-space:nowrap;
+    padding:7px 12px;white-space:nowrap;
   }
   .status .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:none}
-  .status.live .dot{background:var(--q1);box-shadow:0 0 8px var(--q1)}
-  .status.stale .dot{background:#d29922}
+  .status.live .dot{background:var(--q1)}
+  .status.stale .dot{background:var(--warm)}
 
-  /* ---------- tabs ---------- */
+  /* ---------------- tabs ---------------- */
   .tabbar{
-    position:sticky;top:0;z-index:20;
+    position:sticky;top:0;z-index:30;
     background:color-mix(in srgb, var(--bg) 88%, transparent);
     backdrop-filter:blur(12px);
     border-bottom:1px solid var(--line);
   }
-  .tabs{display:flex;gap:6px;padding:10px 0}
+  .tabs{display:flex;gap:6px;padding:9px 0;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
   .tab{
-    flex:1;border:1px solid transparent;border-radius:10px;
+    flex:1 0 auto;border:1px solid transparent;border-radius:10px;
     background:transparent;color:var(--dim);cursor:pointer;
     font:inherit;font-size:13px;font-weight:700;letter-spacing:.01em;
-    padding:10px 6px;transition:color .12s,background .12s;
-    white-space:nowrap;
+    padding:9px 6px;white-space:nowrap;
   }
   .tab:hover{color:var(--ink);background:var(--surface)}
   .tab[aria-selected="true"]{
@@ -78,162 +136,240 @@
     box-shadow:inset 0 -2px 0 var(--accent);
   }
 
-  /* ---------- panel head ---------- */
-  main{padding:22px 0 8px}
-  .panel-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
-  h1{font-size:clamp(24px,5.4vw,32px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
-  .meta{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 18px}
+  /* ---------------- headings & chips ---------------- */
+  main{padding:20px 0 8px;display:flex;flex-direction:column;gap:14px}
+  .ptop{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  h1{font-size:clamp(22px,5vw,30px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
+  h2{font-size:clamp(19px,4.6vw,26px);font-weight:800;letter-spacing:-.025em;line-height:1.1}
+  h3{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .meta{display:flex;flex-wrap:wrap;gap:6px}
   .chip{
     font-size:11.5px;font-weight:600;color:var(--dim);
     border:1px solid var(--line);background:var(--surface);
-    border-radius:999px;padding:4px 10px;
+    border-radius:999px;padding:4px 10px;white-space:nowrap;
   }
   .chip b{color:var(--ink);font-weight:700}
   .chip.acc{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 35%, transparent)}
 
-  .seasons{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
-  .seasons button{
-    font:inherit;font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;
+  /* ---------------- segmented controls ---------------- */
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;flex:none;background:var(--surface);
+    max-width:100%;overflow-x:auto;scrollbar-width:none}
+  .seg::-webkit-scrollbar{display:none}
+  .seg button{
+    font:inherit;font-size:12px;font-weight:700;padding:7px 11px;cursor:pointer;
     background:transparent;color:var(--dim);border:none;white-space:nowrap;
   }
-  .seasons button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
-  .seasons button + button{border-left:1px solid var(--line)}
-
-  /* ---------- stat strip ---------- */
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
-  .stat{
-    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:12px 14px;min-width:0;
+  .seg button:hover{color:var(--ink)}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+  .seg button:disabled{color:var(--faint);cursor:not-allowed}
+  .seg button + button{border-left:1px solid var(--line)}
+  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .tbtn{
+    font:inherit;font-size:12px;font-weight:700;color:var(--dim);cursor:pointer;
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:7px 11px;display:inline-flex;align-items:center;gap:6px;
   }
-  .stat .k{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
-  .stat .v{margin-top:5px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;min-width:0}
+  .tbtn:hover{color:var(--ink);border-color:var(--line-2)}
+  .tbtn[aria-pressed="true"]{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 40%, transparent)}
+  .tbtn svg{flex:none}
+
+  /* ---------------- stat strip ---------------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:11px 13px;min-width:0}
+  .stat .k{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .stat .v{margin-top:6px;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:7px;min-width:0}
   .stat .v .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .stat .n{color:var(--accent);font-weight:800}
-  .stat .sub{margin-top:3px;font-size:11.5px;color:var(--dim);line-height:1.4}
+  .stat .n{color:var(--accent);font-weight:800;margin-left:auto}
+  .stat .sub{margin-top:4px;font-size:11px;color:var(--dim);line-height:1.4}
 
-  /* ---------- table ---------- */
+  /* ---------------- table ---------------- */
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-  .thead,.trow{
-    display:grid;align-items:center;gap:8px;padding:0 14px;
-    grid-template-columns:26px minmax(0,1fr) repeat(4,26px) 40px 40px 64px;
-  }
+  .tbl{--cols:32px minmax(0,1fr) repeat(4,28px) 46px 46px 62px 118px}
+  .tbl.nonext{--cols:32px minmax(0,1fr) repeat(4,28px) 46px 46px 62px}
+  .tbl.proj{--cols:32px minmax(0,1fr) 34px 52px 50px 58px}
+  .thead,.trow{display:grid;grid-template-columns:var(--cols);align-items:center;gap:8px;padding:0 14px;text-align:left}
   .thead{
-    height:36px;font-size:10.5px;font-weight:700;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--faint);
-    border-bottom:1px solid var(--line);
+    height:34px;font-size:10px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line);
   }
-  .thead .num,.trow .num{text-align:center}
-  .thead .pts-h,.trow .pts{text-align:right}
-  .thead .form-h{text-align:right}
+  .thead .c{text-align:center}
+  .thead .r{text-align:right}
   .trow{
-    height:46px;border-bottom:1px solid var(--line);
+    height:var(--row);width:100%;border:none;border-bottom:1px solid var(--line);
     border-left:3px solid transparent;padding-left:11px;
-    transition:background .1s;
+    background:transparent;color:inherit;font:inherit;cursor:pointer;
   }
   .trow:last-child{border-bottom:none}
   .trow:hover{background:var(--surface-2)}
+  .trow.static{cursor:default}
+  .trow.static:hover{background:transparent}
   .trow.z-q1{border-left-color:var(--q1)}
   .trow.z-q2{border-left-color:var(--q2)}
   .trow.z-r{border-left-color:var(--drop)}
-  .trow.leader{background:linear-gradient(90deg, color-mix(in srgb, var(--q1) 8%, transparent), transparent 60%)}
-  .pos{font-size:12.5px;font-weight:700;color:var(--dim);text-align:center}
-  .trow.leader .pos{color:var(--q1)}
+  .trow.lead{background:linear-gradient(90deg, color-mix(in srgb, var(--q1) 9%, transparent), transparent 55%)}
+  .pos{font-size:12.5px;font-weight:700;color:var(--dim);text-align:center;display:flex;align-items:center;justify-content:center;gap:3px}
+  .trow.lead .pos{color:var(--q1)}
+  .mv{font-size:9px;font-weight:700}
+  .mv.up{color:var(--q1)}
+  .mv.down{color:var(--drop)}
   .club{display:flex;align-items:center;gap:9px;min-width:0}
   .crest{
-    width:24px;height:24px;border-radius:50%;flex:none;
-    display:grid;place-items:center;
-    font-size:8.5px;font-weight:800;letter-spacing:.02em;
+    position:relative;width:24px;height:24px;border-radius:50%;flex:none;
+    display:grid;place-items:center;font-size:8.5px;font-weight:800;
     background:var(--surface-2);color:var(--ink);
-    border:1px solid rgba(255,255,255,.08);
-    overflow:hidden;
+    border:1px solid var(--raise);overflow:hidden;
   }
-  .crest{position:relative}
-  .crest img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:var(--surface-2)}
+  .crest img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:inherit}
   .club .nm{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .club .tag{
     flex:none;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
     color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:2px 7px;
   }
   .club .tag.gold{color:#e3b341;border-color:color-mix(in srgb,#e3b341 40%,transparent)}
-  .num{font-size:12.5px;color:var(--dim)}
+  .num{font-size:12.5px;color:var(--dim);text-align:center}
   .gd{font-size:12.5px;text-align:right;color:var(--dim)}
   .gd.up{color:var(--q1)}.gd.down{color:var(--drop)}
-  .pts{font-size:13.5px;font-weight:800}
+  .pts{font-size:13.5px;font-weight:800;text-align:right}
+  .ppg{font-size:12.5px;color:var(--dim);text-align:right}
   .form{display:flex;gap:3px;justify-content:flex-end}
-  .form i{
-    width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--surface-2);
+  .form i{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--surface-2);border:1px solid var(--raise)}
+  .form i.W{background:var(--win);border-color:transparent}
+  .form i.D{background:var(--draw);border-color:transparent}
+  .form i.L{background:var(--loss);border-color:transparent}
+  .next5{display:flex;gap:4px;justify-content:flex-end;align-items:center}
+  .n5{display:inline-grid;gap:2px;justify-items:center}
+  .n5 .crest{width:18px;height:18px;font-size:6.5px}
+  .n5::after{content:"";display:block;width:15px;height:2px;border-radius:2px;background:var(--bar,var(--line-2))}
+  .n5[data-d="hard"]{--bar:var(--drop)}
+  .n5[data-d="mid"]{--bar:var(--warm)}
+  .n5[data-d="easy"]{--bar:var(--q1)}
+  .n5.away{opacity:.6}
+  .next5 .none{font-size:12px;color:var(--faint)}
+  .livedot{
+    flex:none;display:inline-flex;align-items:center;gap:4px;
+    font-size:9.5px;font-weight:800;letter-spacing:.05em;
+    color:var(--drop);border:1px solid color-mix(in srgb,var(--drop) 45%,transparent);
+    border-radius:999px;padding:1px 6px;
   }
-  .form i.W{background:var(--win)}
-  .form i.D{background:var(--draw)}
-  .form i.L{background:var(--loss)}
+  .livedot i{width:5px;height:5px;border-radius:50%;background:var(--drop);animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.25}}
 
-  /* legend + notes */
-  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 2px 0}
+  .pin{display:flex;flex-direction:column;gap:6px}
+  .pin .tbl{--cols:32px minmax(0,1fr) repeat(4,28px) 46px 46px 62px 118px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px}
   .legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--dim)}
   .legend i{width:8px;height:8px;border-radius:2.5px;display:inline-block}
-  .note{margin:10px 2px 0;font-size:12px;color:var(--dim);line-height:1.55}
+  .note{font-size:12px;color:var(--dim);line-height:1.55}
   .note b{color:var(--ink);font-weight:600}
+  .note a{color:inherit}
 
-  /* empty state */
   .empty{
-    background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius);
-    padding:26px 20px;text-align:center;margin-bottom:16px;
+    background:var(--surface);border:1px dashed var(--line-2);border-radius:var(--radius);
+    padding:24px 20px;
   }
   .empty .big{font-size:15px;font-weight:700}
-  .empty p{margin-top:6px;font-size:12.5px;color:var(--dim);line-height:1.5}
+  .empty p{margin-top:6px;font-size:12.5px;color:var(--dim);line-height:1.55;max-width:60ch}
 
-  /* wrapped extras */
-  .stories{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-  .story{
-    font-size:11.5px;font-weight:600;color:var(--dim);
-    border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;
-  }
-  .story b{color:var(--ink)}
-  .out{margin-top:14px}
-  .out h3{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--drop);margin-bottom:8px}
-  .out .chips{display:flex;flex-wrap:wrap;gap:6px}
-  .out .chips span{
-    font-size:11.5px;font-weight:600;color:var(--dim);
-    border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;
-  }
-  .out .chips b{color:var(--drop);margin-right:5px}
+  /* ---------------- records & leaders ---------------- */
+  .sect{display:flex;flex-direction:column;gap:8px}
+  .recs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .rec{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:11px 13px;min-width:0}
+  .rec .k{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .rec .v{margin-top:6px;font-size:19px;font-weight:800;line-height:1}
+  .rec .w{margin-top:7px;display:flex;align-items:center;gap:7px;min-width:0;font-size:12px;font-weight:600;color:var(--dim)}
+  .rec .w .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rec .crest{width:18px;height:18px;font-size:6.5px}
 
-  /* ---------- team page ---------- */
-  .trow.clickable{cursor:pointer}
+  .leads{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .lcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .lcard h3{padding:11px 13px 9px;border-bottom:1px solid var(--line)}
+  .lcard ol{list-style:none}
+  .lcard li{display:flex;align-items:center;gap:8px;padding:0 13px;height:36px;border-bottom:1px solid var(--line);font-size:12.5px}
+  .lcard li:last-child{border-bottom:none}
+  .lcard .r{width:14px;font-size:11px;font-weight:700;color:var(--faint);text-align:right}
+  .lcard .crest{width:18px;height:18px;font-size:6.5px}
+  .lcard .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lcard .v{margin-left:auto;font-weight:800}
+
+  /* ---------------- matchday ---------------- */
+  .mnav{display:flex;align-items:center;gap:6px}
+  .rounds{display:flex;flex-direction:column}
+  .mrow{
+    display:grid;grid-template-columns:96px minmax(0,1fr) 64px minmax(0,1fr) 18px;
+    align-items:center;gap:9px;padding:0 13px;height:50px;width:100%;text-align:left;
+    background:transparent;border:none;border-bottom:1px solid var(--line);color:inherit;font:inherit;cursor:pointer;
+  }
+  .mrow:hover{background:var(--surface-2)}
+  .mdate{font-size:11px;font-weight:600;color:var(--dim);line-height:1.3}
+  .mdate b{display:block;color:var(--ink);font-weight:700}
+  .mteam{display:flex;align-items:center;gap:8px;min-width:0}
+  .mteam.h{justify-content:flex-end}
+  .mteam .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mteam.h .nm{text-align:right}
+  .mscore{
+    text-align:center;font-size:13.5px;font-weight:800;white-space:nowrap;
+    background:var(--surface-2);border-radius:7px;padding:5px 0;
+  }
+  .mscore.soon{font-weight:600;font-size:12px;color:var(--dim);background:transparent;border:1px solid var(--line)}
+  .mscore.live{color:var(--drop);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--drop) 45%,transparent)}
+  .chev{color:var(--faint);display:grid;place-items:center}
+  [aria-expanded="true"] .chev{transform:rotate(180deg)}
+  .mrow:last-child,.fx:last-child{border-bottom:none}
+  .det{border-bottom:1px solid var(--line);background:var(--surface-2);padding:11px 14px;display:flex;flex-direction:column;gap:7px}
+  .det .h2h{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:12px;color:var(--dim)}
+  .det .leg{display:grid;grid-template-columns:auto auto 1fr auto;gap:8px;align-items:center;font-size:12px}
+  .det .leg.this{color:var(--accent)}
+  .det .leg .w{color:var(--faint);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .det .leg .sc{font-weight:800;text-align:right}
+  .det .lnk{align-self:flex-start}
+
+  /* ---------------- club page ---------------- */
   .back{
-    display:inline-flex;align-items:center;gap:7px;margin-bottom:14px;
+    display:inline-flex;align-items:center;gap:7px;align-self:flex-start;
     font:inherit;font-size:12.5px;font-weight:700;color:var(--dim);cursor:pointer;
     background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 14px;
   }
   .back:hover{color:var(--ink)}
-  .team-hero{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-  .team-hero .crest{width:46px;height:46px;font-size:14px;flex:none}
-  .team-hero h2{font-size:clamp(20px,5vw,28px);font-weight:800;letter-spacing:-.025em;line-height:1.1}
-  .team-hero .sub{margin-top:4px;font-size:12px;color:var(--dim)}
-  .team-hero .sub b{color:var(--ink);font-weight:700}
-
-  .rec{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:12px}
-  .rec .cell{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 6px;text-align:center}
-  .rec .k{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
-  .rec .v{margin-top:3px;font-size:15px;font-weight:800}
-  .splits{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;align-items:center}
+  .hero{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .hero .crest{width:46px;height:46px;font-size:14px;flex:none}
+  .hero .sub{margin-top:5px;display:flex;flex-wrap:wrap;gap:6px}
+  .acts{display:flex;flex-wrap:wrap;gap:7px}
+  .acts .star[aria-pressed="true"] svg{fill:var(--accent)}
+  .cgrid{display:grid;grid-template-columns:minmax(0,1fr) 312px;gap:16px;align-items:start}
+  .side{display:flex;flex-direction:column;gap:10px;position:sticky;top:62px}
+  .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .kv .cell{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 6px;text-align:center}
+  .kv .k{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .kv .v{margin-top:4px;font-size:16px;font-weight:800}
+  .splits{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   .splits .chip .form{display:inline-flex;gap:3px;margin-left:6px;vertical-align:-1px}
+  .shape{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 13px}
+  .shape h3{margin-bottom:9px}
+  .shape svg{display:block;width:100%;height:auto;max-width:100%;overflow:visible}
+  .shape .ax{fill:var(--faint);font-size:7.5px;font-weight:700}
+  .shape .ln{fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+  .shape .pt{fill:var(--accent)}
+  .shape .z1{fill:var(--q1);opacity:.13}
+  .shape .z2{fill:var(--q2);opacity:.13}
+  .shape .zr{fill:var(--drop);opacity:.13}
+  .shape .foot{margin-top:8px;font-size:11px;color:var(--dim);line-height:1.5}
 
-  .fx-group{margin-bottom:12px}
-  .fx-month{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--dim);margin:0 2px 6px}
-  .fx-list{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .fxgroup{display:flex;flex-direction:column;gap:7px}
+  .fxmonth{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
   .fx{
-    display:grid;grid-template-columns:34px 78px 22px minmax(0,1fr) 60px;
-    align-items:center;gap:9px;padding:0 13px;height:44px;
-    border-bottom:1px solid var(--line);border-left:3px solid transparent;
+    display:grid;grid-template-columns:36px 84px 22px minmax(0,1fr) 62px 18px;
+    align-items:center;gap:9px;padding:0 13px;height:46px;width:100%;text-align:left;
+    background:transparent;border:none;border-bottom:1px solid var(--line);
+    border-left:3px solid transparent;color:inherit;font:inherit;cursor:pointer;
   }
-  .fx:last-child{border-bottom:none}
+  .fx:hover{background:var(--surface-2)}
   .fx.W{border-left-color:var(--win)}
   .fx.D{border-left-color:var(--draw)}
   .fx.L{border-left-color:var(--loss)}
   .fx.next{background:color-mix(in srgb, var(--accent) 9%, transparent);border-left-color:var(--accent)}
-  .fx .md{font-size:10px;font-weight:700;color:var(--faint);letter-spacing:.03em}
+  .fx .md{font-size:9.5px;font-weight:700;color:var(--faint);letter-spacing:.03em}
+  .fx .md.cmp{color:var(--dim)}
   .fx .dt{font-size:11.5px;font-weight:600;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .fx .dt .wd{color:var(--faint)}
   .fx .ha{
@@ -243,7 +379,7 @@
   .fx .opp{display:flex;align-items:center;gap:8px;min-width:0}
   .fx .opp .crest{width:22px;height:22px;font-size:8px}
   .fx .opp .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .fx .tag{
+  .fx .badge{
     flex:none;font-size:8.5px;font-weight:800;letter-spacing:.06em;
     color:var(--accent-ink);background:var(--accent);border-radius:4px;padding:1.5px 5px;
   }
@@ -252,78 +388,126 @@
   .fx .res.L{color:var(--loss)}
   .fx .res.D{color:var(--dim)}
   .fx .res.kick{font-weight:600;font-size:11.5px;color:var(--faint)}
+  .fx .res.livenow{color:var(--drop)}
 
   footer{
-    margin-top:28px;border-top:1px solid var(--line);
-    padding:20px 0 40px;font-size:11.5px;color:var(--faint);line-height:1.7;
+    margin-top:26px;border-top:1px solid var(--line);
+    padding:18px 0 40px;font-size:11.5px;color:var(--faint);line-height:1.7;
   }
   footer b{color:var(--dim);font-weight:600}
+  footer a{color:inherit}
 
-  @media (max-width:520px){
-    .thead,.trow{grid-template-columns:24px minmax(0,1fr) 26px 34px 34px 58px;gap:6px;padding-right:10px}
-    .hide-m{display:none}
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:0s !important;transition:none !important}
+  }
+
+  @media (max-width:940px){
+    .tbl{--cols:32px minmax(0,1fr) repeat(4,28px) 46px 46px 62px}
+    .col-next{display:none}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .recs{grid-template-columns:repeat(2,1fr)}
+    .cgrid{display:flex;flex-direction:column}
+    .side{position:static;order:-1}
+    .kv{grid-template-columns:repeat(6,1fr)}
+  }
+  @media (max-width:680px){
+    .tbl{--cols:28px minmax(0,1fr) 24px 36px 38px 44px}
+    .tbl.proj{--cols:28px minmax(0,1fr) 46px 52px}
+    .thead,.trow{gap:6px;padding:0 10px}
+    .trow{padding-left:8px}
+    .club{gap:7px}
+    .club .crest{width:22px;height:22px;font-size:8px}
+    .club .nm{font-size:12.5px}
+    .col-wdl{display:none}
+    .mrow{grid-template-columns:minmax(0,1fr) 50px minmax(0,1fr) 12px;height:auto;padding:8px 11px;gap:7px;row-gap:5px}
+    .mteam{gap:6px}
+    .mteam .nm{font-size:12px}
+    .mteam .crest{width:20px;height:20px;font-size:7px}
+    .mscore{font-size:12.5px;padding:4px 0}
+    .mdate{grid-column:1/-1}
+    .mdate b{display:inline;margin-right:6px}
+    .leads{grid-template-columns:1fr}
+  }
+  @media (max-width:560px){
+    .bar{padding:12px 0 10px}
+    .hero{flex-wrap:nowrap;gap:12px;align-items:flex-start}
+    .hero > div{min-width:0}
+    .hero .crest{width:40px;height:40px;font-size:12px}
+    .search{order:3;flex:1 1 100%}
+    .tools{width:100%;margin-left:0;flex-wrap:wrap}
+    .status{margin-left:auto}
+    .kv{grid-template-columns:repeat(3,1fr)}
     .form i{width:7px;height:7px}
+    .stats{grid-template-columns:1fr;gap:6px}
+    .stat{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;padding:9px 13px}
+    .stat .v{margin-top:0}
+    .stat .sub{display:none}
     .club .nm{font-size:13px}
     .club .tag{display:none}
-    .stats{grid-template-columns:1fr;gap:6px}
-    .stat{display:flex;align-items:baseline;gap:10px;padding:10px 14px}
-    .stat .sub{display:none}
-    .stat .v{margin-top:0}
-    .rec{grid-template-columns:repeat(3,1fr)}
-    .fx{grid-template-columns:56px 22px minmax(0,1fr) 54px;gap:8px;padding:0 11px}
+    .fx{grid-template-columns:54px 20px minmax(0,1fr) 50px 13px;gap:7px;padding:0 10px}
+    .fx .badge{font-size:8px;padding:1.5px 4px;letter-spacing:.04em}
+    .fx .opp{gap:7px}
     .fx .dt .wd{display:none}
     .fx .md{display:none}
-    .fx .opp .nm{font-size:12.5px}
+    .tab{font-size:12px;padding:9px 4px}
+  }
+  @media (max-width:360px){
+    .tab{font-size:11.5px;padding:9px 3px;letter-spacing:0}
+    .tbl{--cols:26px minmax(0,1fr) 22px 34px 36px}
+    .col-form{display:none}
+    .recs{grid-template-columns:1fr}
+    .wrap{padding:0 12px}
   }
 </style>
 </head>
 <body>
 
-<div class="wrap">
-  <div class="appbar">
-    <div class="brand">
-      <div class="mark">FT</div>
-      <div class="name">FULLTIME <span>· tables</span></div>
+<header class="bar">
+  <div class="wrap barin">
+    <a class="brand" href="#epl" data-act="home">
+      <span class="mark">FT</span>
+      <span class="name">FULLTIME <span>· tables</span></span>
+    </a>
+    <div class="tools">
+      <div class="search">
+        <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><circle cx="6.8" cy="6.8" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.3 10.3 14 14" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+        <input id="q" type="search" placeholder="Search clubs" autocomplete="off" spellcheck="false" aria-label="Search clubs">
+        <kbd>/</kbd>
+      </div>
+      <button class="ibtn" id="theme" title="Switch theme" aria-label="Switch between light and dark theme">
+        <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 000 12z" fill="currentColor"/></svg>
+      </button>
+      <div class="status" id="status"><span class="dot"></span><span id="status-txt">loading…</span></div>
     </div>
-    <div class="status" id="status"><span class="dot"></span><span id="status-txt">loading…</span></div>
   </div>
-</div>
+</header>
 
 <div class="tabbar">
   <div class="wrap">
     <div class="tabs" role="tablist" aria-label="Competition">
-      <button class="tab" role="tab" id="tab-epl" aria-selected="true">Premier League</button>
-      <button class="tab" role="tab" id="tab-liga" aria-selected="false">La Liga</button>
-      <button class="tab" role="tab" id="tab-ucl" aria-selected="false">Champions League</button>
+      <button class="tab" role="tab" data-lg="epl" aria-selected="true">Premier League</button>
+      <button class="tab" role="tab" data-lg="liga" aria-selected="false">La Liga</button>
+      <button class="tab" role="tab" data-lg="ucl" aria-selected="false">Champions League</button>
     </div>
   </div>
 </div>
 
-<main class="wrap">
-  <div class="panel-top">
-    <h1 id="title">Premier League</h1>
-    <div class="seasons" role="group" aria-label="Season">
-      <button id="mode-live" aria-pressed="true">Live</button>
-      <button id="mode-wrapped" aria-pressed="false">25/26 Final</button>
-    </div>
-  </div>
-  <div class="meta" id="meta"></div>
-  <div id="content"></div>
-</main>
+<main class="wrap" id="view"></main>
 
 <div class="wrap">
-  <footer id="footer">
-    <b>FULLTIME</b> — standings refresh automatically: a scheduled GitHub Action pulls current
-    tables (ESPN public feed, with <a style="color:inherit" href="https://github.com/openfootball/football.json">openfootball</a>
-    open data as fallback) and this page always loads the newest snapshot at runtime.
-    No hands involved.<br>
-    European qualification zones are shown as the standard allocation; extra spots via cup winners
-    and coefficients can shift them. 25/26 final tables compiled from public season reports.
+  <footer>
+    <b>FULLTIME</b> — standings, fixtures and form for three competitions, refreshed every hour by a
+    scheduled job that pulls the ESPN public feed and
+    <a href="https://github.com/openfootball/football.json">openfootball</a> open data and commits a
+    snapshot. The page reads that snapshot, so nothing here is typed by hand.<br>
+    Kick-offs are stored in UTC and shown in your own time zone. European qualification zones use the
+    standard allocation; cup winners and coefficients can shift them. 25/26 final tables compiled from
+    public season reports.
   </footer>
 </div>
 
 <script>
-/* ================= club colors & monograms ================= */
+/* ===================== club colours & monograms ===================== */
 const CLUB_STYLE = {
   "Arsenal":["#EF0107"], "Aston Villa":["#7A003C"], "Bournemouth":["#B50E12"],
   "Brentford":["#E30613"], "Brighton":["#0057B8"], "Chelsea":["#034694"],
@@ -424,141 +608,62 @@ const WRAPPED = {
   }
 };
 
-/* ================= config ================= */
+/* ===================== competitions ===================== */
 const COMP = {
-  epl:{ title:"Premier League", region:"England",
+  epl:{ title:"Premier League", code:"EPL", region:"England", espn:"eng.1", rounds:38,
         zones:p=>p<=4?"q1":p===5?"q2":p>=18?"r":"",
         legend:[["q1","Champions League"],["q2","Europe"],["r","Relegation"]] },
-  liga:{ title:"La Liga", region:"Spain",
+  liga:{ title:"La Liga", code:"LIGA", region:"Spain", espn:"esp.1", rounds:38,
         zones:p=>p<=4?"q1":p===5?"q2":p>=18?"r":"",
         legend:[["q1","Champions League"],["q2","Europe"],["r","Relegation"]] },
-  ucl:{ title:"Champions League", region:"Europe",
+  ucl:{ title:"Champions League", code:"UCL", region:"Europe", espn:"uefa.champions", rounds:8,
         zones:p=>p<=8?"q1":p<=24?"q2":"r",
         legend:[["q1","Round of 16 (top 8)"],["q2","Playoffs (9–24)"],["r","Out (25–36)"]] }
 };
+const LEAGUES = ["epl","liga","ucl"];
+const MODES = [["overall","Overall"],["home","Home"],["away","Away"],["form","Last 5"],["projected","Projected"]];
+const DERIVED = new Set(["home","away","form","projected"]);
 
 const DATA_URLS = [
   "https://raw.githubusercontent.com/lazizbekravshanov/fulltime/main/data.json",
   "./data.json"
 ];
-
-/* ================= state ================= */
-let LIVE = null;      // loaded data.json
-let league = "epl";
-let mode = "live";
-
-const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-
-/* ================= rendering ================= */
-function crest(short, logo){
-  const [bg, fg] = clubStyle(short);
-  // Monogram is always rendered; a crest image layers over it and removes
-  // itself on load failure, so the chip never ends up blank.
-  const img = logo ? `<img src="${esc(logo)}" alt="" loading="lazy" onerror="this.remove()">` : "";
-  return `<span class="crest" style="background:${bg};color:${fg||"#fff"}">${esc(monogram(short))}${img}</span>`;
-}
-
-function gdCell(gd){
-  if (gd == null) return `<span class="gd">–</span>`;
-  const cls = gd > 0 ? "up" : gd < 0 ? "down" : "";
-  return `<span class="gd ${cls}">${gd > 0 ? "+" : ""}${gd}</span>`;
-}
-
-function formCell(form){
-  const dots = (form || "").slice(-5).split("");
-  while (dots.length < 5) dots.unshift("");
-  return `<span class="form">${dots.map(d=>`<i class="${d}" title="${d==="W"?"Win":d==="D"?"Draw":d==="L"?"Loss":""}"></i>`).join("")}</span>`;
-}
-
-function liveTable(comp){
-  const cfg = COMP[league];
-  let h = `<div class="card" role="table" aria-label="${cfg.title} table">
-    <div class="thead" role="row">
-      <span>#</span><span>Club</span>
-      <span class="num hide-m">P</span><span class="num hide-m">W</span><span class="num hide-m">D</span>
-      <span class="num" style="text-align:center">${window.matchMedia("(max-width:520px)").matches?"P":"L"}</span>
-      <span class="pts-h" style="text-align:right">GD</span><span class="pts-h">Pts</span><span class="form-h">Form</span>
-    </div>`;
-  // On mobile the grid collapses: P column doubles as the only played-count.
-  for (const r of comp.rows){
-    const z = cfg.zones(r.pos);
-    h += `<div class="trow ${z?"z-"+z:""} ${r.pos===1?"leader":""}" role="row"`
-      + ` data-short="${esc(r.short)}" data-lg="${league}" data-mode="live" data-logo="${esc(r.logo ?? "")}">`
-      + `
-      <span class="pos" role="cell">${r.pos}</span>
-      <span class="club" role="cell">${crest(r.short, r.logo)}<span class="nm">${esc(r.short)}</span></span>
-      <span class="num hide-m" role="cell">${r.p ?? "–"}</span>
-      <span class="num hide-m" role="cell">${r.w ?? "–"}</span>
-      <span class="num hide-m" role="cell">${r.d ?? "–"}</span>
-      <span class="num" role="cell" style="text-align:center">${window.matchMedia("(max-width:520px)").matches ? (r.p ?? "–") : (r.l ?? "–")}</span>
-      <span role="cell" style="text-align:right">${gdCell(r.gd)}</span>
-      <span class="pts" role="cell">${r.pts ?? "–"}</span>
-      <span role="cell">${formCell(r.form)}</span>
-    </div>`;
-  }
-  h += `</div>`;
-  h += legendHTML(cfg.legend);
-  return h;
-}
-
-function legendHTML(items){
-  const colors = {q1:"var(--q1)", q2:"var(--q2)", r:"var(--drop)"};
-  return `<div class="legend">${items.map(([z,l])=>`<span><i style="background:${colors[z]}"></i>${l}</span>`).join("")}</div>`;
-}
-
-function statStrip(comp){
-  const rows = comp.rows.filter(r => (r.p ?? 0) > 0);
-  if (!rows.length) return "";
-  const leader = comp.rows[0];
-  const attack = [...rows].sort((a,b)=>(b.gf??0)-(a.gf??0))[0];
-  const defence = [...rows].sort((a,b)=>(a.ga??99)-(b.ga??99))[0];
-  const s = (label, r, val, sub) => `<div class="stat"><div class="k">${label}</div>
-    <div class="v">${crest(r.short, r.logo)}<span class="txt">${esc(r.short)}</span><span class="n">${val}</span></div>
-    <div class="sub">${sub}</div></div>`;
-  return `<div class="stats">
-    ${s("Leader", leader, (leader.pts ?? 0)+" pts", "Top of the table right now")}
-    ${s("Best attack", attack, (attack.gf ?? 0), "Goals scored")}
-    ${s("Best defence", defence, (defence.ga ?? 0), "Goals conceded")}
-  </div>`;
-}
-
-function wrappedTable(key){
-  const w = WRAPPED[key];
-  const cfg = COMP[key];
-  let h = `<div class="stories">${w.stories.map(s=>`<span class="story">${s}</span>`).join("")}</div>`;
-  h += `<div class="card" role="table" aria-label="${cfg.title} 2025/26 final table">
-    <div class="thead" role="row" style="grid-template-columns:26px minmax(0,1fr) 60px">
-      <span>#</span><span>Club</span><span class="pts-h">Pts</span>
-    </div>`;
-  for (const [pos, short, pts, z, tag] of w.rows){
-    const clickable = key === "epl" || key === "liga";
-    h += `<div class="trow ${z?"z-"+z:""} ${pos===1&&key!=="ucl"?"leader":""}" role="row"`
-      + (clickable ? ` data-short="${esc(short)}" data-lg="${key}" data-mode="wrapped"` : "")
-      + ` style="grid-template-columns:26px minmax(0,1fr) 60px;height:42px">
-      <span class="pos" role="cell">${pos}</span>
-      <span class="club" role="cell">${crest(short)}<span class="nm">${esc(short)}</span>
-        ${tag?`<span class="tag ${tag==="champions"||tag==="won it all"?"gold":""}">${esc(tag)}</span>`:""}</span>
-      <span class="pts" role="cell" style="text-align:right">${pts}</span>
-    </div>`;
-  }
-  h += `</div>`;
-  if (w.out){
-    h += `<div class="out"><h3>Out of Europe · 25–36</h3><div class="chips">${
-      w.out.map(([p,n])=>`<span><b>${p}</b>${esc(n)}</span>`).join("")}</div></div>`;
-  }
-  h += legendHTML(cfg.legend);
-  h += `<p class="note">${w.note}</p>`;
-  return h;
-}
-
-/* ================= team page ================= */
-const MATCH_CACHE = new Map();
+const OF_BASE = "https://raw.githubusercontent.com/openfootball/football.json/master";
 const OF_FILES = { epl:"en.1.json", liga:"es.1.json" };
-let teamView = null; // {league, mode, short, logo}
 
-/* Club naming mirrors scripts/update-standings.mjs, so openfootball's full
-   club names resolve to the same short names the tables show. */
+/* ===================== state ===================== */
+let LIVE = null;                       // the committed snapshot
+const LIVE_NOW = new Map();            // key lg|home|away -> live score, if any
+let liveTimer = null;
+let renderToken = 0;
+
+const state = {
+  lg:"epl", view:"table", mode:"overall", season:"live",
+  club:null, round:null, allComps:false, q:""
+};
+
+const store = {
+  get(k, d){ try { const v = localStorage.getItem("fulltime:"+k); return v==null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v){ try { localStorage.setItem("fulltime:"+k, JSON.stringify(v)); } catch { /* private mode */ } }
+};
+let fav = store.get("fav", null);       // {lg, short}
+
+/* ===================== small helpers ===================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const slug = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()
+  .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const ord = n => n + (n%100>=11&&n%100<=13 ? "th" : ["th","st","nd","rd"][n%10] ?? "th");
+const ICON = {
+  star:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M8 1.7l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4 4.2 13.5l.7-4.3-3.1-3 4.3-.6z" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>`,
+  cal:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><rect x="2" y="3.5" width="12" height="10.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2 7h12M5.5 2v3M10.5 2v3" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>`,
+  chev:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M4 6.2l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`,
+  left:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M9.5 3.5l-4 4.5 4 4.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>`,
+  right:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M6.5 3.5l4 4.5-4 4.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>`
+};
+
+/* Club naming mirrors scripts/update-standings.mjs so feed names collapse onto
+   the same short names the tables show. */
 const SHORT_NAMES = {
   "afc bournemouth": "Bournemouth",
   "brighton & hove albion": "Brighton",
@@ -616,226 +721,102 @@ const SHORT_NAMES = {
   "bodo/glimt": "Bodø/Glimt",
 };
 const DROP = new Set(["fc","afc","cf","cd","ca","ud","rc","rcd","sc","ac","as","sl","club","de","the","balompie"]);
-const flat = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[.,']/g,"").trim();
+const flat = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[.,']/g,"").trim();
 function clubShort(name){
   const key = flat(name);
   if (SHORT_NAMES[key]) return SHORT_NAMES[key];
   const cleaned = key.split(/\s+/).filter(t => !DROP.has(t)).join(" ");
   if (SHORT_NAMES[cleaned]) return SHORT_NAMES[cleaned];
-  const kept = name.replace(/[.,]/g,"").split(/\s+/).filter(t => !DROP.has(flat(t)));
-  return kept.join(" ") || name;
+  const kept = String(name).replace(/[.,]/g,"").split(/\s+/).filter(t => !DROP.has(flat(t)));
+  return kept.join(" ") || String(name);
 }
+const normKey = s => flat(s).replace(/&/g,"and").replace(/[^a-z0-9 ]/g," ")
+  .split(/\s+/).filter(t => t && !DROP.has(t)).sort().join(" ");
+
+/* Feeds fetched in the browser name clubs their own way; match them to the
+   table's rows before using them. */
+function resolveClub(lg, name){
+  const rows = comp(lg)?.rows ?? [];
+  if (!rows.length) return clubShort(name);
+  const k = normKey(name);
+  const direct = rows.find(r => normKey(r.team) === k || normKey(r.short) === k);
+  if (direct) return direct.short;
+  const mine = k.split(" ").filter(Boolean);
+  let best = null, most = 1, tied = false;
+  for (const r of rows){
+    const toks = new Set(normKey(r.team).split(" ").filter(Boolean));
+    const hits = mine.reduce((n,t)=> n + (toks.has(t) ? 1 : 0), 0);
+    if (hits > most){ best = r.short; most = hits; tied = false; }
+    else if (hits === most && hits > 1) tied = true;
+  }
+  return best && !tied ? best : clubShort(name);
+}
+
+/* ===================== data access ===================== */
+const comp = lg => LIVE?.comps?.[lg] ?? null;
+const rowsOf = lg => comp(lg)?.rows ?? [];
+const rowFor = (lg, short) => rowsOf(lg).find(r => r.short === short) ?? null;
+const logoOf = (lg, short) => rowFor(lg, short)?.logo ?? null;
 
 /* Fixture tuples baked into data.json:
    [matchday, date, time, opponent, home?1:0, goalsFor, goalsAgainst] */
-function bakedFixtures(lg, short){
-  const raw = LIVE?.comps?.[lg]?.fixtures?.[short];
+function fxOf(lg, short){
+  const raw = comp(lg)?.fixtures?.[short];
   if (!Array.isArray(raw) || !raw.length) return null;
   return raw.map(([md, date, time, opp, home, gf, ga]) => ({
-    md, date, time, opp, home: !!home,
+    lg, md, date, time, opp, home: !!home,
     gf: gf ?? null, ga: ga ?? null,
-    done: gf != null && ga != null,
+    done: gf != null && ga != null
   }));
 }
+const compsWithClub = short => LEAGUES.filter(lg => comp(lg)?.fixtures?.[short]);
 
-/* Fallback for seasons the snapshot doesn't carry (e.g. the 25/26 archive). */
-async function openfootballFixtures(lg, seasonDir, short){
-  if (!OF_FILES[lg]) return null;
-  const key = lg + ":" + seasonDir;
-  let matches = MATCH_CACHE.get(key);
-  if (!matches){
-    const of = await fetchJSON(`${OF_BASE}/${seasonDir}/${OF_FILES[lg]}`);
-    matches = of.matches ?? [];
-    MATCH_CACHE.set(key, matches);
-  }
-  const out = [];
-  for (const m of matches){
-    const h = clubShort(m.team1 ?? ""), a = clubShort(m.team2 ?? "");
-    const home = h === short;
-    if (!home && a !== short) continue;
-    const ft = Array.isArray(m?.score?.ft) ? m.score.ft : null;
-    out.push({
-      md: parseInt(String(m.round ?? "").replace(/\D+/g,""), 10) || null,
-      date: m.date ?? null, time: m.time ?? null,
-      opp: home ? a : h, home,
-      gf: ft ? (home ? ft[0] : ft[1]) : null,
-      ga: ft ? (home ? ft[1] : ft[0]) : null,
-      done: !!ft,
-    });
-  }
-  out.sort((x, y) => String(x.date).localeCompare(String(y.date)));
-  return out.length ? out : null;
-}
+/* ===================== time ===================== */
+const TZ_LABEL = (() => {
+  try {
+    const part = new Intl.DateTimeFormat("en-GB", {timeZoneName:"short"})
+      .formatToParts(new Date()).find(p => p.type === "timeZoneName");
+    return part?.value || Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+  } catch { return ""; }
+})();
 
-/* ESPN kickoff times carry a Z; openfootball's are already league-local. */
+/* Kick-offs are stored as UTC ("19:00Z") and rendered in the reader's zone.
+   Older snapshots carry bare league-local times; those are shown verbatim. */
 function kickoff(f){
   if (!f.date) return null;
-  const utc = f.time && /Z$/.test(f.time);
+  const utc = !!f.time && /Z$/.test(f.time);
   const dt = new Date(`${f.date}T${utc ? f.time : (f.time || "12:00")}`);
   return isNaN(dt) ? null : { dt, utc };
 }
-function fxDate(f){
+function fmtDate(f){
   const k = kickoff(f);
   if (!k) return f.date ? esc(f.date) : "TBC";
   const wd = k.dt.toLocaleDateString("en-GB", {weekday:"short"});
   const dm = k.dt.toLocaleDateString("en-GB", {day:"numeric", month:"short"});
   return `<span class="wd">${esc(wd)} </span>${esc(dm)}`;
 }
-function fxTime(f){
+function fmtDateLong(f){
+  const k = kickoff(f);
+  if (!k) return f.date ? esc(f.date) : "Date to be confirmed";
+  return esc(k.dt.toLocaleDateString("en-GB", {weekday:"short", day:"numeric", month:"short"}));
+}
+function fmtTime(f){
   if (!f.time) return "TBC";
   const k = kickoff(f);
   if (k && k.utc) return k.dt.toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit"});
-  return f.time;
-}
-function outcomeOf(f){
-  if (!f.done) return "";
-  return f.gf > f.ga ? "W" : f.gf < f.ga ? "L" : "D";
-}
-/* Result feeds can lag kick-off, so a past match without a score is pending
-   rather than upcoming — it should not be billed as the next fixture. */
-function isPending(f){
-  if (f.done) return false;
-  const k = kickoff(f);
-  return !!k && k.dt.getTime() < Date.now();
+  return String(f.time).replace(/Z$/,"");
 }
 function monthOf(f){
   const k = kickoff(f);
   return k ? k.dt.toLocaleDateString("en-GB", {month:"long", year:"numeric"}) : "Date to be confirmed";
 }
-
-function fxRow(f, isNext){
-  const o = outcomeOf(f);
-  const res = f.done
-    ? `<span class="res ${o}">${f.gf}–${f.ga}</span>`
-    : `<span class="res kick" ${isPending(f) ? 'title="Result not published yet"' : ""}>${
-        isPending(f) ? "—" : esc(fxTime(f))}</span>`;
-  return `<div class="fx ${o} ${isNext ? "next" : ""}" role="row">
-    <span class="md">${f.md ? "MD" + f.md : ""}</span>
-    <span class="dt">${fxDate(f)}</span>
-    <span class="ha" title="${f.home ? "Home" : "Away"}">${f.home ? "H" : "A"}</span>
-    <span class="opp">${crest(f.opp)}<span class="nm">${esc(f.opp)}</span>${isNext ? `<span class="tag">NEXT</span>` : ""}</span>
-    ${res}
-  </div>`;
+/* Result feeds can lag kick-off, so a past match with no score is pending
+   rather than upcoming — it must not be billed as the next fixture. */
+function isPending(f){
+  if (f.done) return false;
+  const k = kickoff(f);
+  return !!k && k.dt.getTime() < Date.now();
 }
-
-function recordOf(list){
-  const w = list.filter(f => f.gf > f.ga).length;
-  const d = list.filter(f => f.gf === f.ga).length;
-  return `${w}W ${d}D ${list.length - w - d}L`;
-}
-
-function backToTable(){
-  teamView = null;
-  history.replaceState(null, "", location.pathname + location.search);
-  render();
-}
-
-async function renderTeam(){
-  const { league: lg, mode: md, short, logo } = teamView;
-  const cfg = COMP[lg];
-  $("title").textContent = cfg.title;
-  $("meta").innerHTML = "";
-  const content = $("content");
-
-  const comp = md === "live" ? LIVE?.comps?.[lg] : null;
-  const row = comp?.rows?.find(r => r.short === short);
-  const seasonLabel = md === "live" ? (LIVE?.season ?? "") : "2025/26";
-  const bits = [
-    row ? `Position <b>${row.pos}</b>` : "",
-    row ? `<b>${row.pts}</b> pts` : "",
-    `${esc(seasonLabel)} · ${esc(cfg.title)}`,
-  ].filter(Boolean);
-
-  const head = `<button class="back" id="back">← ${esc(cfg.title)} table</button>
-    <div class="team-hero">${crest(short, logo)}
-      <div><h2>${esc(short)}</h2><div class="sub">${bits.join(" · ")}</div></div>
-    </div>`;
-  const show = (html) => {
-    content.innerHTML = head + html;
-    $("back").onclick = backToTable;
-  };
-
-  show(`<div class="empty"><div class="big">Loading fixtures…</div></div>`);
-
-  let fx = md === "live" ? bakedFixtures(lg, short) : null;
-  if (!fx){
-    try { fx = await openfootballFixtures(lg, md === "live" ? seasonSlug() : "2025-26", short); }
-    catch { fx = null; }
-  }
-  if (teamView?.short !== short || teamView?.league !== lg) return; // superseded
-
-  if (!fx){
-    show(`<div class="empty">
-        <div class="big">No fixture list for ${esc(short)} yet</div>
-        <p>${lg === "ucl"
-          ? "Champions League fixtures appear here once the schedule reaches the data feed."
-          : "The fixture feed couldn't be reached. Check your connection and try again."}</p>
-      </div>`);
-    return;
-  }
-
-  const played = fx.filter(f => f.done);
-  const gf = played.reduce((n, f) => n + f.gf, 0);
-  const ga = played.reduce((n, f) => n + f.ga, 0);
-  const gd = gf - ga;
-  const w = played.filter(f => f.gf > f.ga).length;
-  const d = played.filter(f => f.gf === f.ga).length;
-  const cell = (k, v) => `<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`;
-  const stats = `<div class="rec">
-      ${cell("Played", played.length)}${cell("Won", w)}${cell("Drawn", d)}
-      ${cell("Lost", played.length - w - d)}${cell("Goals", `${gf}:${ga}`)}
-      ${cell("GD", (gd > 0 ? "+" : "") + gd)}
-    </div>`;
-
-  const formHTML = played.length
-    ? `<span class="chip">Form ${formCell(played.slice(-5).map(outcomeOf).join(""))}</span>` : "";
-  const splits = `<div class="splits">
-      <span class="chip">Home <b>${recordOf(played.filter(f => f.home))}</b></span>
-      <span class="chip">Away <b>${recordOf(played.filter(f => !f.home))}</b></span>
-      ${formHTML}
-      <span class="chip"><b>${fx.length - played.length}</b> to play</span>
-    </div>`;
-
-  let nextIdx = fx.findIndex(f => !f.done && !isPending(f));
-  if (nextIdx < 0) nextIdx = fx.findIndex(f => !f.done);
-  const groups = [];
-  fx.forEach((f, i) => {
-    const label = monthOf(f);
-    if (!groups.length || groups[groups.length - 1].label !== label) groups.push({ label, items: [] });
-    groups[groups.length - 1].items.push({ f, i });
-  });
-  const list = groups.map(g =>
-    `<div class="fx-group">
-       <div class="fx-month">${esc(g.label)}</div>
-       <div class="fx-list" role="table" aria-label="${esc(g.label)} fixtures">
-         ${g.items.map(({ f, i }) => fxRow(f, i === nextIdx)).join("")}
-       </div>
-     </div>`).join("");
-
-  show(stats + splits + `<div style="height:6px"></div>` + list
-    + `<p class="note">Full ${esc(seasonLabel)} schedule — ${fx.length} matches. Results carry the score; upcoming fixtures show kick-off.</p>`);
-}
-
-const slug = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
-  .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-
-function openTeam(lg, md, short, logo){
-  teamView = { league: lg, mode: md, short, logo };
-  league = lg;
-  history.replaceState(null, "", "#" + lg + "/" + slug(short));
-  window.scrollTo(0, 0);
-  renderTeam();
-}
-
-function wireRows(){
-  document.querySelectorAll(".trow[data-short]").forEach(el => {
-    el.classList.add("clickable");
-    el.addEventListener("click", () => {
-      openTeam(el.dataset.lg, el.dataset.mode, el.dataset.short, el.dataset.logo || null);
-    });
-  });
-}
-
 function timeAgo(iso){
   const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime())/60000));
   if (mins < 60) return `${mins}m ago`;
@@ -844,97 +825,909 @@ function timeAgo(iso){
   return `${Math.round(h/24)}d ago`;
 }
 
-function render(){
-  if (teamView){ renderTeam(); return; }
-  const cfg = COMP[league];
-  $("title").textContent = cfg.title;
-  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected", t.id === "tab"+"-"+league ? "true":"false"));
-  $("mode-live").setAttribute("aria-pressed", mode==="live" ? "true":"false");
-  $("mode-wrapped").setAttribute("aria-pressed", mode==="wrapped" ? "true":"false");
+/* ===================== derived tables ===================== */
+const outcomeOf = f => !f.done ? "" : f.gf > f.ga ? "W" : f.gf < f.ga ? "L" : "D";
 
-  const meta = $("meta");
-  const content = $("content");
-
-  if (mode === "wrapped"){
-    meta.innerHTML = `<span class="chip"><b>2025/26</b> · final</span><span class="chip">${cfg.region}</span>`;
-    content.innerHTML = wrappedTable(league);
-    wireRows();
-    return;
+function agg(list){
+  const a = {p:0,w:0,d:0,l:0,gf:0,ga:0};
+  for (const f of list){
+    if (!f.done) continue;
+    a.p++; a.gf += f.gf; a.ga += f.ga;
+    if (f.gf > f.ga) a.w++; else if (f.gf < f.ga) a.l++; else a.d++;
   }
-
-  const comp = LIVE?.comps?.[league];
-  if (!LIVE){
-    meta.innerHTML = `<span class="chip">${cfg.region}</span>`;
-    content.innerHTML = `<div class="empty"><div class="big">Loading standings…</div></div>`;
-    return;
-  }
-  if (!comp || comp.notStarted){
-    meta.innerHTML = `<span class="chip"><b>${esc(LIVE.season)}</b></span><span class="chip">${cfg.region}</span>`;
-    content.innerHTML = `<div class="empty">
-        <div class="big">The ${esc(LIVE.season)} league phase hasn't kicked off yet</div>
-        <p>It starts in mid-September. This page updates itself — the table will appear here as soon as the first round is played. Meanwhile, last season's final standings:</p>
-      </div>` + wrappedTable(league);
-    wireRows();
-    return;
-  }
-  meta.innerHTML = `<span class="chip"><b>${esc(LIVE.season)}</b> · live</span>`
-    + `<span class="chip">Matchday <b>${comp.matchday}</b></span>`
-    + `<span class="chip">${cfg.region}</span>`
-    + `<span class="chip acc">auto-updated</span>`;
-  content.innerHTML = statStrip(comp) + liveTable(comp)
-    + `<p class="note">Tap any club for its full season fixture list. Zones shown as the standard allocation. Source: ${comp.source === "espn" ? "ESPN public feed" : "openfootball open data (table computed from results)"} · refreshed ${timeAgo(LIVE.generated)}.</p>`;
-  wireRows();
+  a.gd = a.gf - a.ga;
+  a.pts = a.w*3 + a.d;
+  return a;
 }
 
-/* ================= data loading ================= */
+/* The overall table comes from the feed, which applies each competition's real
+   tiebreaks. Splits are recomputed here from fixtures. */
+function tableFor(lg, mode){
+  const c = comp(lg);
+  if (!c?.rows?.length) return null;
+  if (mode === "overall" || !c.fixtures) return c.rows.map(r => ({...r}));
+  if (mode === "projected") return projectedTable(lg);
+  const out = c.rows.map(r => {
+    let list = (fxOf(lg, r.short) ?? []).filter(f => f.done);
+    if (mode === "home") list = list.filter(f => f.home);
+    else if (mode === "away") list = list.filter(f => !f.home);
+    else if (mode === "form") list = list.slice(-5);
+    return {...r, ...agg(list), form: list.slice(-5).map(outcomeOf).join(""), feedPos: r.pos};
+  });
+  out.sort((a,b) => b.pts-a.pts || b.gd-a.gd || b.gf-a.gf || a.short.localeCompare(b.short));
+  out.forEach((r,i) => { r.pos = i+1; });
+  return out;
+}
+
+function projectedTable(lg){
+  const c = comp(lg);
+  const out = c.rows.map(r => {
+    const fx = fxOf(lg, r.short) ?? [];
+    const total = fx.length || COMP[lg].rounds;
+    const ppg = r.p ? r.pts / r.p : 0;
+    const left = Math.max(0, total - (r.p ?? 0));
+    return {...r, feedPos:r.pos, total, ppg, proj: Math.round((r.pts ?? 0) + ppg*left)};
+  });
+  out.sort((a,b) => b.proj-a.proj || b.ppg-a.ppg || a.short.localeCompare(b.short));
+  out.forEach((r,i) => { r.pos = i+1; });
+  return out;
+}
+
+/* Position after every matchday, for the season-shape chart. Each club's own
+   fixture list already carries its own results, so no de-duplication is needed. */
+function positionHistory(lg, short){
+  const c = comp(lg);
+  if (!c?.fixtures) return null;
+  const clubs = c.rows.map(r => r.short);
+  const lists = new Map(clubs.map(s => [s, fxOf(lg, s) ?? []]));
+  const maxMd = Math.max(0, ...[...lists.values()].flat().map(f => f.md || 0));
+  if (!maxMd) return null;
+  const acc = new Map(clubs.map(s => [s, {p:0,pts:0,gd:0,gf:0}]));
+  const points = [];
+  for (let md = 1; md <= maxMd; md++){
+    let playedThisRound = false;
+    for (const s of clubs){
+      for (const f of lists.get(s)){
+        if (f.md !== md || !f.done) continue;
+        const a = acc.get(s);
+        a.p++; a.gf += f.gf; a.gd += f.gf - f.ga;
+        a.pts += f.gf > f.ga ? 3 : f.gf === f.ga ? 1 : 0;
+        if (s === short) playedThisRound = true;
+      }
+    }
+    const mine = acc.get(short);
+    if (!mine || mine.p === 0 || !playedThisRound) continue;
+    const rank = [...acc.entries()].filter(([,a]) => a.p > 0)
+      .sort((x,y) => y[1].pts-x[1].pts || y[1].gd-x[1].gd || y[1].gf-x[1].gf || x[0].localeCompare(y[0]));
+    const i = rank.findIndex(([s]) => s === short);
+    if (i >= 0) points.push({md, pos:i+1, pts:mine.pts});
+  }
+  return points.length > 1 ? {points, size: clubs.length} : null;
+}
+
+function recordsOf(lg){
+  const c = comp(lg);
+  if (!c?.fixtures) return null;
+  let unbeaten = null, winless = null, biggest = null, clean = null;
+  for (const r of c.rows){
+    const fx = (fxOf(lg, r.short) ?? []).filter(f => f.done);
+    if (!fx.length) continue;
+    let ub = 0;
+    for (let i = fx.length-1; i >= 0 && outcomeOf(fx[i]) !== "L"; i--) ub++;
+    let wl = 0;
+    for (let i = fx.length-1; i >= 0 && outcomeOf(fx[i]) !== "W"; i--) wl++;
+    if (!unbeaten || ub > unbeaten.n) unbeaten = {n:ub, r};
+    if (!winless || wl > winless.n) winless = {n:wl, r};
+    const cs = fx.filter(f => f.ga === 0).length;
+    if (!clean || cs > clean.n) clean = {n:cs, r};
+    for (const f of fx){
+      const m = f.gf - f.ga;
+      if (m > 0 && (!biggest || m > biggest.m || (m === biggest.m && f.gf > biggest.gf)))
+        biggest = {m, gf:f.gf, ga:f.ga, r, f};
+    }
+  }
+  if (!unbeaten) return null;
+  return {unbeaten, winless, biggest, clean};
+}
+
+function nextFive(lg, short){
+  return (fxOf(lg, short) ?? []).filter(f => !f.done && !isPending(f)).slice(0,5);
+}
+
+/* League-wide rounds. Home entries alone describe every match exactly once. */
+function roundsOf(lg){
+  const c = comp(lg);
+  if (!c?.fixtures) return null;
+  const rounds = new Map();
+  for (const club of Object.keys(c.fixtures)){
+    for (const f of fxOf(lg, club) ?? []){
+      if (!f.home) continue;
+      const md = f.md || 0;
+      if (!rounds.has(md)) rounds.set(md, []);
+      rounds.get(md).push({
+        md, date:f.date, time:f.time, home:club, away:f.opp,
+        hg:f.gf, ag:f.ga, done:f.done, f
+      });
+    }
+  }
+  if (!rounds.size) return null;
+  for (const list of rounds.values())
+    list.sort((a,b) => String(a.date).localeCompare(String(b.date))
+      || String(a.time).localeCompare(String(b.time)) || a.home.localeCompare(b.home));
+  return rounds;
+}
+function currentRound(rounds){
+  const keys = [...rounds.keys()].sort((a,b) => a-b);
+  for (const k of keys) if (rounds.get(k).some(m => !m.done)) return k;
+  return keys[keys.length-1] ?? 1;
+}
+
+/* ===================== live overlay (opportunistic) ===================== */
+const liveKey = (lg, home, away) => `${lg}|${home}|${away}`;
+const liveFor = (lg, home, away) => LIVE_NOW.get(liveKey(lg, home, away)) ?? null;
+function liveForFixture(f, club){
+  return f.home ? liveFor(f.lg, club, f.opp) : liveFor(f.lg, f.opp, club);
+}
+function liveClubs(lg){
+  const set = new Set();
+  for (const [k,v] of LIVE_NOW){
+    if (!k.startsWith(lg+"|") || v.state !== "in") continue;
+    const [, h, a] = k.split("|");
+    set.add(h); set.add(a);
+  }
+  return set;
+}
+function matchesNear(hours){
+  const now = Date.now();
+  const out = [];
+  for (const lg of LEAGUES){
+    const c = comp(lg);
+    if (!c?.fixtures) continue;
+    for (const club of Object.keys(c.fixtures)){
+      for (const f of fxOf(lg, club) ?? []){
+        if (!f.home) continue;
+        const k = kickoff(f);
+        if (k && Math.abs(k.dt.getTime() - now) < hours*3600e3) out.push({lg, f});
+      }
+    }
+  }
+  return out;
+}
+const utcStamp = d => d.toISOString().slice(0,10).replace(/-/g,"");
+
+async function pollLive(){
+  clearTimeout(liveTimer);
+  if (!LIVE || document.hidden) return scheduleLive();
+  const soon = matchesNear(5);
+  if (!soon.length){ LIVE_NOW.clear(); return scheduleLive(); }
+  const byLeague = new Map();
+  for (const {lg, f} of soon){
+    if (!byLeague.has(lg)) byLeague.set(lg, new Set());
+    byLeague.get(lg).add(utcStamp(new Date(f.date + "T12:00:00Z")));
+  }
+  let changed = false;
+  for (const [lg, days] of byLeague){
+    for (const day of days){
+      try {
+        const feed = await fetchJSON(
+          `https://site.api.espn.com/apis/site/v2/sports/soccer/${COMP[lg].espn}/scoreboard?dates=${day}`);
+        for (const event of feed.events ?? []){
+          const game = event.competitions?.[0];
+          const home = (game?.competitors ?? []).find(c => c.homeAway === "home");
+          const away = (game?.competitors ?? []).find(c => c.homeAway === "away");
+          if (!home?.team || !away?.team) continue;
+          const st = game.status?.type?.state;          // pre | in | post
+          if (st !== "in" && st !== "post") continue;
+          const num = v => { const n = Number(v?.value ?? v?.displayValue ?? v); return Number.isFinite(n) ? n : null; };
+          const rec = {
+            state: st,
+            hg: num(home.score), ag: num(away.score),
+            clock: game.status?.displayClock ?? null,
+            detail: game.status?.type?.shortDetail ?? null
+          };
+          if (rec.hg == null || rec.ag == null) continue;
+          const k = liveKey(lg, resolveClub(lg, home.team.displayName ?? home.team.name),
+                                resolveClub(lg, away.team.displayName ?? away.team.name));
+          const old = LIVE_NOW.get(k);
+          if (!old || old.state !== rec.state || old.hg !== rec.hg || old.ag !== rec.ag || old.clock !== rec.clock){
+            LIVE_NOW.set(k, rec);
+            changed = true;
+          }
+        }
+      } catch { /* the baked snapshot stands */ }
+    }
+  }
+  if (changed) render();
+  scheduleLive();
+}
+function scheduleLive(){
+  clearTimeout(liveTimer);
+  if (!LIVE || !matchesNear(5).length) return;
+  const inPlay = [...LIVE_NOW.values()].some(v => v.state === "in");
+  liveTimer = setTimeout(pollLive, inPlay ? 45000 : 180000);
+}
+
+/* ===================== pieces ===================== */
+function crest(short, logo){
+  const [bg, fg] = clubStyle(short);
+  // The monogram is always drawn; a crest image layers over it and removes
+  // itself if it fails, so the chip is never blank.
+  const img = logo ? `<img src="${esc(logo)}" alt="" loading="lazy" onerror="this.remove()">` : "";
+  return `<span class="crest" style="background:${bg};color:${fg || "#fff"}">${esc(monogram(short))}${img}</span>`;
+}
+function gdCell(gd){
+  if (gd == null) return `<span class="gd">–</span>`;
+  return `<span class="gd ${gd > 0 ? "up" : gd < 0 ? "down" : ""}">${gd > 0 ? "+" : ""}${gd}</span>`;
+}
+function formCell(form){
+  const dots = (form || "").slice(-5).split("");
+  while (dots.length < 5) dots.unshift("");
+  const label = {W:"Win",D:"Draw",L:"Loss"};
+  return `<span class="form">${dots.map(d => `<i class="${d}" title="${label[d] ?? "Not played"}"></i>`).join("")}</span>`;
+}
+function legendHTML(items, extra){
+  const colors = {q1:"var(--q1)", q2:"var(--q2)", r:"var(--drop)"};
+  return `<div class="legend">${items.map(([z,l]) =>
+    `<span><i style="background:${colors[z]}"></i>${l}</span>`).join("")}${extra ?? ""}</div>`;
+}
+function movement(r){
+  if (r.feedPos == null || r.feedPos === r.pos) return "";
+  const d = r.feedPos - r.pos;
+  return `<span class="mv ${d > 0 ? "up" : "down"}" title="${Math.abs(d)} place${Math.abs(d)===1?"":"s"} ${d>0?"higher":"lower"} than the overall table">${d > 0 ? "▲" : "▼"}</span>`;
+}
+function nextStrip(lg, short){
+  const fx = nextFive(lg, short);
+  if (!fx.length) return `<span class="next5"><span class="none">season over</span></span>`;
+  const rows = rowsOf(lg);
+  const size = rows.length || 20;
+  return `<span class="next5">` + fx.map(f => {
+    const pos = rowFor(lg, f.opp)?.pos ?? null;
+    const q = pos ? pos/size : .5;
+    const d = q <= .3 ? "hard" : q <= .7 ? "mid" : "easy";
+    const when = f.date ? " · " + fmtDateLong(f).replace(/<[^>]+>/g,"") : "";
+    return `<span class="n5 ${f.home ? "" : "away"}" data-d="${d}" title="${esc(f.opp)}${pos ? " ("+ord(pos)+")" : ""} · ${f.home ? "home" : "away"}${when}">${crest(f.opp, logoOf(lg, f.opp))}</span>`;
+  }).join("") + `</span>`;
+}
+
+function standingsCard(lg, rows, withHead = true){
+  const cfg = COMP[lg];
+  const live = liveClubs(lg);
+  const hasFx = !!comp(lg)?.fixtures;
+  const head = `<div class="thead">
+      <span class="c">#</span><span>Club</span>
+      <span class="c">P</span>
+      <span class="c col-wdl">W</span><span class="c col-wdl">D</span><span class="c col-wdl">L</span>
+      <span class="r">GD</span><span class="r">Pts</span><span class="r col-form">Form</span>
+      ${hasFx ? `<span class="r col-next">Next 5</span>` : ""}
+    </div>`;
+  const body = rows.map(r => {
+    const z = cfg.zones(r.pos);
+    const label = `${r.pos}. ${r.short}, ${r.pts ?? 0} points from ${r.p ?? 0} played. Open season.`;
+    const lv = live.has(r.short) ? `<span class="livedot" title="Playing now"><i></i>LIVE</span>` : "";
+    return `<button class="trow ${z ? "z-"+z : ""} ${r.pos === 1 ? "lead" : ""}"
+        data-act="club" data-club="${esc(slug(r.short))}" data-lg="${lg}" aria-label="${esc(label)}">
+      <span class="pos">${r.pos}${movement(r)}</span>
+      <span class="club">${crest(r.short, r.logo)}<span class="nm">${esc(r.short)}</span>${lv}</span>
+      <span class="num">${r.p ?? "–"}</span>
+      <span class="num col-wdl">${r.w ?? "–"}</span>
+      <span class="num col-wdl">${r.d ?? "–"}</span>
+      <span class="num col-wdl">${r.l ?? "–"}</span>
+      <span>${gdCell(r.gd)}</span>
+      <span class="pts">${r.pts ?? "–"}</span>
+      <span class="col-form">${formCell(r.form)}</span>
+      ${hasFx ? `<span class="col-next">${nextStrip(lg, r.short)}</span>` : ""}
+    </button>`;
+  }).join("");
+  return `<div class="card tbl ${hasFx ? "" : "nonext"}">${withHead ? head : ""}${body}</div>`;
+}
+
+function projectedCard(lg, rows, withHead = true){
+  const cfg = COMP[lg];
+  const head = `<div class="thead">
+      <span class="c">#</span><span>Club</span>
+      <span class="c col-wdl">P</span><span class="r col-wdl">PPG</span>
+      <span class="r">Now</span><span class="r">Proj</span>
+    </div>`;
+  const body = rows.map(r => {
+    const z = cfg.zones(r.pos);
+    return `<button class="trow ${z ? "z-"+z : ""} ${r.pos === 1 ? "lead" : ""}"
+        data-act="club" data-club="${esc(slug(r.short))}" data-lg="${lg}"
+        aria-label="${esc(`${r.pos}. ${r.short}, projected ${r.proj} points from ${r.pts} now. Open season.`)}">
+      <span class="pos">${r.pos}${movement(r)}</span>
+      <span class="club">${crest(r.short, r.logo)}<span class="nm">${esc(r.short)}</span></span>
+      <span class="num col-wdl">${r.p ?? "–"}</span>
+      <span class="ppg col-wdl">${r.ppg.toFixed(2)}</span>
+      <span class="ppg">${r.pts ?? "–"}</span>
+      <span class="pts">${r.proj}</span>
+    </button>`;
+  }).join("");
+  return `<div class="card tbl proj">${withHead ? head : ""}${body}</div>`;
+}
+
+function statStrip(lg){
+  const c = comp(lg);
+  const played = c.rows.filter(r => (r.p ?? 0) > 0);
+  if (!played.length) return "";
+  const leader = c.rows[0];
+  const attack = [...played].sort((a,b) => (b.gf ?? 0)-(a.gf ?? 0))[0];
+  const defence = [...played].sort((a,b) => (a.ga ?? 99)-(b.ga ?? 99))[0];
+  const form = c.fixtures ? tableFor(lg, "form")?.[0] : null;
+  const cell = (k, r, v, sub) => `<div class="stat"><div class="k">${k}</div>
+    <div class="v">${crest(r.short, r.logo)}<span class="txt">${esc(r.short)}</span><span class="n">${v}</span></div>
+    <div class="sub">${sub}</div></div>`;
+  return `<div class="stats">
+    ${cell("Leader", leader, (leader.pts ?? 0)+" pts", "Top of the table right now")}
+    ${form ? cell("In form", form, form.pts+" pts", "From the last five matches") : ""}
+    ${cell("Best attack", attack, attack.gf ?? 0, "Goals scored")}
+    ${cell("Best defence", defence, defence.ga ?? 0, "Goals conceded")}
+  </div>`;
+}
+
+function liveStripHTML(lg){
+  const rows = [];
+  for (const [k,v] of LIVE_NOW){
+    if (!k.startsWith(lg+"|") || v.state !== "in") continue;
+    const [, h, a] = k.split("|");
+    rows.push(`<span class="chip"><b>${esc(h)} ${v.hg}–${v.ag} ${esc(a)}</b>${v.clock ? " · "+esc(v.clock) : ""}</span>`);
+  }
+  if (!rows.length) return "";
+  return `<div class="sect"><h3>In play</h3><div class="meta">${rows.join("")}</div></div>`;
+}
+
+function recordsHTML(lg){
+  const rec = recordsOf(lg);
+  if (!rec) return "";
+  const who = r => `<div class="w">${crest(r.short, r.logo)}<span class="txt">${esc(r.short)}</span></div>`;
+  const cell = (k, v, inner) => `<div class="rec"><div class="k">${k}</div><div class="v">${v}</div>${inner}</div>`;
+  const b = rec.biggest;
+  return `<div class="sect"><h3>Season records</h3><div class="recs">
+    ${cell("Unbeaten run", rec.unbeaten.n || "—", who(rec.unbeaten.r))}
+    ${cell("Without a win", rec.winless.n || "—", who(rec.winless.r))}
+    ${b ? cell("Biggest win", `${b.gf}–${b.ga}`,
+        `<div class="w">${crest(b.r.short, b.r.logo)}<span class="txt">${b.f.home ? "v" : "at"} ${esc(b.f.opp)}</span></div>`) : ""}
+    ${cell("Clean sheets", rec.clean.n, who(rec.clean.r))}
+  </div></div>`;
+}
+
+function leadersHTML(lg){
+  const L = comp(lg)?.leaders;
+  if (!L) return "";
+  const col = (title, list) => !list?.length ? "" : `<div class="lcard"><h3>${title}</h3><ol>${
+    list.map((e,i) => `<li><span class="r">${i+1}</span>${e.club ? crest(e.club, logoOf(lg, e.club)) : ""}
+      <span class="nm">${esc(e.player)}</span><span class="v">${e.value}</span></li>`).join("")}</ol></div>`;
+  const inner = col("Top scorers", L.goals) + col("Most assists", L.assists);
+  if (!inner) return "";
+  return `<div class="sect"><div class="leads">${inner}</div></div>`;
+}
+
+/* ===================== head-to-head ===================== */
+function h2hHTML(lg, club, opp, date){
+  const list = (fxOf(lg, club) ?? []).filter(f => f.opp === opp);
+  const played = list.filter(f => f.done);
+  const w = played.filter(f => f.gf > f.ga).length;
+  const d = played.filter(f => f.gf === f.ga).length;
+  const summary = played.length
+    ? `<div class="h2h">This season: <b>${esc(club)}</b> ${w}W ${d}D ${played.length-w-d}L</div>` : "";
+  const legs = list.map(f => {
+    const me = f.done ? `${f.gf}–${f.ga}` : f.time ? fmtTime(f) : "TBC";
+    return `<div class="leg ${f.date === date ? "this" : ""}">
+      <span class="w">${f.home ? "Home" : "Away"}</span>
+      <span>${fmtDateLong(f)}</span>
+      <span>${f.md ? "Matchday "+f.md : ""}${f.date === date ? " · this match" : ""}</span>
+      <span class="sc">${esc(me)}</span>
+    </div>`;
+  }).join("");
+  const single = list.length < 2
+    ? `<div class="h2h">${lg === "ucl"
+        ? "The league phase pairs these two once, so there is no reverse leg."
+        : "Only one meeting is in the fixture list so far."}</div>` : "";
+  return summary + legs + single +
+    `<button class="tbtn lnk" data-act="club" data-lg="${lg}" data-club="${esc(slug(opp))}">${esc(opp)}'s season ${ICON.right}</button>`;
+}
+function toggleH2H(btn){
+  const open = btn.getAttribute("aria-expanded") === "true";
+  const det = btn.nextElementSibling;
+  if (!det?.classList.contains("det")) return;
+  btn.setAttribute("aria-expanded", String(!open));
+  det.hidden = open;
+  if (!open && !det.dataset.filled){
+    det.innerHTML = h2hHTML(btn.dataset.lg, btn.dataset.club, btn.dataset.opp, btn.dataset.date || null);
+    det.dataset.filled = "1";
+  }
+}
+
+/* ===================== calendar export ===================== */
+const icsEsc = s => String(s).replace(/([\\,;])/g,"\\$1").replace(/\n/g," ");
+function icsFor(lg, short, fx){
+  const pad = n => String(n).padStart(2,"0");
+  const stamp = d => `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+  const lines = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//FULLTIME//league tables//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",
+    `X-WR-CALNAME:${icsEsc(short)} fixtures`];
+  fx.forEach((f, i) => {
+    const k = kickoff(f);
+    const when = k && f.time
+      ? [`DTSTART:${stamp(k.dt)}`, `DTEND:${stamp(new Date(k.dt.getTime() + 7200e3))}`]
+      : f.date ? [`DTSTART;VALUE=DATE:${f.date.replace(/-/g,"")}`] : null;
+    if (!when) return;
+    const title = f.home ? `${short} v ${f.opp}` : `${f.opp} v ${short}`;
+    lines.push("BEGIN:VEVENT", `UID:fulltime-${f.lg || lg}-${slug(short)}-${i}@fulltime`,
+      `DTSTAMP:${stamp(new Date())}`, ...when,
+      `SUMMARY:${icsEsc(title)}`,
+      `LOCATION:${icsEsc(f.home ? "Home" : "Away")}`,
+      `DESCRIPTION:${icsEsc(COMP[f.lg || lg].title + (f.md ? ` · Matchday ${f.md}` : "") + (f.done ? ` · final score ${f.gf}–${f.ga}` : ""))}`,
+      "END:VEVENT");
+  });
+  lines.push("END:VCALENDAR");
+  return lines.join("\r\n");
+}
+function exportICS(lg, clubSlug){
+  const found = findClub(lg, clubSlug);
+  if (!found) return;
+  const fx = clubFixtures(found.lg, found.short, state.allComps);
+  if (!fx?.length) return;
+  const blob = new Blob([icsFor(found.lg, found.short, fx)], {type:"text/calendar;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${slug(found.short)}-fixtures.ics`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/* ===================== club helpers ===================== */
+function findClub(lg, clubSlug){
+  const here = rowsOf(lg).find(r => slug(r.short) === clubSlug);
+  if (here) return {lg, row:here, short:here.short, logo:here.logo};
+  for (const other of LEAGUES){
+    const r = rowsOf(other).find(x => slug(x.short) === clubSlug);
+    if (r) return {lg:other, row:r, short:r.short, logo:r.logo};
+  }
+  // 25/26 archive rows carry no live table entry.
+  for (const key of LEAGUES){
+    const hit = (WRAPPED[key]?.rows ?? []).find(([,n]) => slug(n) === clubSlug);
+    if (hit) return {lg:key, row:null, short:hit[1], logo:null};
+  }
+  return null;
+}
+function clubFixtures(lg, short, all){
+  const mine = fxOf(lg, short);
+  if (!all) return mine;
+  const merged = compsWithClub(short).flatMap(other => fxOf(other, short) ?? []);
+  merged.sort((a,b) => String(a.date).localeCompare(String(b.date)) || String(a.time).localeCompare(String(b.time)));
+  return merged.length ? merged : mine;
+}
+
+/* ===================== views ===================== */
+function seasonSeg(){
+  const live = LIVE?.season ?? seasonLabel();
+  return `<div class="seg" role="group" aria-label="Season">
+    <button data-act="season" data-season="live" aria-pressed="${state.season === "live"}">${esc(live)}</button>
+    <button data-act="season" data-season="final" aria-pressed="${state.season === "final"}">25/26 final</button>
+  </div>`;
+}
+function seasonLabel(){
+  const n = new Date();
+  const y = n.getUTCMonth() >= 6 ? n.getUTCFullYear() : n.getUTCFullYear()-1;
+  return `${y % 100}/${String((y+1) % 100).padStart(2,"0")}`;
+}
+
+function viewTable(){
+  const cfg = COMP[state.lg];
+  const head = `<div class="ptop"><h1>${esc(cfg.title)}</h1>${seasonSeg()}</div>`;
+  if (state.season === "final") return head + viewFinal();
+
+  if (!LIVE) return head + `<div class="empty"><div class="big">Loading the latest snapshot…</div>
+    <p>This reads a file committed by the refresh job. If it doesn't arrive, the 25/26 final tables are one tap away.</p></div>`;
+
+  const c = comp(state.lg);
+  if (!c || c.notStarted){
+    return head + `<div class="meta"><span class="chip"><b>${esc(LIVE.season)}</b></span><span class="chip">${esc(cfg.region)}</span></div>
+      <div class="empty"><div class="big">The ${esc(LIVE.season)} ${esc(cfg.title)} hasn't kicked off yet</div>
+        <p>The refresh job checks every hour; the table appears here as soon as the first round is played. Last season's final standings are below.</p></div>`
+      + viewFinal();
+  }
+
+  const rounds = roundsOf(state.lg);
+  const hasFx = !!c.fixtures;
+  const mode = (!hasFx && DERIVED.has(state.mode)) ? "overall" : state.mode;
+  let rows = tableFor(state.lg, mode) ?? [];
+
+  const q = state.q.trim().toLowerCase();
+  const hits = q ? rows.filter(r => flat(r.short).includes(flat(q)) || flat(r.team ?? "").includes(flat(q))) : rows;
+
+  const meta = `<div class="meta">
+      <span class="chip"><b>${esc(LIVE.season)}</b> · live</span>
+      <span class="chip">Matchday <b>${c.matchday}</b></span>
+      <span class="chip">${esc(cfg.region)}</span>
+      ${TZ_LABEL ? `<span class="chip">Times in <b>${esc(TZ_LABEL)}</b></span>` : ""}
+      <span class="chip acc">refreshed ${esc(timeAgo(LIVE.generated))}</span>
+    </div>`;
+
+  const seg = `<div class="seg" role="group" aria-label="Table split">${
+    MODES.map(([k,l]) => `<button data-act="mode" data-mode="${k}" aria-pressed="${mode === k}"
+      ${!hasFx && DERIVED.has(k) ? "disabled title='Needs the fixture list, which this competition has not published yet'" : ""}>${l}</button>`).join("")}</div>`;
+  const roundBtn = rounds
+    ? `<button class="tbtn" data-act="round" data-round="${currentRound(rounds)}">Matchday ${currentRound(rounds)} ${ICON.right}</button>` : "";
+
+  let body;
+  if (q && !hits.length){
+    body = `<div class="empty"><div class="big">No club in the ${esc(cfg.title)} matches “${esc(state.q)}”</div>
+      <p>The search covers one table at a time, and it stays on while you move between competitions.</p>
+      <p><button class="tbtn" data-act="clearq" style="margin-top:10px">Clear the search</button></p></div>`;
+  } else {
+    body = mode === "projected" ? projectedCard(state.lg, hits) : standingsCard(state.lg, hits);
+  }
+
+  const explain = {
+    overall:"Straight from the competition's own table, tiebreaks included.",
+    home:"Home matches only, recomputed from results.",
+    away:"Away matches only, recomputed from results.",
+    form:"The last five matches only — a table of right now, not of the season.",
+    projected:"Points per game carried across every remaining fixture. Arrows mark the move against the real table."
+  }[mode];
+
+  const pin = favPin(state.lg, rows, mode);
+
+  return head + meta + liveStripHTML(state.lg) + statStrip(state.lg)
+    + `<div class="toolbar">${seg}${roundBtn}</div>`
+    + pin + body
+    + legendHTML(cfg.legend, hasFx
+        ? `<span><i style="background:var(--line-2)"></i>Next 5: bar shows how high the opponent sits, faded means away</span>` : "")
+    + `<p class="note">${explain} Tap a club for its full season. Source: ${
+        c.source === "espn" ? "ESPN public feed" : "openfootball open data"}${
+        q ? ` · showing ${hits.length} of ${rows.length} clubs` : ""}.</p>`
+    + recordsHTML(state.lg) + leadersHTML(state.lg);
+}
+
+function favPin(lg, rows, mode){
+  if (!fav || fav.lg !== lg) return "";
+  const r = rows.find(x => x.short === fav.short);
+  if (!r) return "";
+  const card = mode === "projected" ? projectedCard(lg, [r], false) : standingsCard(lg, [r], false);
+  return `<div class="pin"><h3>Your club</h3>${card}</div>`;
+}
+
+function viewFinal(){
+  const key = state.lg;
+  const w = WRAPPED[key];
+  const cfg = COMP[key];
+  const head = `<div class="meta"><span class="chip"><b>2025/26</b> · final table</span>
+      <span class="chip">${esc(cfg.region)}</span></div>`;
+  const stories = `<div class="meta">${w.stories.map(s => `<span class="chip">${s}</span>`).join("")}</div>`;
+  const rows = w.rows.map(([pos, short, pts, z, tag]) => {
+    const archive = key !== "ucl";   // openfootball publishes domestic 25/26 fixtures
+    const open = archive ? `data-act="club" data-club="${esc(slug(short))}" data-lg="${key}"` : "";
+    return `<${archive ? "button" : "div"} class="trow ${archive ? "" : "static"} ${z ? "z-"+z : ""} ${pos === 1 && key !== "ucl" ? "lead" : ""}" ${open}
+        style="--cols:32px minmax(0,1fr) 60px;height:42px" ${archive ? `aria-label="${esc(`${pos}. ${short}, ${pts} points. Open season.`)}"` : ""}>
+      <span class="pos">${pos}</span>
+      <span class="club">${crest(short)}<span class="nm">${esc(short)}</span>
+        ${tag ? `<span class="tag ${tag === "champions" || tag === "won it all" ? "gold" : ""}">${esc(tag)}</span>` : ""}</span>
+      <span class="pts">${pts}</span>
+    </${archive ? "button" : "div"}>`;
+  }).join("");
+  const out = w.out ? `<div class="sect"><h3 style="color:var(--drop)">Out of Europe · 25–36</h3>
+      <div class="meta">${w.out.map(([p,n]) => `<span class="chip"><b>${p}</b> ${esc(n)}</span>`).join("")}</div></div>` : "";
+  return head + stories
+    + `<div class="card tbl" style="--cols:32px minmax(0,1fr) 60px">
+        <div class="thead"><span class="c">#</span><span>Club</span><span class="r">Pts</span></div>${rows}</div>`
+    + out + legendHTML(cfg.legend) + `<p class="note">${w.note}</p>`;
+}
+
+function viewRound(){
+  const cfg = COMP[state.lg];
+  const rounds = roundsOf(state.lg);
+  if (!rounds) return `<button class="back" data-act="table">${ICON.left} ${esc(cfg.title)} table</button>
+    <div class="empty"><div class="big">No fixture list for the ${esc(cfg.title)} yet</div>
+      <p>Round-by-round results need the full schedule, which this competition hasn't published to the feed.</p></div>`;
+  const keys = [...rounds.keys()].sort((a,b) => a-b);
+  const md = rounds.has(state.round) ? state.round : currentRound(rounds);
+  const i = keys.indexOf(md);
+  const list = rounds.get(md) ?? [];
+  const cur = currentRound(rounds);
+
+  const nav = `<div class="mnav">
+      <button class="tbtn" data-act="round" data-round="${keys[i-1] ?? md}" ${i <= 0 ? "disabled" : ""} aria-label="Previous matchday">${ICON.left}</button>
+      <button class="tbtn" data-act="round" data-round="${cur}" ${md === cur ? "disabled" : ""}>Current</button>
+      <button class="tbtn" data-act="round" data-round="${keys[i+1] ?? md}" ${i >= keys.length-1 ? "disabled" : ""} aria-label="Next matchday">${ICON.right}</button>
+    </div>`;
+
+  const played = list.filter(m => m.done).length;
+  const rows = list.map((m, n) => {
+    const lv = liveFor(state.lg, m.home, m.away);
+    const score = lv && lv.state === "in"
+      ? `<span class="mscore live">${lv.hg}–${lv.ag}</span>`
+      : m.done ? `<span class="mscore">${m.hg}–${m.ag}</span>`
+      : `<span class="mscore soon">${isPending(m.f) ? "—" : esc(fmtTime(m.f))}</span>`;
+    const when = `${fmtDateLong(m.f)}${lv && lv.state === "in" && lv.clock ? ` · <b>${esc(lv.clock)}</b>` : ""}`;
+    return `<button class="mrow" data-act="h2h" data-lg="${state.lg}" data-club="${esc(m.home)}"
+        data-opp="${esc(m.away)}" data-date="${esc(m.date ?? "")}" aria-expanded="false"
+        aria-label="${esc(`${m.home} ${m.done ? m.hg+"–"+m.ag : "versus"} ${m.away}. Show both legs.`)}">
+      <span class="mdate">${when}</span>
+      <span class="mteam h"><span class="nm">${esc(m.home)}</span>${crest(m.home, logoOf(state.lg, m.home))}</span>
+      ${score}
+      <span class="mteam a">${crest(m.away, logoOf(state.lg, m.away))}<span class="nm">${esc(m.away)}</span></span>
+      <span class="chev">${ICON.chev}</span>
+    </button><div class="det" hidden></div>`;
+  }).join("");
+
+  return `<button class="back" data-act="table">${ICON.left} ${esc(cfg.title)} table</button>
+    <div class="ptop"><h1>Matchday ${md}</h1>${nav}</div>
+    <div class="meta"><span class="chip">${esc(cfg.title)}</span><span class="chip"><b>${list.length}</b> matches</span>
+      <span class="chip"><b>${played}</b> played</span>${TZ_LABEL ? `<span class="chip">Times in <b>${esc(TZ_LABEL)}</b></span>` : ""}</div>
+    <div class="card rounds">${rows}</div>
+    <p class="note">Every match in the round, league-wide. Tap one to see both legs between the two clubs.
+      ${state.lg === "ucl" ? "Champions League rounds are grouped by kick-off window." : ""}</p>`;
+}
+
+function shapeHTML(lg, hist){
+  const W = 300, H = 104, pad = 9, left = 20;
+  const {points, size} = hist;
+  const y = pos => pad + (H - 2*pad) * ((pos - .5)/size);
+  const edge = pos => pad + (H - 2*pad) * ((pos - 1)/size);
+  const x = i => left + (W - left - pad) * (points.length < 2 ? 0 : i/(points.length-1));
+  // Qualification bands come from the same zone rule the table uses.
+  const zones = COMP[lg].zones;
+  const bands = [];
+  for (let p = 1; p <= size; p++){
+    const z = zones(p);
+    const last = bands[bands.length-1];
+    if (z && last && last.z === z && last.to === p-1) last.to = p;
+    else if (z) bands.push({z, from:p, to:p});
+  }
+  const cls = {q1:"z1", q2:"z2", r:"zr"};
+  const best = Math.min(...points.map(p => p.pos));
+  const worst = Math.max(...points.map(p => p.pos));
+  const now = points[points.length-1];
+  return `<div class="shape"><h3>Season shape</h3>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Position by matchday: ${points.map(p => `matchday ${p.md} ${ord(p.pos)}`).join(", ")}">
+      ${bands.map(b => `<rect class="${cls[b.z]}" x="${left}" y="${edge(b.from).toFixed(1)}" width="${W-left-pad}" height="${(edge(b.to+1)-edge(b.from)).toFixed(1)}"/>`).join("")}
+      <text class="ax" x="2" y="${(y(1)+2.5).toFixed(1)}">1st</text>
+      <text class="ax" x="2" y="${(y(size)+2.5).toFixed(1)}">${size}th</text>
+      <polyline class="ln" points="${points.map((p,i) => `${x(i).toFixed(1)},${y(p.pos).toFixed(1)}`).join(" ")}"/>
+      ${points.map((p,i) => `<circle class="pt" cx="${x(i).toFixed(1)}" cy="${y(p.pos).toFixed(1)}" r="1.7"><title>MD${p.md}: ${ord(p.pos)}, ${p.pts} pts</title></circle>`).join("")}
+    </svg>
+    <div class="foot">High <b>${ord(best)}</b> · low <b>${ord(worst)}</b> · now <b>${ord(now.pos)}</b> after ${points.length} matchday${points.length === 1 ? "" : "s"}.</div>
+  </div>`;
+}
+
+function viewClub(){
+  const found = findClub(state.lg, state.club);
+  const cfg = COMP[found?.lg ?? state.lg];
+  if (!found){
+    return `<button class="back" data-act="table">${ICON.left} ${esc(cfg.title)} table</button>
+      <div class="empty"><div class="big">That club isn't in this competition's table</div>
+        <p>It may have been relegated, eliminated, or the link is out of date. Pick a club from the table.</p></div>`;
+  }
+  const lg = found.lg, short = found.short, row = found.row;
+  const archive = state.season === "final";
+  const multi = !archive && compsWithClub(short).length > 1;
+  const fx = archive ? null : clubFixtures(lg, short, state.allComps && multi);
+
+  const isFav = fav && fav.lg === lg && fav.short === short;
+  const chips = [
+    row ? `<span class="chip">Position <b>${row.pos}</b></span>` : "",
+    row ? `<span class="chip"><b>${row.pts}</b> pts</span>` : "",
+    `<span class="chip">${esc(archive ? "2025/26" : (LIVE?.season ?? ""))} · ${esc(cfg.title)}</span>`
+  ].filter(Boolean).join("");
+
+  const acts = `<div class="acts">
+      <button class="tbtn star" data-act="fav" data-lg="${lg}" data-club="${esc(slug(short))}"
+        aria-pressed="${!!isFav}">${ICON.star} ${isFav ? "Your club" : "Make this my club"}</button>
+      ${fx?.length ? `<button class="tbtn" data-act="ics" data-lg="${lg}" data-club="${esc(slug(short))}">${ICON.cal} Add to calendar</button>` : ""}
+      ${multi ? `<button class="tbtn" data-act="allcomps" data-on="${state.allComps ? "0" : "1"}"
+        aria-pressed="${!!state.allComps}">All competitions</button>` : ""}
+    </div>`;
+
+  const head = `<button class="back" data-act="table">${ICON.left} ${esc(cfg.title)} table</button>
+    <div class="hero">${crest(short, found.logo)}
+      <div><h2>${esc(short)}</h2><div class="sub">${chips}</div></div>
+    </div>${acts}`;
+
+  if (archive){
+    // The 25/26 archive isn't in the snapshot; its fixtures load on demand.
+    const token = ++renderToken;
+    loadArchive(lg, short, token);
+    return head + `<div id="arch"><div class="empty"><div class="big">Loading the 2025/26 season…</div>
+      <p>Last season's match list comes from openfootball on demand, so it isn't carried in the hourly snapshot.</p></div></div>`;
+  }
+  if (!fx?.length){
+    return head + `<div class="empty"><div class="big">No fixture list for ${esc(short)} yet</div>
+      <p>${lg === "ucl"
+        ? "Champions League fixtures appear here once the draw reaches the feed."
+        : "The schedule hasn't reached the feed for this club. The refresh job retries every hour."}</p></div>`;
+  }
+  return head + clubBody(lg, short, fx, multi);
+}
+
+function clubBody(lg, short, fx, multi){
+  const played = fx.filter(f => f.done);
+  const gf = played.reduce((n,f) => n + f.gf, 0);
+  const ga = played.reduce((n,f) => n + f.ga, 0);
+  const w = played.filter(f => f.gf > f.ga).length;
+  const d = played.filter(f => f.gf === f.ga).length;
+  const cell = (k,v) => `<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  const kv = `<div class="kv">
+      ${cell("Played", played.length)}${cell("Won", w)}${cell("Drawn", d)}
+      ${cell("Lost", played.length-w-d)}${cell("Goals", `${gf}:${ga}`)}
+      ${cell("GD", (gf-ga > 0 ? "+" : "") + (gf-ga))}
+    </div>`;
+  const record = list => {
+    const ww = list.filter(f => f.gf > f.ga).length, dd = list.filter(f => f.gf === f.ga).length;
+    return `${ww}W ${dd}D ${list.length-ww-dd}L`;
+  };
+  const splits = `<div class="splits">
+      <span class="chip">Home <b>${record(played.filter(f => f.home))}</b></span>
+      <span class="chip">Away <b>${record(played.filter(f => !f.home))}</b></span>
+      ${played.length ? `<span class="chip">Form ${formCell(played.slice(-5).map(outcomeOf).join(""))}</span>` : ""}
+      <span class="chip"><b>${fx.length - played.length}</b> to play</span>
+    </div>`;
+
+  const hist = state.allComps && multi ? null : positionHistory(lg, short);
+  const side = `<div class="side">${kv}${splits}${hist ? shapeHTML(lg, hist) : ""}</div>`;
+
+  let nextIdx = fx.findIndex(f => !f.done && !isPending(f));
+  if (nextIdx < 0) nextIdx = fx.findIndex(f => !f.done);
+  const groups = [];
+  fx.forEach((f,i) => {
+    const label = monthOf(f);
+    if (!groups.length || groups[groups.length-1].label !== label) groups.push({label, items:[]});
+    groups[groups.length-1].items.push({f, i});
+  });
+  const list = groups.map(g => `<div class="fxgroup">
+      <div class="fxmonth">${esc(g.label)}</div>
+      <div class="card">${g.items.map(({f,i}) => fxRow(lg, short, f, i === nextIdx, state.allComps && multi)).join("")}</div>
+    </div>`).join("");
+
+  return `<div class="cgrid">
+      <div class="sect">${list}
+        <p class="note">${fx.length} matches${state.allComps && multi ? " across every competition in the snapshot" : ""}.
+          Results carry the score, upcoming fixtures the kick-off${TZ_LABEL ? ` in <b>${esc(TZ_LABEL)}</b>` : ""}.
+          Tap a match for the reverse leg.</p>
+      </div>${side}
+    </div>`;
+}
+
+function fxRow(lg, short, f, isNext, showComp){
+  const o = outcomeOf(f);
+  const lv = liveForFixture(f, short);
+  const inPlay = lv && lv.state === "in";
+  const res = inPlay
+    ? `<span class="res livenow">${f.home ? lv.hg : lv.ag}–${f.home ? lv.ag : lv.hg}</span>`
+    : f.done ? `<span class="res ${o}">${f.gf}–${f.ga}</span>`
+    : `<span class="res kick"${isPending(f) ? ` title="Result not published yet"` : ""}>${isPending(f) ? "—" : esc(fmtTime(f))}</span>`;
+  const badge = inPlay ? `<span class="badge">LIVE${lv.clock ? " "+esc(lv.clock) : ""}</span>`
+    : isNext ? `<span class="badge">NEXT</span>` : "";
+  const left = showComp
+    ? `<span class="md cmp">${esc(COMP[f.lg].code)}</span>`
+    : `<span class="md">${f.md ? "MD"+f.md : ""}</span>`;
+  return `<button class="fx ${o} ${isNext && !inPlay ? "next" : ""}" data-act="h2h" data-lg="${f.lg || lg}"
+      data-club="${esc(short)}" data-opp="${esc(f.opp)}" data-date="${esc(f.date ?? "")}" aria-expanded="false"
+      aria-label="${esc(`${f.home ? "Home" : "Away"} ${f.done ? "against" : "versus"} ${f.opp}${f.done ? `, ${f.gf}–${f.ga}` : ""}. Show both legs.`)}">
+    ${left}
+    <span class="dt">${fmtDate(f)}</span>
+    <span class="ha" title="${f.home ? "Home" : "Away"}">${f.home ? "H" : "A"}</span>
+    <span class="opp">${crest(f.opp, logoOf(f.lg || lg, f.opp))}<span class="nm">${esc(f.opp)}</span>${badge}</span>
+    ${res}
+    <span class="chev">${ICON.chev}</span>
+  </button><div class="det" hidden></div>`;
+}
+
+/* The 25/26 archive: fetched only when a club from that table is opened. */
+const ARCHIVE = new Map();
+async function loadArchive(lg, short, token){
+  const slot = () => token === renderToken ? $("arch") : null;
+  try {
+    if (!OF_FILES[lg]) throw new Error("no archive file");
+    const key = lg + ":2025-26";
+    let matches = ARCHIVE.get(key);
+    if (!matches){
+      matches = (await fetchJSON(`${OF_BASE}/2025-26/${OF_FILES[lg]}`)).matches ?? [];
+      ARCHIVE.set(key, matches);
+    }
+    const out = [];
+    for (const m of matches){
+      const h = clubShort(m.team1 ?? ""), a = clubShort(m.team2 ?? "");
+      const home = h === short;
+      if (!home && a !== short) continue;
+      const ft = Array.isArray(m?.score?.ft) ? m.score.ft : null;
+      out.push({
+        lg, md: parseInt(String(m.round ?? "").replace(/\D+/g,""), 10) || null,
+        date: m.date ?? null, time: m.time ?? null, opp: home ? a : h, home,
+        gf: ft ? (home ? ft[0] : ft[1]) : null, ga: ft ? (home ? ft[1] : ft[0]) : null, done: !!ft
+      });
+    }
+    out.sort((x,y) => String(x.date).localeCompare(String(y.date)));
+    const el = slot();
+    if (!el) return;
+    el.innerHTML = out.length
+      ? clubBody(lg, short, out, false)
+      : `<div class="empty"><div class="big">No 2025/26 matches found for ${esc(short)}</div>
+          <p>The archive lists that season's clubs under slightly different names, and this one didn't match.</p></div>`;
+  } catch {
+    const el = slot();
+    if (el) el.innerHTML = `<div class="empty"><div class="big">The 2025/26 match list didn't load</div>
+      <p>It comes straight from openfootball on GitHub. Check the connection and reopen this club.</p></div>`;
+  }
+}
+
+/* ===================== routing ===================== */
+function parseHash(){
+  const parts = location.hash.replace(/^#\/?/,"").split("/").filter(Boolean);
+  if (!LEAGUES.includes(parts[0])) return null;
+  const s = {lg:parts[0], view:"table", mode:"overall", season:"live", club:null, round:null, allComps:false};
+  const t = parts[1];
+  if (t === "final") s.season = "final";
+  else if (t === "md" && parts[2]){ s.view = "round"; s.round = parseInt(parts[2],10) || 1; }
+  else if (t === "club" && parts[2]){
+    s.view = "club"; s.club = parts[2];
+    s.allComps = parts[3] === "all";
+    s.season = parts[3] === "final" ? "final" : "live";
+  }
+  else if (t && MODES.some(([k]) => k === t)) s.mode = t;
+  return s;
+}
+function hashOf(s){
+  if (s.view === "club") return `#${s.lg}/club/${s.club}${s.season === "final" ? "/final" : s.allComps ? "/all" : ""}`;
+  if (s.view === "round") return `#${s.lg}/md/${s.round}`;
+  if (s.season === "final") return `#${s.lg}/final`;
+  return `#${s.lg}${s.mode !== "overall" ? "/"+s.mode : ""}`;
+}
+function go(patch, replace){
+  Object.assign(state, patch);
+  const h = hashOf(state);
+  if (location.hash !== h){
+    // pushState fires neither hashchange nor popstate, so render() stays the
+    // single place the DOM is built.
+    replace ? history.replaceState(null,"",h) : history.pushState(null,"",h);
+  }
+  render();
+}
+
+function render(){
+  renderToken++;
+  document.querySelectorAll(".tab").forEach(t =>
+    t.setAttribute("aria-selected", String(t.dataset.lg === state.lg)));
+  const view = $("view");
+  if (state.view === "club") view.innerHTML = viewClub();
+  else if (state.view === "round") view.innerHTML = viewRound();
+  else view.innerHTML = viewTable();
+  document.title = state.view === "club" && state.club
+    ? `${state.club.replace(/-/g," ")} · FULLTIME`
+    : `${COMP[state.lg].title} · FULLTIME`;
+}
+
+/* ===================== data loading ===================== */
 async function fetchJSON(url){
-  const res = await fetch(url, {cache:"no-cache", signal: AbortSignal.timeout(6000)});
+  const res = await fetch(url, {cache:"no-cache", signal: AbortSignal.timeout(7000)});
   if (!res.ok) throw new Error(String(res.status));
   return res.json();
 }
 
 async function load(){
   const results = await Promise.allSettled(DATA_URLS.map(fetchJSON));
-  const ok = results.filter(r=>r.status==="fulfilled").map(r=>r.value)
-    .filter(d=>d && d.generated && d.comps);
+  const ok = results.filter(r => r.status === "fulfilled").map(r => r.value)
+    .filter(d => d && d.generated && d.comps);
   if (ok.length){
-    ok.sort((a,b)=> new Date(b.generated) - new Date(a.generated));
+    ok.sort((a,b) => new Date(b.generated) - new Date(a.generated));
     LIVE = ok[0];
     const age = Date.now() - new Date(LIVE.generated).getTime();
-    const st = $("status");
-    st.className = "status " + (age < 24*3600e3 ? "live" : "stale");
+    $("status").className = "status " + (age < 6*3600e3 ? "live" : "stale");
     $("status-txt").textContent = "updated " + timeAgo(LIVE.generated);
   } else {
     $("status").className = "status stale";
     $("status-txt").textContent = "offline · 25/26 snapshot";
-    mode = "wrapped";
+    state.season = "final";
   }
-  // Deep link: #<league>/<team-slug> reopens a club's timeline.
-  const m = location.hash.match(/^#(epl|liga|ucl)\/([a-z0-9-]+)$/);
-  if (m && LIVE){
-    const row = LIVE.comps?.[m[1]]?.rows?.find(r => slug(r.short) === m[2]);
-    if (row){ league = m[1]; teamView = {league:m[1], mode:"live", short:row.short, logo:row.logo}; }
-  }
-  render();
-  refreshInBrowser();
 }
 
-/* If the committed snapshot is stale, recompute the league tables right here
-   in the browser from openfootball's raw JSON (CORS-open) — the page stays
-   current even if no scheduled job ever runs. */
-const OF_BASE = "https://raw.githubusercontent.com/openfootball/football.json/master";
-function seasonSlug(){
-  const n = new Date();
-  const y = n.getUTCMonth() >= 6 ? n.getUTCFullYear() : n.getUTCFullYear() - 1;
-  return `${y}-${String((y + 1) % 100).padStart(2,"0")}`;
-}
-const normKey = s => s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()
-  .replace(/&/g,"and").replace(/[^a-z0-9 ]/g,"")
-  .split(/\s+/).filter(t=>!["fc","afc","cf","cd","ca","ud","rc","rcd","sc","ac","as","sl","club","de","the","balompie"].includes(t))
-  .sort().join(" ");
+/* If the committed snapshot has gone stale, recompute the domestic tables here
+   in the browser from openfootball's raw JSON. Fixtures and leaders from the
+   snapshot are kept — this only replaces rows. */
 function computeTable(matches){
   const table = new Map();
-  const t = n => { if(!table.has(n)) table.set(n,{team:n,p:0,w:0,d:0,l:0,gf:0,ga:0,res:[]}); return table.get(n); };
+  const t = n => { if (!table.has(n)) table.set(n, {team:n,p:0,w:0,d:0,l:0,gf:0,ga:0,res:[]}); return table.get(n); };
   let matchday = 0;
   for (const m of matches ?? []){
     if (m.team1) t(m.team1);
@@ -942,66 +1735,147 @@ function computeTable(matches){
     const ft = m?.score?.ft;
     if (!Array.isArray(ft) || ft.length !== 2) continue;
     const [g1,g2] = ft, a = t(m.team1), b = t(m.team2);
-    a.p++; b.p++; a.gf+=g1; a.ga+=g2; b.gf+=g2; b.ga+=g1;
-    if (g1>g2){a.w++;b.l++;a.res.push([m.date,"W"]);b.res.push([m.date,"L"]);}
-    else if (g1<g2){b.w++;a.l++;a.res.push([m.date,"L"]);b.res.push([m.date,"W"]);}
-    else {a.d++;b.d++;a.res.push([m.date,"D"]);b.res.push([m.date,"D"]);}
-    const md = parseInt(String(m.round ?? "").replace(/\D+/g,""),10);
+    a.p++; b.p++; a.gf += g1; a.ga += g2; b.gf += g2; b.ga += g1;
+    if (g1 > g2){ a.w++; b.l++; a.res.push([m.date,"W"]); b.res.push([m.date,"L"]); }
+    else if (g1 < g2){ b.w++; a.l++; a.res.push([m.date,"L"]); b.res.push([m.date,"W"]); }
+    else { a.d++; b.d++; a.res.push([m.date,"D"]); b.res.push([m.date,"D"]); }
+    const md = parseInt(String(m.round ?? "").replace(/\D+/g,""), 10);
     if (md > matchday) matchday = md;
   }
-  const rows = [...table.values()].map(r=>({ ...r, gd:r.gf-r.ga, pts:r.w*3+r.d,
-    form:r.res.sort((x,y)=>String(x[0]).localeCompare(String(y[0]))).slice(-5).map(x=>x[1]).join("") }));
-  rows.sort((x,y)=>y.pts-x.pts || y.gd-x.gd || y.gf-x.gf || x.team.localeCompare(y.team));
-  return { matchday, rows: rows.map((r,i)=>({pos:i+1, team:r.team, short:r.team,
-    p:r.p,w:r.w,d:r.d,l:r.l,gf:r.gf,ga:r.ga,gd:r.gd,pts:r.pts,form:r.form,logo:null})) };
+  const rows = [...table.values()].map(r => ({...r, gd:r.gf-r.ga, pts:r.w*3+r.d,
+    form:r.res.sort((x,y) => String(x[0]).localeCompare(String(y[0]))).slice(-5).map(x => x[1]).join("")}));
+  rows.sort((x,y) => y.pts-x.pts || y.gd-x.gd || y.gf-x.gf || x.team.localeCompare(y.team));
+  return {matchday, rows: rows.map((r,i) => ({pos:i+1, team:r.team, short:r.team,
+    p:r.p, w:r.w, d:r.d, l:r.l, gf:r.gf, ga:r.ga, gd:r.gd, pts:r.pts, form:r.form, logo:null}))};
 }
 async function refreshInBrowser(){
-  if (!LIVE) return;
-  if (Date.now() - new Date(LIVE.generated).getTime() < 24*3600e3) return;
-  const files = { epl:"en.1.json", liga:"es.1.json" };
+  if (!LIVE || Date.now() - new Date(LIVE.generated).getTime() < 24*3600e3) return;
   let touched = false;
-  for (const [key,file] of Object.entries(files)){
+  for (const [key,file] of Object.entries(OF_FILES)){
     try {
-      const of = await fetchJSON(`${OF_BASE}/${seasonSlug()}/${file}`);
+      const of = await fetchJSON(`${OF_BASE}/${ofSeasonDir()}/${file}`);
       const fresh = computeTable(of.matches);
-      if (!fresh.rows.some(r=>r.p>0)) continue;
-      // Reuse the snapshot's short names and crest URLs where clubs match.
-      const old = new Map((LIVE.comps[key]?.rows ?? []).map(r=>[normKey(r.team), r]));
+      if (!fresh.rows.some(r => r.p > 0)) continue;
+      const old = new Map((LIVE.comps[key]?.rows ?? []).map(r => [normKey(r.team), r]));
       for (const r of fresh.rows){
         const o = old.get(normKey(r.team));
         if (o){ r.short = o.short; r.logo = o.logo; }
       }
-      LIVE.comps[key] = { name: COMP[key].title, source:"openfootball (live, in-browser)",
-        matchday: fresh.matchday, rows: fresh.rows };
+      LIVE.comps[key] = {...(LIVE.comps[key] ?? {}), name: COMP[key].title,
+        source:"openfootball (recomputed in your browser)", matchday: fresh.matchday, rows: fresh.rows};
       touched = true;
-    } catch (e) { /* keep the snapshot */ }
+    } catch { /* keep the snapshot */ }
   }
   if (touched){
     LIVE.generated = new Date().toISOString();
-    const st = $("status");
-    st.className = "status live";
+    $("status").className = "status live";
     $("status-txt").textContent = "recomputed just now";
     render();
   }
 }
-
-/* Label the live toggle with the season currently in play (Aug–May). */
-{
+function ofSeasonDir(){
   const n = new Date();
-  const y = n.getUTCMonth() >= 6 ? n.getUTCFullYear() : n.getUTCFullYear() - 1;
-  $("mode-live").textContent = `${String(y % 100)}/${String((y + 1) % 100).padStart(2,"0")} Live`;
+  const y = n.getUTCMonth() >= 6 ? n.getUTCFullYear() : n.getUTCFullYear()-1;
+  return `${y}-${String((y+1) % 100).padStart(2,"0")}`;
 }
 
-/* ================= events ================= */
-for (const key of ["epl","liga","ucl"]){
-  $("tab-"+key).addEventListener("click", ()=>{ league = key; teamView = null; history.replaceState(null,"",location.pathname); render(); });
+/* ===================== theme ===================== */
+function applyTheme(){
+  const t = store.get("theme", null);
+  if (t) document.documentElement.setAttribute("data-theme", t);
+  else document.documentElement.removeAttribute("data-theme");
+  const dark = t ? t === "dark"
+    : !window.matchMedia("(prefers-color-scheme: light)").matches;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#0d1117" : "#f4f6f8");
 }
-$("mode-live").addEventListener("click", ()=>{ mode="live"; backToTable(); });
-$("mode-wrapped").addEventListener("click", ()=>{ mode="wrapped"; backToTable(); });
-window.matchMedia("(max-width:520px)").addEventListener?.("change", render);
+function toggleTheme(){
+  const dark = getComputedStyle(document.documentElement).colorScheme !== "light";
+  store.set("theme", dark ? "light" : "dark");
+  applyTheme();
+}
 
-render();
-load();
+function toggleFav(lg, clubSlug){
+  const found = findClub(lg, clubSlug);
+  if (!found) return;
+  const on = fav && fav.lg === found.lg && fav.short === found.short;
+  fav = on ? null : {lg: found.lg, short: found.short};
+  store.set("fav", fav);
+  render();
+}
+
+/* ===================== events ===================== */
+$("view").addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (!el) return;
+  const act = el.dataset.act;
+  if (act === "club"){ window.scrollTo(0,0); go({lg: el.dataset.lg || state.lg, view:"club", club: el.dataset.club, allComps:false}); }
+  else if (act === "table") go({view:"table", round:null, club:null});
+  else if (act === "mode") go({mode: el.dataset.mode, view:"table"}, true);
+  else if (act === "season") go({season: el.dataset.season, view:"table", club:null}, true);
+  else if (act === "round"){ window.scrollTo(0,0); go({view:"round", round: +el.dataset.round}); }
+  else if (act === "allcomps") go({allComps: el.dataset.on === "1"}, true);
+  else if (act === "fav") toggleFav(el.dataset.lg, el.dataset.club);
+  else if (act === "ics") exportICS(el.dataset.lg, el.dataset.club);
+  else if (act === "h2h") toggleH2H(el);
+  else if (act === "clearq"){ state.q = ""; $("q").value = ""; render(); }
+});
+
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => { state.q = ""; $("q").value = ""; go({lg: tab.dataset.lg, view:"table", club:null, round:null}); });
+});
+document.querySelector(".brand").addEventListener("click", e => {
+  e.preventDefault();
+  go({view:"table", club:null, round:null, season:"live", mode:"overall"});
+});
+$("theme").addEventListener("click", toggleTheme);
+
+$("q").addEventListener("input", e => {
+  state.q = e.target.value;
+  if (state.view !== "table") go({view:"table", club:null, round:null}, true);
+  else render();
+});
+$("q").addEventListener("keydown", e => {
+  if (e.key === "Escape"){ e.target.value = ""; state.q = ""; render(); return; }
+  if (e.key !== "Enter") return;
+  const first = $("view").querySelector('.trow[data-club]');
+  if (first) first.click();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== $("q")){ e.preventDefault(); $("q").focus(); }
+});
+
+window.addEventListener("popstate", () => {
+  const s = parseHash();
+  if (s) Object.assign(state, s, {q: state.q});
+  render();
+});
+window.addEventListener("hashchange", () => {
+  if (hashOf(state) === location.hash) return;
+  const s = parseHash();
+  if (s){ Object.assign(state, s, {q: state.q}); render(); }
+});
+document.addEventListener("visibilitychange", () => { if (!document.hidden) pollLive(); });
+let lastNarrow = window.matchMedia("(max-width:680px)").matches;
+window.addEventListener("resize", () => {
+  const narrow = window.matchMedia("(max-width:680px)").matches;
+  if (narrow !== lastNarrow){ lastNarrow = narrow; render(); }
+});
+
+/* ===================== boot ===================== */
+(async function boot(){
+  applyTheme();
+  const fromHash = parseHash();
+  if (fromHash) Object.assign(state, fromHash);
+  render();
+  await load();
+  if (!fromHash && fav && rowsOf(fav.lg).some(r => r.short === fav.short)){
+    Object.assign(state, {lg: fav.lg, view:"club", club: slug(fav.short)});
+    history.replaceState(null, "", hashOf(state));
+  }
+  render();
+  pollLive();
+  refreshInBrowser();
+})();
 </script>
 </body>
 </html>

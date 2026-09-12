@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FULLTIME">
+  <rect width="512" height="512" rx="96" fill="#0d1117"/>
+  <rect x="96" y="96" width="320" height="320" rx="72" fill="#00ff85"/>
+  <text x="256" y="256" fill="#062b18" font-family="Inter, system-ui, sans-serif" font-size="150"
+        font-weight="800" text-anchor="middle" dominant-baseline="central" letter-spacing="-4">FT</text>
+</svg>

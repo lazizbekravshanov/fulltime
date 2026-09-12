@@ -17,9 +17,11 @@ const seasonLabel = `${startYear}/${String((startYear + 1) % 100).padStart(2, "0
 const ofSeason = `${startYear}-${String((startYear + 1) % 100).padStart(2, "0")}`;
 
 const COMPS = {
-  epl: { name: "Premier League", espn: "eng.1", of: `${ofSeason}/en.1.json` },
-  liga: { name: "La Liga", espn: "esp.1", of: `${ofSeason}/es.1.json` },
-  ucl: { name: "Champions League", espn: "uefa.champions", of: null },
+  epl: { name: "Premier League", espn: "eng.1", of: `${ofSeason}/en.1.json`, tz: "Europe/London" },
+  liga: { name: "La Liga", espn: "esp.1", of: `${ofSeason}/es.1.json`, tz: "Europe/Madrid" },
+  // openfootball publishes no Champions League file, so ESPN is the only source
+  // and its kick-off times already carry a UTC offset.
+  ucl: { name: "Champions League", espn: "uefa.champions", of: null, tz: null },
 };
 
 const SHORT_NAMES = {
@@ -207,27 +209,73 @@ function parseESPN(json) {
   return { matchday, rows };
 }
 
+// How far ahead of UTC a zone runs at a given instant, in milliseconds.
+function zoneOffset(instant, tz) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz, hour12: false, hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).formatToParts(instant);
+  const p = {};
+  for (const { type, value } of parts) p[type] = value;
+  const asUTC = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+  return asUTC - instant.getTime();
+}
+
+// openfootball publishes league-local wall times ("15:00"); the page needs the
+// instant. Resolve the offset at the instant itself so summer time is handled,
+// and return the UTC date too, since a late kick-off can cross midnight.
+function localToUTC(date, time, tz) {
+  if (!date || !time || !tz || /Z$/.test(time)) return [date, time];
+  const hm = /^(\d{1,2}):(\d{2})/.exec(time);
+  if (!hm) return [date, time];
+  const wall = Date.parse(`${date}T${hm[1].padStart(2, "0")}:${hm[2]}:00Z`);
+  if (!Number.isFinite(wall)) return [date, time];
+  let instant = wall;
+  for (let i = 0; i < 2; i++) instant = wall - zoneOffset(new Date(instant), tz);
+  const iso = new Date(instant).toISOString();
+  return [iso.slice(0, 10), iso.slice(11, 16) + "Z"];
+}
+
 // Fixture tuples are [matchday, date, time, opponent, home?1:0, goalsFor, goalsAgainst];
 // goals are null until a match is played. Baking them into data.json keeps the
 // page free of runtime fetches. Clubs are keyed by their raw feed name here and
 // renamed to the table's short names by alignFixtures().
-function fixturesFromOpenfootball(data) {
+function fixturesFromOpenfootball(data, tz) {
   const out = {};
   for (const m of data.matches ?? []) {
     if (!m.team1 || !m.team2) continue;
     const md = parseInt(String(m.round ?? "").replace(/\D+/g, ""), 10) || null;
     const ft = Array.isArray(m?.score?.ft) ? m.score.ft : null;
-    (out[m.team1] ??= []).push([md, m.date ?? null, m.time ?? null, m.team2, 1, ft ? ft[0] : null, ft ? ft[1] : null]);
-    (out[m.team2] ??= []).push([md, m.date ?? null, m.time ?? null, m.team1, 0, ft ? ft[1] : null, ft ? ft[0] : null]);
+    const [date, time] = localToUTC(m.date ?? null, m.time ?? null, tz);
+    (out[m.team1] ??= []).push([md, date, time, m.team2, 1, ft ? ft[0] : null, ft ? ft[1] : null]);
+    (out[m.team2] ??= []).push([md, date, time, m.team1, 0, ft ? ft[1] : null, ft ? ft[0] : null]);
   }
   return out;
+}
+
+// ESPN's scoreboard carries no round number. Champions League rounds are two-day
+// windows a fortnight apart, so clustering kick-off dates recovers them; domestic
+// leagues pack rounds three days apart and take their numbers from openfootball
+// instead, which is why this is opt-in.
+function roundsByDate(dates) {
+  const map = new Map();
+  let round = 0;
+  let anchor = null;
+  for (const d of [...new Set(dates)].sort()) {
+    const t = Date.parse(d + "T12:00:00Z");
+    if (!Number.isFinite(t)) continue;
+    if (anchor == null || t - anchor > 3 * 864e5) { round++; anchor = t; }
+    map.set(d, round);
+  }
+  return map;
 }
 
 // ESPN's scoreboard, walked a month at a time. The per-team schedule feed only
 // returns matches already played, so it cannot carry a full season; this one
 // lists scheduled fixtures too, and is the only source that covers the
 // Champions League, which openfootball does not publish.
-async function fixturesFromESPN(slug, year) {
+async function fixturesFromESPN(slug, year, { cluster = false } = {}) {
   const out = {};
   const seen = new Set();
   const goals = (side) => {
@@ -271,12 +319,16 @@ async function fixturesFromESPN(slug, year) {
       (out[an] ??= []).push([null, date, time, hn, 0, ag, hg]);
     }
   }
+  if (cluster) {
+    const rounds = roundsByDate(Object.values(out).flat().map((t) => t[1]).filter(Boolean));
+    for (const list of Object.values(out)) for (const t of list) t[0] = rounds.get(t[1]) ?? null;
+  }
   return out;
 }
 
 // Feeds name clubs differently ("Nottingham Forest FC" vs ESPN's "Nottm Forest"),
 // so re-key fixtures onto exactly the names the table shows.
-function alignFixtures(fixtures, rows) {
+function renamer(rows) {
   const byKey = new Map(rows.map((r) => [nameKey(r.team), r.short]));
   const byTokens = rows.map((r) => [new Set(nameKey(r.team).split(" ").filter(Boolean)), r.short]);
   const cache = new Map();
@@ -298,6 +350,11 @@ function alignFixtures(fixtures, rows) {
     cache.set(name, short);
     return short;
   };
+  return rename;
+}
+
+function alignFixtures(fixtures, rows) {
+  const rename = renamer(rows);
   const out = {};
   for (const [club, list] of Object.entries(fixtures)) {
     const sorted = [...list].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
@@ -310,24 +367,72 @@ function alignFixtures(fixtures, rows) {
 
 // openfootball publishes real matchday numbers but enters scores about a week
 // late, so fill any gaps from ESPN, which settles results within the hour.
-function mergeResults(base, fresh) {
+function mergeFromESPN(base, fresh) {
   const sameWeek = (a, b) => {
     const x = Date.parse(a + "T12:00:00Z"), y = Date.parse(b + "T12:00:00Z");
     return Number.isFinite(x) && Number.isFinite(y) && Math.abs(x - y) <= 3 * 864e5;
   };
   let filled = 0;
+  let retimed = 0;
   for (const [club, list] of Object.entries(base)) {
     const other = fresh[club];
     if (!other) continue;
     for (const t of list) {
-      if (t[5] != null) continue;
-      const hit = other.find(
-        (o) => o[3] === t[3] && o[4] === t[4] && o[5] != null && t[1] && o[1] && sameWeek(o[1], t[1])
-      );
-      if (hit) { t[5] = hit[5]; t[6] = hit[6]; filled++; }
+      const hit = other.find((o) => o[3] === t[3] && o[4] === t[4] && t[1] && o[1] && sameWeek(o[1], t[1]));
+      if (!hit) continue;
+      // ESPN settles results within the hour and publishes an exact kick-off
+      // instant; openfootball keeps the real matchday number. Take both.
+      if (t[5] == null && hit[5] != null) { t[5] = hit[5]; t[6] = hit[6]; filled++; }
+      if (hit[2] && (t[1] !== hit[1] || t[2] !== hit[2])) { t[1] = hit[1]; t[2] = hit[2]; retimed++; }
+    }
+    list.sort((a, b) => String(a[1]).localeCompare(String(b[1])) || String(a[2]).localeCompare(String(b[2])));
+  }
+  return { filled, retimed };
+}
+
+// ESPN publishes scoring leaders per competition, but the feed's shape varies by
+// sport and season, so walk it defensively: anything unrecognised yields null and
+// the page drops the section rather than rendering a broken one.
+function parseLeaders(json) {
+  const cats = json?.leaders?.categories ?? json?.categories ?? json?.leaders ?? [];
+  if (!Array.isArray(cats) || !cats.length) return null;
+  const pick = (want, avoid) => {
+    const cat = cats.find((c) => {
+      const n = `${c?.name ?? ""} ${c?.abbreviation ?? ""} ${c?.displayName ?? ""}`.toLowerCase();
+      return want.test(n) && !(avoid && avoid.test(n));
+    });
+    if (!Array.isArray(cat?.leaders)) return null;
+    const out = [];
+    for (const e of cat.leaders) {
+      const player = e?.athlete?.displayName ?? e?.athlete?.fullName ?? e?.displayName ?? null;
+      const team = e?.team?.displayName ?? e?.team?.name ?? e?.athlete?.team?.displayName ?? null;
+      const value = Number(e?.value ?? e?.displayValue);
+      if (!player || !Number.isFinite(value)) continue;
+      out.push({ player, team, value });
+    }
+    out.sort((a, b) => b.value - a.value);
+    return out.length ? out.slice(0, 8) : null;
+  };
+  const goals = pick(/goal/, /conced|against|allowed|own|keeper/);
+  const assists = pick(/assist/);
+  if (!goals && !assists) return null;
+  return { goals, assists };
+}
+
+async function leadersFromESPN(slug, year) {
+  const urls = [
+    `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/leaders?season=${year}`,
+    `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/leaders`,
+  ];
+  for (const url of urls) {
+    try {
+      const parsed = parseLeaders(await getJSON(url));
+      if (parsed) return parsed;
+    } catch (e) {
+      console.error(`[leaders] ${slug}: ${e.message}`);
     }
   }
-  return filled;
+  return null;
 }
 
 async function build() {
@@ -369,23 +474,32 @@ async function build() {
     }
 
     if (result && result.rows.some((r) => (r.p ?? 0) > 0)) {
-      const openfootball = ofData ? alignFixtures(fixturesFromOpenfootball(ofData), result.rows) : {};
-      const espn = alignFixtures(await fixturesFromESPN(cfg.espn, startYear), result.rows);
+      const openfootball = ofData ? alignFixtures(fixturesFromOpenfootball(ofData, cfg.tz), result.rows) : {};
+      const espn = alignFixtures(await fixturesFromESPN(cfg.espn, startYear, { cluster: !cfg.of }), result.rows);
       let fixtures = espn;
       if (Object.keys(openfootball).length) {
-        const filled = mergeResults(openfootball, espn);
-        console.error(`[${key}] ${filled} result(s) filled in from ESPN`);
+        const { filled, retimed } = mergeFromESPN(openfootball, espn);
+        console.error(`[${key}] ${filled} result(s) filled in and ${retimed} kick-off(s) retimed from ESPN`);
         fixtures = openfootball;
       }
       const noFixtures = result.rows.filter((r) => !fixtures[r.short]).map((r) => r.short);
       if (noFixtures.length) console.error(`[${key}] no fixtures for: ${noFixtures.join(", ")}`);
+      const leaders = await leadersFromESPN(cfg.espn, startYear);
+      if (leaders) {
+        const rename = renamer(result.rows);
+        for (const list of Object.values(leaders)) {
+          for (const e of list ?? []) e.club = e.team ? rename(e.team) : null;
+        }
+      }
       comps[key] = {
         name: cfg.name,
         source,
         matchday: result.matchday,
         rows: result.rows,
         fixtures,
+        ...(leaders ? { leaders } : {}),
       };
+      console.error(`[${key}] leaders: ${leaders ? Object.entries(leaders).map(([k, v]) => `${k}=${v ? v.length : 0}`).join(" ") : "none"}`);
       console.error(`[${key}] fixtures for ${Object.keys(fixtures).length} clubs`);
     } else {
       comps[key] = { name: cfg.name, notStarted: true };
