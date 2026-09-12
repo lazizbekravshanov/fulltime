@@ -1310,6 +1310,18 @@ function performersHTML(lg){
 }
 
 /* ===================== head-to-head ===================== */
+/* Prefer a real score wherever one exists: a finished result, otherwise the
+   goals the snapshot already carries for a match that has kicked off. */
+function legScore(lg, f){
+  if (f.done) return `${f.gf}–${f.ga}`;
+  const sc = f.ev ? scorersOf(lg, f.ev) : null;
+  if (sc?.length){
+    const h = sc.filter(g => g.home).length;
+    const a = sc.length - h;
+    return f.home ? `${h}–${a}` : `${a}–${h}`;
+  }
+  return f.time ? fmtTime(f) : "TBC";
+}
 function h2hHTML(lg, club, opp, date){
   const list = (fxOf(lg, club) ?? []).filter(f => f.opp === opp);
   const played = list.filter(f => f.done);
@@ -1318,7 +1330,7 @@ function h2hHTML(lg, club, opp, date){
   const summary = played.length
     ? `<div class="h2h">This season: <b>${esc(club)}</b> ${w}W ${d}D ${played.length-w-d}L</div>` : "";
   const legs = list.map(f => {
-    const me = f.done ? `${f.gf}–${f.ga}` : f.time ? fmtTime(f) : "TBC";
+    const me = legScore(lg, f);
     return `<div class="leg ${f.date === date ? "this" : ""}">
       <span class="w">${f.home ? "Home" : "Away"}</span>
       <span>${fmtDateLong(f)}</span>
@@ -1486,18 +1498,22 @@ function viewMatch(){
       <p>Matches appear here once the fixture list and the scoreboard agree on them. Pick one from a
          matchday or a club's season.</p></div>`;
   }
+  const scorers = scorersOf(lg, m.f.ev);
   const lv = liveFor(lg, m.home, m.away);
   const inPlay = lv && lv.state === "in";
-  const hg = inPlay ? lv.hg : m.hg;
-  const ag = inPlay ? lv.ag : m.ag;
-  const shown = inPlay || m.done;
+  // A match that kicked off before the snapshot was taken has goals but no
+  // result yet: show what the goals add up to rather than a kick-off time.
+  const partial = !m.done && !inPlay && !!scorers?.length;
+  const scoredHome = scorers ? scorers.filter(g => g.home).length : 0;
+  const hg = inPlay ? lv.hg : m.done ? m.hg : scoredHome;
+  const ag = inPlay ? lv.ag : m.done ? m.ag : scorers ? scorers.length - scoredHome : 0;
+  const shown = inPlay || m.done || partial;
 
   const club = (name, side) => `<button class="team ${side}" data-act="club" data-lg="${lg}"
       data-club="${esc(slug(name))}" aria-label="${esc(name)} season">
     ${side === "h" ? `<span class="nm">${esc(name)}</span>${crest(name, logoOf(lg, name))}`
                    : `${crest(name, logoOf(lg, name))}<span class="nm">${esc(name)}</span>`}</button>`;
 
-  const scorers = scorersOf(lg, m.f.ev);
   const goalLine = (g) => `<span class="goal"><b>${esc(g.name)}</b> ${esc(g.minute ?? "")}'${
     g.kind === "p" ? ` <span class="kind">pen</span>` : g.kind === "o" ? ` <span class="kind">og</span>` : ""}</span>`;
   const sheet = scorers ? `<div class="sheet">
@@ -1512,6 +1528,7 @@ function viewMatch(){
         ${m.f.md ? `<span class="chip">Matchday <b>${m.f.md}</b></span>` : ""}
         <span class="chip">${esc(cfg.title)}</span>
         ${inPlay ? `<span class="chip acc">LIVE${lv.clock ? " · " + esc(lv.clock) : ""}</span>` : ""}
+        ${partial ? `<span class="chip">Under way · score at the last refresh, ${esc(timeAgo(LIVE.generated))}</span>` : ""}
       </div>
       <div class="score">
         ${club(m.home, "h")}
