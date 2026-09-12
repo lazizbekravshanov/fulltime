@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-12T10:58:09.983Z",
+ "generated": "2026-09-12T15:38:27.499Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -7237,13 +7237,13 @@
      "id": "96",
      "team": "Alavés",
      "short": "Alavés",
-     "p": 4,
+     "p": 5,
      "w": 3,
      "d": 1,
-     "l": 0,
-     "gf": 10,
-     "ga": 3,
-     "gd": 7,
+     "l": 1,
+     "gf": 11,
+     "ga": 5,
+     "gd": 6,
      "pts": 10,
      "form": "",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/96.png"
@@ -7330,6 +7330,22 @@
     },
     {
      "pos": 8,
+     "id": "87",
+     "team": "Racing Santander",
+     "short": "Racing",
+     "p": 5,
+     "w": 2,
+     "d": 1,
+     "l": 2,
+     "gf": 9,
+     "ga": 9,
+     "gd": 0,
+     "pts": 7,
+     "form": "",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/87.png"
+    },
+    {
+     "pos": 9,
      "id": "97",
      "team": "Osasuna",
      "short": "Osasuna",
@@ -7345,7 +7361,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/97.png"
     },
     {
-     "pos": 9,
+     "pos": 10,
      "id": "89",
      "team": "Real Sociedad",
      "short": "Real Sociedad",
@@ -7361,7 +7377,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/89.png"
     },
     {
-     "pos": 10,
+     "pos": 11,
      "id": "93",
      "team": "Athletic Club",
      "short": "Athletic",
@@ -7377,7 +7393,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/93.png"
     },
     {
-     "pos": 11,
+     "pos": 12,
      "id": "1538",
      "team": "Levante",
      "short": "Levante",
@@ -7393,7 +7409,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/1538.png"
     },
     {
-     "pos": 12,
+     "pos": 13,
      "id": "88",
      "team": "Espanyol",
      "short": "Espanyol",
@@ -7407,22 +7423,6 @@
      "pts": 4,
      "form": "",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/88.png"
-    },
-    {
-     "pos": 13,
-     "id": "87",
-     "team": "Racing Santander",
-     "short": "Racing",
-     "p": 4,
-     "w": 1,
-     "d": 1,
-     "l": 2,
-     "gf": 7,
-     "ga": 8,
-     "gd": -1,
-     "pts": 4,
-     "form": "",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/87.png"
     },
     {
      "pos": 14,
@@ -7581,8 +7581,8 @@
       "14:00",
       "Racing",
       0,
-      null,
-      null
+      1,
+      2
      ],
      [
       6,
@@ -8957,8 +8957,8 @@
       "14:00",
       "Alavés",
       1,
-      null,
-      null
+      2,
+      1
      ],
      [
       6,
