@@ -1,0 +1,38 @@
+name: Live check
+
+# Loads the published site in a real browser, from a network that can reach both
+# GitHub Pages and ESPN, and reports what it actually renders. Also refreshes the
+# screenshots in docs/, which the README points at.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-check
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Chromium
+        run: npx --yes playwright@1.49.1 install --with-deps chromium
+      - name: Check the live site
+        run: node .github/scripts/live-check.mjs
+      - name: Commit the screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          if git diff --cached --quiet; then
+            echo "Screenshots unchanged."
+          else
+            git commit -m "docs: refresh live screenshots [skip ci]"
+            git push
+          fi
