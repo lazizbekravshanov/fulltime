@@ -296,13 +296,13 @@
   .mnav{display:flex;align-items:center;gap:6px}
   .rounds{display:flex;flex-direction:column}
   .mrow{
-    display:grid;grid-template-columns:96px minmax(0,1fr) 64px minmax(0,1fr) 18px;
+    display:grid;grid-template-columns:108px minmax(0,1fr) 64px minmax(0,1fr) 18px;
     align-items:center;gap:9px;padding:0 13px;height:50px;width:100%;text-align:left;
     background:transparent;border:none;border-bottom:1px solid var(--line);color:inherit;font:inherit;cursor:pointer;
   }
   .mrow:hover{background:var(--surface-2)}
-  .mdate{font-size:11px;font-weight:600;color:var(--dim);line-height:1.3}
-  .mdate b{display:block;color:var(--ink);font-weight:700}
+  .mdate{font-size:11px;font-weight:600;color:var(--dim);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mdate b{color:var(--ink);font-weight:700}
   .mteam{display:flex;align-items:center;gap:8px;min-width:0}
   .mteam.h{justify-content:flex-end}
   .mteam .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -425,7 +425,6 @@
     .mteam .crest{width:20px;height:20px;font-size:7px}
     .mscore{font-size:12.5px;padding:4px 0}
     .mdate{grid-column:1/-1}
-    .mdate b{display:inline;margin-right:6px}
     .leads{grid-template-columns:1fr}
   }
   @media (max-width:560px){
