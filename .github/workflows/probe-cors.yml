@@ -1,0 +1,34 @@
+# Temporary: checks whether a browser may call ESPN directly (CORS) and how long
+# the deployed snapshot is cached. This sandbox can reach neither host.
+name: Probe CORS and caching
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe
+        run: |
+          probe() {
+            echo ""
+            echo "=== $1"
+            curl -sS -o /dev/null -D - -H "Origin: https://lazizbekravshanov.github.io" "$1" \
+              | tr -d '\r' \
+              | grep -iE "^(HTTP/|access-control-allow-origin|cache-control|age|etag|expires|last-modified|content-length)" \
+              || echo "  (no matching headers)"
+          }
+          probe "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings?season=2026"
+          probe "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20260912"
+          probe "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/summary?event=401879285"
+          probe "https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/seasons/2026/types/1/leaders"
+          probe "https://lazizbekravshanov.github.io/fulltime/data.json"
+          probe "https://raw.githubusercontent.com/lazizbekravshanov/fulltime/main/data.json"
+          echo ""
+          echo "=== preflight (OPTIONS) on the standings feed"
+          curl -sS -o /dev/null -D - -X OPTIONS \
+            -H "Origin: https://lazizbekravshanov.github.io" \
+            -H "Access-Control-Request-Method: GET" \
+            "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings?season=2026" \
+            | tr -d '\r' | grep -iE "^(HTTP/|access-control)" || echo "  (no CORS headers on preflight)"
