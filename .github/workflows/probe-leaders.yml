@@ -1,0 +1,49 @@
+# Temporary: finds which ESPN endpoint carries scoring leaders for soccer.
+# This sandbox cannot reach ESPN, so the probe runs here and is then deleted.
+name: Probe leaders feed
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Probe
+        run: |
+          node - <<'JS'
+          const urls = [
+            "https://site.web.api.espn.com/apis/common/v3/sports/soccer/eng.1/leaders?season=2026",
+            "https://site.web.api.espn.com/apis/common/v3/sports/soccer/eng.1/statistics/byathlete?season=2026&limit=5",
+            "https://site.web.api.espn.com/apis/common/v3/sports/soccer/eng.1/statistics?season=2026",
+            "https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/seasons/2026/types/1/leaders",
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/leaders?season=2026&seasontype=1",
+            "https://site.api.espn.com/apis/common/v3/sports/soccer/eng.1/leaders?season=2026"
+          ];
+          const walk = (o, depth = 0, path = "") => {
+            if (depth > 3 || !o || typeof o !== "object") return [];
+            if (Array.isArray(o)) return o.length ? walk(o[0], depth + 1, path + "[0]") : [];
+            const out = [];
+            for (const k of Object.keys(o).slice(0, 12)) {
+              out.push(path + "." + k);
+              out.push(...walk(o[k], depth + 1, path + "." + k));
+            }
+            return out;
+          };
+          for (const url of urls) {
+            try {
+              const res = await fetch(url, { headers: { "user-agent": "league-tables-updater" } });
+              console.log("\n=== " + res.status + "  " + url);
+              if (!res.ok) continue;
+              const j = await res.json();
+              console.log("keys: " + Object.keys(j).join(", "));
+              console.log("paths:\n  " + walk(j).slice(0, 40).join("\n  "));
+              console.log("snippet: " + JSON.stringify(j).slice(0, 900));
+            } catch (e) {
+              console.log("\n=== ERR " + url + " -> " + e.message);
+            }
+          }
+          JS
