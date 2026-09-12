@@ -1,6 +1,9 @@
 // Drives the published site in a real browser and reports what it renders.
-import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
+import { createRequire } from "node:module";
+// Playwright is installed outside the repo, so resolve it by path: NODE_PATH does
+// not apply to ES module imports.
+const { chromium } = createRequire(import.meta.url)(process.env.PW_MODULE ?? "playwright");
 
 const SITE = "https://lazizbekravshanov.github.io/fulltime/";
 const SHOTS = "docs";
