@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-12T16:11:54.431Z",
+ "generated": "2026-09-12T16:14:57.322Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -1051,8 +1051,8 @@
       "14:00Z",
       "Chelsea",
       0,
-      null,
-      null
+      2,
+      2
      ],
      [
       5,
@@ -1739,8 +1739,8 @@
       "14:00Z",
       "C Palace",
       0,
-      null,
-      null
+      3,
+      2
      ],
      [
       5,
@@ -2427,8 +2427,8 @@
       "14:00Z",
       "Aston Villa",
       0,
-      null,
-      null
+      2,
+      1
      ],
      [
       5,
@@ -3459,8 +3459,8 @@
       "14:00Z",
       "Ipswich",
       1,
-      null,
-      null
+      2,
+      3
      ],
      [
       5,
@@ -3803,8 +3803,8 @@
       "14:00Z",
       "Bournemouth",
       0,
-      null,
-      null
+      2,
+      2
      ],
      [
       5,
@@ -4835,8 +4835,8 @@
       "14:00Z",
       "Brentford",
       1,
-      null,
-      null
+      2,
+      2
      ],
      [
       5,
@@ -5523,8 +5523,8 @@
       "14:00Z",
       "Nottm Forest",
       1,
-      null,
-      null
+      1,
+      2
      ],
      [
       5,
@@ -6211,8 +6211,8 @@
       "14:00Z",
       "Fulham",
       1,
-      null,
-      null
+      0,
+      0
      ],
      [
       5,
@@ -6555,8 +6555,8 @@
       "14:00Z",
       "Liverpool",
       0,
-      null,
-      null
+      0,
+      0
      ],
      [
       5,
@@ -6899,8 +6899,8 @@
       "14:00Z",
       "Hull",
       1,
-      null,
-      null
+      2,
+      2
      ],
      [
       5,
@@ -7208,6 +7208,92 @@
       null,
       null
      ]
+    ]
+   },
+   "leaders": {
+    "goals": [
+     {
+      "player": "Erling Haaland",
+      "club": "Man City",
+      "value": 3
+     },
+     {
+      "player": "Bruno Fernandes",
+      "club": "Man United",
+      "value": 3
+     },
+     {
+      "player": "Alexander Isak",
+      "club": "Liverpool",
+      "value": 3
+     },
+     {
+      "player": "Josh King",
+      "club": "Fulham",
+      "value": 2
+     },
+     {
+      "player": "João Pedro",
+      "club": "Chelsea",
+      "value": 2
+     },
+     {
+      "player": "Bryan Mbeumo",
+      "club": "Man United",
+      "value": 2
+     },
+     {
+      "player": "Vitaly Janelt",
+      "club": "Brentford",
+      "value": 2
+     },
+     {
+      "player": "Marcus Tavernier",
+      "club": "Bournemouth",
+      "value": 2
+     }
+    ],
+    "assists": [
+     {
+      "player": "Cody Gakpo",
+      "club": "Liverpool",
+      "value": 3
+     },
+     {
+      "player": "João Pedro",
+      "club": "Chelsea",
+      "value": 2
+     },
+     {
+      "player": "Antoine Semenyo",
+      "club": "Man City",
+      "value": 2
+     },
+     {
+      "player": "Julio Enciso",
+      "club": "Ipswich",
+      "value": 2
+     },
+     {
+      "player": "Evanilson",
+      "club": "Bournemouth",
+      "value": 2
+     },
+     {
+      "player": "Riccardo Calafiori",
+      "club": "Arsenal",
+      "value": 2
+     },
+     {
+      "player": "Jorrel Hato",
+      "club": "Chelsea",
+      "value": 2
+     },
+     {
+      "player": "Phil Foden",
+      "club": "Man City",
+      "value": 2
+     }
     ]
    }
   },
@@ -14418,6 +14504,92 @@
       null
      ]
     ]
+   },
+   "leaders": {
+    "goals": [
+     {
+      "player": "Raphinha",
+      "club": "Barcelona",
+      "value": 6
+     },
+     {
+      "player": "Sergio Camello",
+      "club": "Rayo",
+      "value": 5
+     },
+     {
+      "player": "Kylian Mbappé",
+      "club": "Real Madrid",
+      "value": 4
+     },
+     {
+      "player": "Pierre-Emerick Aubameyang",
+      "club": "Deportivo",
+      "value": 4
+     },
+     {
+      "player": "Lamine Yamal",
+      "club": "Barcelona",
+      "value": 4
+     },
+     {
+      "player": "Ante Budimir",
+      "club": "Osasuna",
+      "value": 4
+     },
+     {
+      "player": "Fermín López",
+      "club": "Barcelona",
+      "value": 4
+     },
+     {
+      "player": "Lucas Boyé",
+      "club": "Alavés",
+      "value": 4
+     }
+    ],
+    "assists": [
+     {
+      "player": "Anthony Gordon",
+      "club": "Barcelona",
+      "value": 4
+     },
+     {
+      "player": "Unai López",
+      "club": "Rayo",
+      "value": 3
+     },
+     {
+      "player": "Javi Hernandez",
+      "club": "Espanyol",
+      "value": 3
+     },
+     {
+      "player": "Ángel Pérez",
+      "club": "Alavés",
+      "value": 3
+     },
+     {
+      "player": "Mariano Díaz",
+      "club": "Alavés",
+      "value": 3
+     },
+     {
+      "player": "Mikel Oyarzabal",
+      "club": "Real Sociedad",
+      "value": 2
+     },
+     {
+      "player": "Xavi Espart",
+      "club": "Barcelona",
+      "value": 2
+     },
+     {
+      "player": "Pierre-Emerick Aubameyang",
+      "club": "Deportivo",
+      "value": 2
+     }
+    ]
    }
   },
   "ucl": {
@@ -17666,6 +17838,92 @@
       null,
       null
      ]
+    ]
+   },
+   "leaders": {
+    "goals": [
+     {
+      "player": "Ferran Torres",
+      "club": "PSG",
+      "value": 3
+     },
+     {
+      "player": "Ermedin Demirovic",
+      "club": "Stuttgart",
+      "value": 3
+     },
+     {
+      "player": "Danijel Sturm",
+      "club": "Slavia Prague",
+      "value": 2
+     },
+     {
+      "player": "Michael Olise",
+      "club": "Bayern",
+      "value": 2
+     },
+     {
+      "player": "Erling Haaland",
+      "club": "Man City",
+      "value": 2
+     },
+     {
+      "player": "Serhou Guirassy",
+      "club": "Dortmund",
+      "value": 2
+     },
+     {
+      "player": "Marc Bartra",
+      "club": "Betis",
+      "value": 2
+     },
+     {
+      "player": "Raphinha",
+      "club": "Barcelona",
+      "value": 2
+     }
+    ],
+    "assists": [
+     {
+      "player": "Lamine Yamal",
+      "club": "Barcelona",
+      "value": 2
+     },
+     {
+      "player": "Nico Paz",
+      "club": "Como",
+      "value": 2
+     },
+     {
+      "player": "Deniz Undav",
+      "club": "Stuttgart",
+      "value": 2
+     },
+     {
+      "player": "Pau Torres",
+      "club": "Aston Villa",
+      "value": 2
+     },
+     {
+      "player": "Ousmane Dembélé",
+      "club": "PSG",
+      "value": 2
+     },
+     {
+      "player": "Maghnes Akliouche",
+      "club": "PSG",
+      "value": 1
+     },
+     {
+      "player": "João Gomes",
+      "club": "Aston Villa",
+      "value": 1
+     },
+     {
+      "player": "Georges Mikautadze",
+      "club": "Villarreal",
+      "value": 1
+     }
     ]
    }
   }
