@@ -652,6 +652,7 @@ const store = {
   set(k, v){ try { localStorage.setItem("fulltime:"+k, JSON.stringify(v)); } catch { /* private mode */ } }
 };
 let fav = store.get("fav", null);       // {lg, short}
+let offline = false;                    // true once both snapshot sources have failed
 
 /* ===================== small helpers ===================== */
 const $ = id => document.getElementById(id);
@@ -1404,6 +1405,10 @@ function favPin(lg, rows, mode){
 
 function viewFinal(){
   const key = state.lg;
+  const warn = offline ? `<div class="empty"><div class="big">This season's table didn't load</div>
+      <p>The hourly snapshot couldn't be reached — usually a dropped connection or a blocked
+         request. Last season's final tables are below in the meantime.
+         <button class="tbtn" data-act="retry" style="margin-left:6px">Try again</button></p></div>` : "";
   const w = WRAPPED[key];
   const cfg = COMP[key];
   const head = `<div class="meta"><span class="chip"><b>2025/26</b> · final table</span>
@@ -1422,7 +1427,7 @@ function viewFinal(){
   }).join("");
   const out = w.out ? `<div class="sect"><h3 style="color:var(--drop)">Out of Europe · 25–36</h3>
       <div class="meta">${w.out.map(([p,n]) => `<span class="chip"><b>${p}</b> ${esc(n)}</span>`).join("")}</div></div>` : "";
-  return head + stories
+  return warn + head + stories
     + `<div class="card tbl" style="--cols:32px minmax(0,1fr) 60px">
         <div class="thead"><span class="c">#</span><span>Club</span><span class="r">Pts</span></div>${rows}</div>`
     + out + legendHTML(cfg.legend) + `<p class="note">${w.note}</p>`;
@@ -1712,27 +1717,51 @@ function render(){
 }
 
 /* ===================== data loading ===================== */
-async function fetchJSON(url){
-  const res = await fetch(url, {cache:"no-cache", signal: AbortSignal.timeout(7000)});
+async function fetchJSON(url, ms = 15000){
+  const res = await fetch(url, {cache:"no-cache", signal: AbortSignal.timeout(ms)});
   if (!res.ok) throw new Error(String(res.status));
   return res.json();
 }
 
-async function load(){
-  const results = await Promise.allSettled(DATA_URLS.map(fetchJSON));
-  const ok = results.filter(r => r.status === "fulfilled").map(r => r.value)
-    .filter(d => d && d.generated && d.comps);
-  if (ok.length){
-    ok.sort((a,b) => new Date(b.generated) - new Date(a.generated));
-    LIVE = ok[0];
-    const age = Date.now() - new Date(LIVE.generated).getTime();
-    $("status").className = "status " + (age < 6*3600e3 ? "live" : "stale");
-    $("status-txt").textContent = "updated " + timeAgo(LIVE.generated);
-  } else {
-    $("status").className = "status stale";
-    $("status-txt").textContent = "offline · 25/26 snapshot";
-    state.season = "final";
-  }
+function adopt(snapshot){
+  LIVE = snapshot;
+  offline = false;
+  const age = Date.now() - new Date(snapshot.generated).getTime();
+  $("status").className = "status " + (age < 6*3600e3 ? "live" : "stale");
+  $("status-txt").textContent = "updated " + timeAgo(snapshot.generated);
+}
+
+// Two sources hold the same snapshot: the committed copy on GitHub and the one
+// served beside this page. Draw as soon as either arrives rather than waiting for
+// the slower of the two, and swap in a fresher one if it turns up afterwards.
+function load(){
+  const usable = (d) => d && d.generated && d.comps;
+  const newer = (d) => !LIVE || new Date(d.generated) > new Date(LIVE.generated);
+  let pending = DATA_URLS.length;
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = () => { if (!settled){ settled = true; resolve(); } };
+    for (const url of DATA_URLS){
+      fetchJSON(url).then(snapshot => {
+        if (!usable(snapshot) || !newer(snapshot)) return;
+        const drawn = !!LIVE;
+        adopt(snapshot);
+        if (drawn) render();
+      }).catch(() => { /* the other source may still answer */ })
+        .finally(() => {
+          if (LIVE) done();
+          if (--pending === 0){
+            if (!LIVE){
+              $("status").className = "status stale";
+              $("status-txt").textContent = "couldn't load · 25/26 shown";
+              state.season = "final";
+              offline = true;
+            }
+            done();
+          }
+        });
+    }
+  });
 }
 
 /* If the committed snapshot has gone stale, recompute the domestic tables here
@@ -1831,6 +1860,11 @@ $("view").addEventListener("click", e => {
   else if (act === "ics") exportICS(el.dataset.lg, el.dataset.club);
   else if (act === "h2h") toggleH2H(el);
   else if (act === "clearq"){ state.q = ""; $("q").value = ""; render(); }
+  else if (act === "retry"){
+    el.disabled = true;
+    el.textContent = "Trying…";
+    load().then(() => { if (LIVE) offline = false; go({season: LIVE ? "live" : "final", view:"table"}, true); });
+  }
 });
 
 document.querySelectorAll(".tab").forEach(tab => {
