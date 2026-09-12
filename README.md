@@ -5,6 +5,11 @@ League** — standings, every club's full season, and round-by-round results.
 
 Live: https://lazizbekravshanov.github.io/fulltime/
 
+![The Premier League table on the live site](docs/screenshot-table.png)
+
+*Screenshots are taken from the published site by `.github/workflows/live-check.yml`,
+which drives it in a real browser and reports what it renders.*
+
 ## What it does
 
 **Tables.** Overall standings come straight from the competition's own table,
