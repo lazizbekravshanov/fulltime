@@ -9,12 +9,23 @@ const SITE = "https://lazizbekravshanov.github.io/fulltime/";
 const SHOTS = "docs";
 mkdirSync(SHOTS, { recursive: true });
 
-const snapshot = await (await fetch(SITE + "data.json", { headers: { "cache-control": "no-cache" } })).json();
+const grab = async (name) => {
+  const res = await fetch(SITE + name + "?v=" + Date.now(), { headers: { "cache-control": "no-cache" } });
+  return { json: await res.json(), bytes: Number(res.headers.get("content-length") ?? 0) };
+};
+const snapshot = (await grab("data.json")).json;
+const liveFile = await grab("live.json");
+const commentaryFile = await grab("commentary.json");
+
+// Prefer a match the live file actually carries commentary for.
 const pick = () => {
   for (const lg of ["epl", "liga", "ucl"]) {
-    const events = snapshot.comps[lg]?.events ?? {};
-    const ids = Object.keys(events);
-    if (ids.length) return { lg, ev: ids[ids.length - 1], goals: events[ids[ids.length - 1]] };
+    const ids = Object.keys(commentaryFile.json.comps?.[lg] ?? {});
+    if (ids.length) return { lg, ev: ids[0], goals: snapshot.comps[lg]?.events?.[ids[0]] ?? [], commented: true };
+  }
+  for (const lg of ["epl", "liga", "ucl"]) {
+    const ids = Object.keys(snapshot.comps[lg]?.events ?? {});
+    if (ids.length) return { lg, ev: ids[ids.length - 1], goals: snapshot.comps[lg].events[ids[ids.length - 1]], commented: false };
   }
   return null;
 };
@@ -30,12 +41,17 @@ page.on("response", (r) => {
 page.on("pageerror", (e) => failures.push("pageerror: " + e.message));
 page.on("console", (m) => { if (m.type() === "error" && !/net::|Failed to load resource/.test(m.text())) failures.push("console: " + m.text()); });
 
-console.log("=== snapshot on the server");
-console.log("  generated: " + snapshot.generated);
+const age = (iso) => Math.round((Date.now() - new Date(iso).getTime()) / 60000) + "m old";
+console.log("=== files on the server");
+console.log(`  data.json       ${age(snapshot.generated)}`);
+console.log(`  live.json       ${age(liveFile.json.generated)}  ${(liveFile.bytes / 1024).toFixed(1)}KB`);
+console.log(`  commentary.json ${age(commentaryFile.json.generated)}  ${(commentaryFile.bytes / 1024).toFixed(1)}KB`);
 for (const lg of ["epl", "liga", "ucl"]) {
-  const c = snapshot.comps[lg];
-  console.log(`  ${lg}: matchday ${c.matchday}, leader ${c.rows?.[0]?.short} ${c.rows?.[0]?.pts} pts, `
-    + `${Object.keys(c.events ?? {}).length} matches with scorers`);
+  const snapRow = snapshot.comps[lg]?.rows?.[0];
+  const liveRow = liveFile.json.comps?.[lg]?.rows?.[0];
+  const inPlay = Object.values(liveFile.json.comps?.[lg]?.matches ?? {}).filter(m => m.state === "in").length;
+  console.log(`  ${lg}: snapshot says ${snapRow?.short} ${snapRow?.pts}, live says ${liveRow?.short ?? "-"} ${liveRow?.pts ?? "-"}`
+    + ` · ${inPlay} in play · commentary for ${Object.keys(commentaryFile.json.comps?.[lg] ?? {}).length}`);
 }
 
 console.log("\n=== the live page, as a browser sees it");
@@ -54,8 +70,11 @@ const after = await page.evaluate(() => ({
   performers: document.querySelectorAll(".perf li").length,
   stats: [...document.querySelectorAll('[data-act="stat"]')].map(b => b.textContent.trim()).join(", ")
 }));
-console.log("  table first row on first paint: " + beforeRefresh);
-console.log("  after the on-load refresh:      " + after.leader);
+const liveLeader = liveFile.json.comps?.epl?.rows?.[0];
+console.log("  first paint (the hourly snapshot): " + beforeRefresh);
+console.log("  after the live file lands:         " + after.leader);
+console.log("  live.json says it should be:       "
+  + (liveLeader ? liveLeader.short + " " + liveLeader.pts : "(no table in live.json)"));
 console.log("  status pill: " + after.pill + "   chip: " + after.chip);
 console.log("  rows: " + after.rows + " · crest images loaded: " + after.crests + "/" + after.crestTotal);
 console.log("  top performers: " + after.performers + " rows · tabs: " + after.stats);
@@ -68,7 +87,7 @@ if (match) {
   console.log(`\n=== a real match page (${match.lg} ${match.ev}, ${match.goals.length} goal(s) in the snapshot)`);
   await page.goto(`${SITE}#${match.lg}/match/${match.ev}`, { waitUntil: "load" });
   await page.waitForSelector(".mhead", { timeout: 20000 });
-  const feed = await page.waitForSelector(".feed .line", { timeout: 20000 }).then(() => true).catch(() => false);
+  await page.waitForSelector(".feed .line", { timeout: 20000 }).catch(() => {});
   const m = await page.evaluate(() => ({
     teams: [...document.querySelectorAll(".team .nm")].map(e => e.textContent.trim()).join(" v "),
     score: document.querySelector(".bigscore")?.textContent.trim(),
@@ -78,7 +97,8 @@ if (match) {
   }));
   console.log("  " + m.teams + "   " + m.score);
   console.log("  scorers: " + (m.goals.join(" · ") || "(none)"));
-  console.log("  commentary lines from ESPN: " + m.lines + (feed ? "" : "  (none arrived)"));
+  console.log("  commentary lines: " + m.lines
+    + (match.commented ? " (this match is in commentary.json)" : " (not a match the live file covers)"));
   if (m.first) console.log("  latest line: " + m.first);
   await page.screenshot({ path: `${SHOTS}/screenshot-match.png` });
 }
