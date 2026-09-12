@@ -912,12 +912,12 @@ function tableFor(lg, mode){
   const c = comp(lg);
   if (!c?.rows?.length) return null;
   if (mode === "overall" || !c.fixtures){
-    // Form comes from openfootball, which publishes no Champions League file;
-    // where it is missing, read it off the fixture list instead.
+    // The fixture list carries the freshest results, so derive form from it
+    // rather than from whatever the standings feed last published.
     return c.rows.map(r => {
-      if (r.form || !c.fixtures) return {...r};
+      if (!c.fixtures) return {...r};
       const last = (fxOf(lg, r.short) ?? []).filter(f => f.done).slice(-5);
-      return {...r, form: last.map(outcomeOf).join("")};
+      return {...r, form: last.length ? last.map(outcomeOf).join("") : r.form};
     });
   }
   if (mode === "projected") return projectedTable(lg);
@@ -1092,46 +1092,7 @@ const utcStamp = d => d.toISOString().slice(0,10).replace(/-/g,"");
 async function pollLive(){
   clearTimeout(liveTimer);
   if (!LIVE || document.hidden) return scheduleLive();
-  const soon = matchesNear(5);
-  if (!soon.length){ LIVE_NOW.clear(); return scheduleLive(); }
-  const byLeague = new Map();
-  for (const {lg, f} of soon){
-    if (!byLeague.has(lg)) byLeague.set(lg, new Set());
-    byLeague.get(lg).add(utcStamp(new Date(f.date + "T12:00:00Z")));
-  }
-  let changed = false;
-  for (const [lg, days] of byLeague){
-    for (const day of days){
-      try {
-        const feed = await fetchJSON(
-          `https://site.api.espn.com/apis/site/v2/sports/soccer/${COMP[lg].espn}/scoreboard?dates=${day}`);
-        for (const event of feed.events ?? []){
-          const game = event.competitions?.[0];
-          const home = (game?.competitors ?? []).find(c => c.homeAway === "home");
-          const away = (game?.competitors ?? []).find(c => c.homeAway === "away");
-          if (!home?.team || !away?.team) continue;
-          const st = game.status?.type?.state;          // pre | in | post
-          if (st !== "in" && st !== "post") continue;
-          const num = v => { const n = Number(v?.value ?? v?.displayValue ?? v); return Number.isFinite(n) ? n : null; };
-          const rec = {
-            state: st,
-            hg: num(home.score), ag: num(away.score),
-            clock: game.status?.displayClock ?? null,
-            detail: game.status?.type?.shortDetail ?? null
-          };
-          if (rec.hg == null || rec.ag == null) continue;
-          const k = liveKey(lg, resolveClub(lg, home.team.displayName ?? home.team.name),
-                                resolveClub(lg, away.team.displayName ?? away.team.name));
-          const old = LIVE_NOW.get(k);
-          if (!old || old.state !== rec.state || old.hg !== rec.hg || old.ag !== rec.ag || old.clock !== rec.clock){
-            LIVE_NOW.set(k, rec);
-            changed = true;
-          }
-        }
-      } catch { /* the baked snapshot stands */ }
-    }
-  }
-  if (changed) render();
+  await refreshLeague(state.lg, { force: true });
   scheduleLive();
 }
 function scheduleLive(){
@@ -1955,6 +1916,7 @@ function render(){
   else if (state.view === "match") view.innerHTML = viewMatch();
   else if (state.view === "round") view.innerHTML = viewRound();
   else view.innerHTML = viewTable();
+  markFresh();
   document.title = state.view === "club" && state.club
     ? `${state.club.replace(/-/g," ")} · FULLTIME`
     : `${COMP[state.lg].title} · FULLTIME`;
@@ -1990,7 +1952,9 @@ function load(){
     let settled = false;
     const done = () => { if (!settled){ settled = true; resolve(); } };
     for (const url of DATA_URLS){
-      fetchJSON(url).then(snapshot => {
+      // A per-minute token defeats the ten-minute CDN cache without refetching
+      // the same file on a rapid double reload.
+      fetchJSON(url + (url.includes("?") ? "&" : "?") + "v=" + Math.floor(Date.now() / 60000)).then(snapshot => {
         if (!usable(snapshot) || !newer(snapshot)) return;
         const drawn = !!LIVE;
         adopt(snapshot);
@@ -2012,61 +1976,179 @@ function load(){
   });
 }
 
-/* If the committed snapshot has gone stale, recompute the domestic tables here
-   in the browser from openfootball's raw JSON. Fixtures and leaders from the
-   snapshot are kept — this only replaces rows. */
-function computeTable(matches){
-  const table = new Map();
-  const t = n => { if (!table.has(n)) table.set(n, {team:n,p:0,w:0,d:0,l:0,gf:0,ga:0,res:[]}); return table.get(n); };
-  let matchday = 0;
-  for (const m of matches ?? []){
-    if (m.team1) t(m.team1);
-    if (m.team2) t(m.team2);
-    const ft = m?.score?.ft;
-    if (!Array.isArray(ft) || ft.length !== 2) continue;
-    const [g1,g2] = ft, a = t(m.team1), b = t(m.team2);
-    a.p++; b.p++; a.gf += g1; a.ga += g2; b.gf += g2; b.ga += g1;
-    if (g1 > g2){ a.w++; b.l++; a.res.push([m.date,"W"]); b.res.push([m.date,"L"]); }
-    else if (g1 < g2){ b.w++; a.l++; a.res.push([m.date,"L"]); b.res.push([m.date,"W"]); }
-    else { a.d++; b.d++; a.res.push([m.date,"D"]); b.res.push([m.date,"D"]); }
-    const md = parseInt(String(m.round ?? "").replace(/\D+/g,""), 10);
-    if (md > matchday) matchday = md;
-  }
-  const rows = [...table.values()].map(r => ({...r, gd:r.gf-r.ga, pts:r.w*3+r.d,
-    form:r.res.sort((x,y) => String(x[0]).localeCompare(String(y[0]))).slice(-5).map(x => x[1]).join("")}));
-  rows.sort((x,y) => y.pts-x.pts || y.gd-x.gd || y.gf-x.gf || x.team.localeCompare(y.team));
-  return {matchday, rows: rows.map((r,i) => ({pos:i+1, team:r.team, short:r.team,
-    p:r.p, w:r.w, d:r.d, l:r.l, gf:r.gf, ga:r.ga, gd:r.gd, pts:r.pts, form:r.form, logo:null}))};
-}
-async function refreshInBrowser(){
-  if (!LIVE || Date.now() - new Date(LIVE.generated).getTime() < 24*3600e3) return;
-  let touched = false;
-  for (const [key,file] of Object.entries(OF_FILES)){
-    try {
-      const of = await fetchJSON(`${OF_BASE}/${ofSeasonDir()}/${file}`);
-      const fresh = computeTable(of.matches);
-      if (!fresh.rows.some(r => r.p > 0)) continue;
-      const old = new Map((LIVE.comps[key]?.rows ?? []).map(r => [normKey(r.team), r]));
-      for (const r of fresh.rows){
-        const o = old.get(normKey(r.team));
-        if (o){ r.short = o.short; r.logo = o.logo; }
-      }
-      LIVE.comps[key] = {...(LIVE.comps[key] ?? {}), name: COMP[key].title,
-        source:"openfootball (recomputed in your browser)", matchday: fresh.matchday, rows: fresh.rows};
-      touched = true;
-    } catch { /* keep the snapshot */ }
-  }
-  if (touched){
-    LIVE.generated = new Date().toISOString();
-    $("status").className = "status live";
-    $("status-txt").textContent = "recomputed just now";
-    render();
-  }
-}
-function ofSeasonDir(){
+/* ===================== refresh on load =====================
+   The snapshot is only as fresh as the last hourly commit, and GitHub caches it
+   for another ten minutes on top. ESPN serves its feeds cross-origin with a
+   one-second cache, so on every load the competition being viewed is brought up
+   to the minute: the table from the standings feed, recent results and scorers
+   from the scoreboard. Every failure is silent and leaves the snapshot in place. */
+const ESPN = "https://site.api.espn.com/apis";
+const REFRESHED = new Map();      // league -> when it was last brought up to date
+let refreshedAt = null;
+
+function seasonStartYear(){
   const n = new Date();
-  const y = n.getUTCMonth() >= 6 ? n.getUTCFullYear() : n.getUTCFullYear()-1;
-  return `${y}-${String((y+1) % 100).padStart(2,"0")}`;
+  return n.getUTCMonth() >= 6 ? n.getUTCFullYear() : n.getUTCFullYear() - 1;
+}
+function espnStat(entry, ...names){
+  for (const n of names){
+    const s = (entry.stats ?? []).find(st => st.name === n || st.type === n);
+    if (s && typeof s.value === "number") return s.value;
+  }
+  return null;
+}
+function parseStandings(json){
+  let entries = (json.children ?? []).flatMap(c => c.standings?.entries ?? []);
+  if (!entries.length) entries = json.standings?.entries ?? [];
+  if (!entries.length) return null;
+  const rows = entries.map(e => {
+    const gf = espnStat(e, "pointsFor");
+    const ga = espnStat(e, "pointsAgainst");
+    return {
+      pos: espnStat(e, "rank"), id: e.team?.id ?? null,
+      team: e.team?.displayName ?? e.team?.name ?? "?",
+      p: espnStat(e, "gamesPlayed"), w: espnStat(e, "wins"),
+      d: espnStat(e, "ties"), l: espnStat(e, "losses"),
+      gf, ga,
+      gd: espnStat(e, "pointDifferential") ?? (gf != null && ga != null ? gf - ga : null),
+      pts: espnStat(e, "points"), form: "",
+      logo: e.team?.logos?.[0]?.href ?? null
+    };
+  });
+  if (rows.some(r => r.pts == null)) return null;
+  rows.sort((x,y) => (x.pos ?? 99) - (y.pos ?? 99) || y.pts - x.pts || (y.gd ?? 0) - (x.gd ?? 0));
+  rows.forEach((r,i) => { if (r.pos == null) r.pos = i + 1; });
+  return rows;
+}
+
+/* Keep the snapshot's short names: every fixture is keyed by them. */
+function adoptRows(lg, rows){
+  const c = comp(lg);
+  if (!c?.rows?.length) return false;
+  const byId = new Map(c.rows.filter(r => r.id != null).map(r => [String(r.id), r]));
+  const byKey = new Map(c.rows.map(r => [normKey(r.team), r]));
+  c.rows = rows.map(r => {
+    const was = byId.get(String(r.id)) ?? byKey.get(normKey(r.team));
+    return {...r, short: was?.short ?? clubShort(r.team), logo: r.logo ?? was?.logo ?? null};
+  });
+  c.matchday = Math.max(0, ...c.rows.map(r => r.p ?? 0));
+  return true;
+}
+
+/* Mirrors scorersFrom() in the updater: [minute, scorer, home?1:0, kind]. */
+function scorersFromGame(game, homeTeamId, hg, ag){
+  const out = [];
+  for (const d of game.details ?? []){
+    if (!d?.scoringPlay || d.shootout) continue;
+    const who = d.athletesInvolved?.[0];
+    const name = who?.shortName ?? who?.displayName ?? null;
+    if (!name) continue;
+    out.push([
+      String(d.clock?.displayValue ?? "").replace(/'/g,"").trim() || null,
+      name,
+      String(d.team?.id ?? "") === String(homeTeamId) ? 1 : 0,
+      d.ownGoal ? "o" : d.penaltyKick ? "p" : ""
+    ]);
+  }
+  if (hg == null || ag == null) return out;
+  const home = (list) => list.filter(g => g[2] === 1).length;
+  if (home(out) === hg && out.length - home(out) === ag) return out;
+  const flipped = out.map(g => g[3] === "o" ? [g[0], g[1], g[2] === 1 ? 0 : 1, g[3]] : g);
+  return home(flipped) === hg && flipped.length - home(flipped) === ag ? flipped : out;
+}
+
+function setResult(lg, ev, hg, ag){
+  const fx = comp(lg)?.fixtures;
+  if (!fx || !ev) return false;
+  let touched = false;
+  for (const list of Object.values(fx)){
+    for (const t of list){
+      if (t[7] !== ev) continue;
+      const mine = t[4] === 1 ? hg : ag;
+      const theirs = t[4] === 1 ? ag : hg;
+      if (t[5] !== mine || t[6] !== theirs){ t[5] = mine; t[6] = theirs; touched = true; }
+    }
+  }
+  return touched;
+}
+
+const stamp = (d) => d.toISOString().slice(0,10).replace(/-/g,"");
+async function refreshResults(lg){
+  const now = Date.now();
+  const range = `${stamp(new Date(now - 4 * 864e5))}-${stamp(new Date(now + 864e5))}`;
+  const feed = await fetchJSON(
+    `${ESPN}/site/v2/sports/soccer/${COMP[lg].espn}/scoreboard?dates=${range}&limit=300`, 9000);
+  let changed = false;
+  for (const event of feed.events ?? []){
+    const game = event.competitions?.[0];
+    const home = (game?.competitors ?? []).find(c => c.homeAway === "home");
+    const away = (game?.competitors ?? []).find(c => c.homeAway === "away");
+    if (!home?.team || !away?.team) continue;
+    const state = game.status?.type?.state;
+    const num = (v) => { const n = Number(v?.value ?? v?.displayValue ?? v); return Number.isFinite(n) ? n : null; };
+    const hg = num(home.score), ag = num(away.score);
+    const hs = resolveClub(lg, home.team.displayName ?? home.team.name);
+    const as = resolveClub(lg, away.team.displayName ?? away.team.name);
+    const ev = String(event.id ?? "") || null;
+
+    if (state === "in" && hg != null && ag != null){
+      const key = liveKey(lg, hs, as);
+      const was = LIVE_NOW.get(key);
+      const rec = {state:"in", hg, ag, clock: game.status?.displayClock ?? null};
+      if (!was || was.hg !== rec.hg || was.ag !== rec.ag || was.clock !== rec.clock){
+        LIVE_NOW.set(key, rec);
+        changed = true;
+      }
+    } else {
+      LIVE_NOW.delete(liveKey(lg, hs, as));
+    }
+    // A finished match is written into the fixture list so the whole page — table
+    // splits, records, season shape — reflects it, not just the scoreline.
+    if (game.status?.type?.completed === true && hg != null && ag != null){
+      if (setResult(lg, ev, hg, ag)) changed = true;
+      const scorers = scorersFromGame(game, home.team.id, hg, ag);
+      if (ev && scorers.length){
+        const c = comp(lg);
+        c.events ??= {};
+        if (JSON.stringify(c.events[ev]) !== JSON.stringify(scorers)){ c.events[ev] = scorers; changed = true; }
+      }
+    } else if (ev && hg != null && ag != null && state === "in"){
+      const scorers = scorersFromGame(game, home.team.id, hg, ag);
+      const c = comp(lg);
+      c.events ??= {};
+      if (scorers.length && JSON.stringify(c.events[ev]) !== JSON.stringify(scorers)){ c.events[ev] = scorers; changed = true; }
+    }
+  }
+  return changed;
+}
+
+async function refreshLeague(lg, { force = false } = {}){
+  if (!LIVE || !comp(lg) || comp(lg).notStarted) return;
+  const last = REFRESHED.get(lg) ?? 0;
+  if (!force && Date.now() - last < 60000) return;
+  REFRESHED.set(lg, Date.now());
+  let changed = false;
+  const results = await Promise.allSettled([
+    fetchJSON(`${ESPN}/v2/sports/soccer/${COMP[lg].espn}/standings?season=${seasonStartYear()}`, 9000)
+      .then(j => { const rows = parseStandings(j); return rows ? adoptRows(lg, rows) : false; }),
+    refreshResults(lg)
+  ]);
+  for (const r of results) if (r.status === "fulfilled" && r.value) changed = true;
+  if (!results.some(r => r.status === "fulfilled")){
+    REFRESHED.set(lg, 0);        // nothing got through; let the next attempt retry
+    return;
+  }
+  refreshedAt = Date.now();
+  markFresh();
+  if (changed) render();
+}
+
+function markFresh(){
+  if (!refreshedAt) return;
+  const secs = Math.round((Date.now() - refreshedAt) / 1000);
+  $("status").className = "status live";
+  $("status-txt").textContent = secs < 90 ? "live · just now"
+    : "live · " + timeAgo(new Date(refreshedAt).toISOString());
 }
 
 /* ===================== theme ===================== */
@@ -2098,7 +2180,7 @@ $("view").addEventListener("click", e => {
   const el = e.target.closest("[data-act]");
   if (!el) return;
   const act = el.dataset.act;
-  if (act === "club"){ window.scrollTo(0,0); go({lg: el.dataset.lg || state.lg, view:"club", club: el.dataset.club, allComps:false}); }
+  if (act === "club"){ window.scrollTo(0,0); go({lg: el.dataset.lg || state.lg, view:"club", club: el.dataset.club, allComps:false}); refreshLeague(state.lg); }
   else if (act === "table") go({view:"table", round:null, club:null, match:null});
   else if (act === "mode") go({mode: el.dataset.mode, view:"table"}, true);
   else if (act === "season") go({season: el.dataset.season, view:"table", club:null}, true);
@@ -2120,7 +2202,11 @@ $("view").addEventListener("click", e => {
 });
 
 document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => { state.q = ""; $("q").value = ""; go({lg: tab.dataset.lg, view:"table", club:null, round:null}); });
+  tab.addEventListener("click", () => {
+    state.q = ""; $("q").value = "";
+    go({lg: tab.dataset.lg, view:"table", club:null, round:null});
+    refreshLeague(tab.dataset.lg);
+  });
 });
 document.querySelector(".brand").addEventListener("click", e => {
   e.preventDefault();
@@ -2153,7 +2239,9 @@ window.addEventListener("hashchange", () => {
   const s = parseHash();
   if (s){ Object.assign(state, s, {q: state.q}); render(); }
 });
-document.addEventListener("visibilitychange", () => { if (!document.hidden) pollLive(); });
+// Coming back to the tab is the same as loading it again.
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshLeague(state.lg, { force: true }); });
+window.addEventListener("pageshow", (e) => { if (e.persisted) refreshLeague(state.lg, { force: true }); });
 let lastNarrow = window.matchMedia("(max-width:680px)").matches;
 window.addEventListener("resize", () => {
   const narrow = window.matchMedia("(max-width:680px)").matches;
@@ -2172,8 +2260,7 @@ window.addEventListener("resize", () => {
     history.replaceState(null, "", hashOf(state));
   }
   render();
-  pollLive();
-  refreshInBrowser();
+  refreshLeague(state.lg).finally(scheduleLive);
 })();
 </script>
 </body>

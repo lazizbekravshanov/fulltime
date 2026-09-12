@@ -53,12 +53,22 @@ names so you know what you're reading.
 
 ## It updates itself
 
-A scheduled GitHub Action runs every hour, pulls current standings and
-fixtures, and commits `data.json`. The page loads the newest `data.json` at
-view time, so there is nothing to redeploy and nothing to do by hand. The
-season rolls over automatically each August. If the snapshot ever goes more
-than a day stale, the page recomputes the domestic tables in the browser from
-open data rather than showing old numbers.
+Two layers, so the page is never showing yesterday's table.
+
+**On every load** the competition you are looking at is brought up to the
+minute in your browser, straight from ESPN: the table from the standings feed,
+and results, scorers and live scores from the scoreboard. Switching competition
+refreshes that one, and returning to the tab refreshes again. A finished match
+is written into the fixture list, so the splits, records and season-shape chart
+move with it — not just the scoreline. Every one of those requests can fail
+silently; the committed snapshot is what the page falls back to.
+
+**Every hour** a scheduled GitHub Action pulls the same feeds and commits
+`data.json`. That is what gives the page its instant first paint, its full
+season of fixtures, and something to show when ESPN can't be reached. GitHub
+caches that file for ten minutes, so the page asks for it with a per-minute
+token to be sure a reload gets the newest one. The season rolls over
+automatically each August.
 
 Sources: ESPN's public feed for standings, crests, kick-off instants, goal
 scorers, commentary, competition leaders and Champions League fixtures;
