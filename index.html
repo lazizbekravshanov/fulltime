@@ -1056,7 +1056,7 @@ function scorersOf(lg, ev){
     .sort((a,b) => (parseInt(a.minute,10) || 0) - (parseInt(b.minute,10) || 0));
 }
 
-/* ===================== live overlay (opportunistic) ===================== */
+/* ===================== live scores ===================== */
 const liveKey = (lg, home, away) => `${lg}|${home}|${away}`;
 const liveFor = (lg, home, away) => LIVE_NOW.get(liveKey(lg, home, away)) ?? null;
 function liveForFixture(f, club){
@@ -1086,20 +1086,6 @@ function matchesNear(hours){
     }
   }
   return out;
-}
-const utcStamp = d => d.toISOString().slice(0,10).replace(/-/g,"");
-
-async function pollLive(){
-  clearTimeout(liveTimer);
-  if (!LIVE || document.hidden) return scheduleLive();
-  await refreshLeague(state.lg, { force: true });
-  scheduleLive();
-}
-function scheduleLive(){
-  clearTimeout(liveTimer);
-  if (!LIVE || !matchesNear(5).length) return;
-  const inPlay = [...LIVE_NOW.values()].some(v => v.state === "in");
-  liveTimer = setTimeout(pollLive, inPlay ? 45000 : 180000);
 }
 
 /* ===================== pieces ===================== */
@@ -1382,24 +1368,10 @@ function clubFixtures(lg, short, all){
 }
 
 /* ===================== match page ===================== */
-const COMMENTARY = new Map();       // event id -> {lines, at}
-let feedTimer = null;
+const COMMENTARY = new Map();       // event id -> {lines, at}, from the live file
 
-/* Commentary is fetched only when a match is opened — never on the way to a
-   table — and any failure leaves the rest of the page untouched. */
-async function fetchCommentary(lg, ev){
-  const j = await fetchJSON(
-    `https://site.api.espn.com/apis/site/v2/sports/soccer/${COMP[lg].espn}/summary?event=${ev}`, 12000);
-  const lines = (j.commentary ?? []).map(c => ({
-    seq: Number(c?.sequence ?? 0),
-    minute: String(c?.time?.displayValue ?? "").replace(/'/g,"").trim(),
-    text: String(c?.text ?? "").trim()
-  })).filter(c => c.text);
-  if (!lines.length) throw new Error("no commentary");
-  lines.sort((a,b) => b.seq - a.seq);
-  return {lines, at: Date.now()};
-}
-
+/* Commentary arrives with the live file, which carries the matches in play and
+   the ones just finished. Nothing is fetched when a match is opened. */
 function feedHTML(lines){
   return `<div class="card feed">${lines.map(l => {
     // Opta's wording is stable enough to tint the important lines; when it is
@@ -1411,42 +1383,15 @@ function feedHTML(lines){
   }).join("")}</div>`;
 }
 
-function paintFeed(lg, ev, failed){
-  const slot = $("feed");
-  if (!slot) return;
-  const data = COMMENTARY.get(ev);
-  if (data) { slot.innerHTML = feedHTML(data.lines); return; }
-  slot.innerHTML = failed
-    ? `<div class="empty"><div class="big">Commentary didn't load</div>
-        <p>It comes live from ESPN when a match is opened, so a blocked or dropped request leaves
-           this section empty. The score and scorers above are from the hourly snapshot and stand
-           on their own. <button class="tbtn" data-act="recomment" data-lg="${lg}" data-ev="${esc(ev)}"
-           style="margin-left:6px">Try again</button></p></div>`
-    : `<div class="card"><div class="loading">Loading commentary…</div></div>`;
-}
-
-function matchIsLive(lg, m){
-  if (!m || m.done) return false;
-  const lv = liveFor(lg, m.home, m.away);
-  if (lv) return lv.state === "in";
-  const k = kickoff(m.f);
-  if (!k) return false;
-  const since = Date.now() - k.dt.getTime();
-  return since > 0 && since < 3 * 3600e3;
-}
-
-async function loadCommentary(lg, ev, m){
-  const token = renderToken;
-  try {
-    COMMENTARY.set(ev, await fetchCommentary(lg, ev));
-    if (token !== renderToken) return;
-    paintFeed(lg, ev);
-  } catch {
-    if (token !== renderToken) return;
-    paintFeed(lg, ev, true);
-  }
-  clearTimeout(feedTimer);
-  if (token === renderToken && matchIsLive(lg, m)) feedTimer = setTimeout(() => loadCommentary(lg, ev, m), 45000);
+function commentaryHTML(lg, m){
+  const data = m.f.ev ? COMMENTARY.get(m.f.ev) : null;
+  if (data?.lines?.length) return feedHTML(data.lines);
+  const kick = kickoff(m.f);
+  const started = kick && kick.dt.getTime() < Date.now();
+  return `<div class="empty"><div class="big">${started ? "No commentary for this match" : "Commentary starts at kick-off"}</div>
+    <p>${started
+      ? "Commentary is collected for matches in play and the ones just finished, so it is gone from here once a match is a day or so old. The score and scorers above stay."
+      : "The live feed carries commentary for matches being played now and those that have just ended. Come back around kick-off."}</p></div>`;
 }
 
 function viewMatch(){
@@ -1500,11 +1445,10 @@ function viewMatch(){
       ${sheet}
     </div>`;
 
-  const commentary = `<div class="sect"><h3>Commentary</h3><div id="feed"></div></div>`;
+  const commentary = `<div class="sect"><h3>Commentary</h3>${commentaryHTML(lg, m)}</div>`;
   const h2h = `<div class="sect"><h3>Head to head</h3><div class="card det" style="border-bottom:none">${
     h2hHTML(lg, m.home, m.away, m.f.date)}</div></div>`;
 
-  if (m.f.ev) loadCommentary(lg, m.f.ev, m);
   return back + head
     + (m.f.ev ? commentary : `<p class="note">This fixture isn't matched to a match feed yet, so there is no commentary for it.</p>`)
     + h2h;
@@ -1912,7 +1856,6 @@ function render(){
   document.querySelectorAll(".tab").forEach(t =>
     t.setAttribute("aria-selected", String(t.dataset.lg === state.lg)));
   const view = $("view");
-  clearTimeout(feedTimer);
   if (state.view === "club") view.innerHTML = viewClub();
   else if (state.view === "match") view.innerHTML = viewMatch();
   else if (state.view === "round") view.innerHTML = viewRound();
@@ -1978,85 +1921,17 @@ function load(){
 }
 
 /* ===================== refresh on load =====================
-   The snapshot is only as fresh as the last hourly commit, and GitHub caches it
-   for another ten minutes on top. ESPN serves its feeds cross-origin with a
-   one-second cache, so on every load the competition being viewed is brought up
-   to the minute: the table from the standings feed, recent results and scorers
-   from the scoreboard. Every failure is silent and leaves the snapshot in place. */
-const ESPN = "https://site.api.espn.com/apis";
-const REFRESHED = new Map();      // league -> when it was last brought up to date
+   ESPN cannot be read from a browser — it sends no Access-Control-Allow-Origin to
+   a real fetch, whatever it tells curl — so everything time-sensitive is pulled by
+   a job every five minutes into live.json, and the page reads that. It is fetched
+   after the first paint, applied on top of the hourly snapshot, and polled while a
+   match is in play. Every failure leaves the snapshot showing. */
+const LIVE_URLS = [
+  "https://raw.githubusercontent.com/lazizbekravshanov/fulltime/main/live.json",
+  "./live.json"
+];
 let refreshedAt = null;
-
-function seasonStartYear(){
-  const n = new Date();
-  return n.getUTCMonth() >= 6 ? n.getUTCFullYear() : n.getUTCFullYear() - 1;
-}
-function espnStat(entry, ...names){
-  for (const n of names){
-    const s = (entry.stats ?? []).find(st => st.name === n || st.type === n);
-    if (s && typeof s.value === "number") return s.value;
-  }
-  return null;
-}
-function parseStandings(json){
-  let entries = (json.children ?? []).flatMap(c => c.standings?.entries ?? []);
-  if (!entries.length) entries = json.standings?.entries ?? [];
-  if (!entries.length) return null;
-  const rows = entries.map(e => {
-    const gf = espnStat(e, "pointsFor");
-    const ga = espnStat(e, "pointsAgainst");
-    return {
-      pos: espnStat(e, "rank"), id: e.team?.id ?? null,
-      team: e.team?.displayName ?? e.team?.name ?? "?",
-      p: espnStat(e, "gamesPlayed"), w: espnStat(e, "wins"),
-      d: espnStat(e, "ties"), l: espnStat(e, "losses"),
-      gf, ga,
-      gd: espnStat(e, "pointDifferential") ?? (gf != null && ga != null ? gf - ga : null),
-      pts: espnStat(e, "points"), form: "",
-      logo: e.team?.logos?.[0]?.href ?? null
-    };
-  });
-  if (rows.some(r => r.pts == null)) return null;
-  rows.sort((x,y) => (x.pos ?? 99) - (y.pos ?? 99) || y.pts - x.pts || (y.gd ?? 0) - (x.gd ?? 0));
-  rows.forEach((r,i) => { if (r.pos == null) r.pos = i + 1; });
-  return rows;
-}
-
-/* Keep the snapshot's short names: every fixture is keyed by them. */
-function adoptRows(lg, rows){
-  const c = comp(lg);
-  if (!c?.rows?.length) return false;
-  const byId = new Map(c.rows.filter(r => r.id != null).map(r => [String(r.id), r]));
-  const byKey = new Map(c.rows.map(r => [normKey(r.team), r]));
-  c.rows = rows.map(r => {
-    const was = byId.get(String(r.id)) ?? byKey.get(normKey(r.team));
-    return {...r, short: was?.short ?? clubShort(r.team), logo: r.logo ?? was?.logo ?? null};
-  });
-  c.matchday = Math.max(0, ...c.rows.map(r => r.p ?? 0));
-  return true;
-}
-
-/* Mirrors scorersFrom() in the updater: [minute, scorer, home?1:0, kind]. */
-function scorersFromGame(game, homeTeamId, hg, ag){
-  const out = [];
-  for (const d of game.details ?? []){
-    if (!d?.scoringPlay || d.shootout) continue;
-    const who = d.athletesInvolved?.[0];
-    const name = who?.shortName ?? who?.displayName ?? null;
-    if (!name) continue;
-    out.push([
-      String(d.clock?.displayValue ?? "").replace(/'/g,"").trim() || null,
-      name,
-      String(d.team?.id ?? "") === String(homeTeamId) ? 1 : 0,
-      d.ownGoal ? "o" : d.penaltyKick ? "p" : ""
-    ]);
-  }
-  if (hg == null || ag == null) return out;
-  const home = (list) => list.filter(g => g[2] === 1).length;
-  if (home(out) === hg && out.length - home(out) === ag) return out;
-  const flipped = out.map(g => g[3] === "o" ? [g[0], g[1], g[2] === 1 ? 0 : 1, g[3]] : g);
-  return home(flipped) === hg && flipped.length - home(flipped) === ag ? flipped : out;
-}
+let liveGenerated = null;
 
 function setResult(lg, ev, hg, ag){
   const fx = comp(lg)?.fixtures;
@@ -2073,90 +1948,101 @@ function setResult(lg, ev, hg, ag){
   return touched;
 }
 
-const stamp = (d) => d.toISOString().slice(0,10).replace(/-/g,"");
-async function refreshResults(lg){
-  const now = Date.now();
-  const range = `${stamp(new Date(now - 4 * 864e5))}-${stamp(new Date(now + 864e5))}`;
-  const feed = await fetchJSON(
-    `${ESPN}/site/v2/sports/soccer/${COMP[lg].espn}/scoreboard?dates=${range}&limit=300`, 9000);
-  let changed = false;
-  for (const event of feed.events ?? []){
-    const game = event.competitions?.[0];
-    const home = (game?.competitors ?? []).find(c => c.homeAway === "home");
-    const away = (game?.competitors ?? []).find(c => c.homeAway === "away");
-    if (!home?.team || !away?.team) continue;
-    const state = game.status?.type?.state;
-    const num = (v) => { const n = Number(v?.value ?? v?.displayValue ?? v); return Number.isFinite(n) ? n : null; };
-    const hg = num(home.score), ag = num(away.score);
-    const hs = resolveClub(lg, home.team.displayName ?? home.team.name);
-    const as = resolveClub(lg, away.team.displayName ?? away.team.name);
-    const ev = String(event.id ?? "") || null;
+/* Keep the snapshot's short names: every fixture is keyed by them. */
+function adoptRows(lg, rows){
+  const c = comp(lg);
+  if (!c?.rows?.length || !rows?.length) return false;
+  const byId = new Map(c.rows.filter(r => r.id != null).map(r => [String(r.id), r]));
+  const byKey = new Map(c.rows.map(r => [normKey(r.team), r]));
+  c.rows = rows.map(r => {
+    const was = byId.get(String(r.id)) ?? byKey.get(normKey(r.team));
+    return {...r, short: r.short ?? was?.short ?? clubShort(r.team), logo: r.logo ?? was?.logo ?? null};
+  });
+  return true;
+}
 
-    if (state === "in" && hg != null && ag != null){
-      const key = liveKey(lg, hs, as);
-      const was = LIVE_NOW.get(key);
-      const rec = {state:"in", hg, ag, clock: game.status?.displayClock ?? null};
-      if (!was || was.hg !== rec.hg || was.ag !== rec.ag || was.clock !== rec.clock){
-        LIVE_NOW.set(key, rec);
+function applyLive(live){
+  if (!LIVE || !live?.comps) return false;
+  if (liveGenerated && new Date(live.generated) <= new Date(liveGenerated)) return false;
+  liveGenerated = live.generated;
+  let changed = false;
+  for (const lg of LEAGUES){
+    const c = comp(lg);
+    const l = live.comps[lg];
+    if (!c || !l) continue;
+    if (l.rows && adoptRows(lg, l.rows)){
+      if (l.matchday) c.matchday = l.matchday;
+      changed = true;
+    }
+    for (const [ev, m] of Object.entries(l.matches ?? {})){
+      if (m.state === "post" && m.hg != null && m.ag != null){
+        if (setResult(lg, ev, m.hg, m.ag)) changed = true;
+      }
+      if (m.goals?.length){
+        c.events ??= {};
+        if (JSON.stringify(c.events[ev]) !== JSON.stringify(m.goals)){ c.events[ev] = m.goals; changed = true; }
+      }
+      const seat = matchById(lg, ev);
+      if (!seat) continue;
+      const key = liveKey(lg, seat.home, seat.away);
+      if (m.state === "in" && m.hg != null){
+        const was = LIVE_NOW.get(key);
+        const rec = {state:"in", hg:m.hg, ag:m.ag, clock:m.clock ?? null};
+        if (!was || was.hg !== rec.hg || was.ag !== rec.ag || was.clock !== rec.clock){
+          LIVE_NOW.set(key, rec);
+          changed = true;
+        }
+      } else if (LIVE_NOW.delete(key)) changed = true;
+    }
+    for (const [ev, lines] of Object.entries(l.commentary ?? {})){
+      const mapped = lines.map(([minute, text], i) => ({seq: i, minute, text})).reverse();
+      const had = COMMENTARY.get(ev);
+      if (!had || had.lines.length !== mapped.length){
+        COMMENTARY.set(ev, {lines: mapped, at: Date.now()});
         changed = true;
       }
-    } else {
-      LIVE_NOW.delete(liveKey(lg, hs, as));
-    }
-    // A finished match is written into the fixture list so the whole page — table
-    // splits, records, season shape — reflects it, not just the scoreline.
-    if (game.status?.type?.completed === true && hg != null && ag != null){
-      if (setResult(lg, ev, hg, ag)) changed = true;
-      const scorers = scorersFromGame(game, home.team.id, hg, ag);
-      if (ev && scorers.length){
-        const c = comp(lg);
-        c.events ??= {};
-        if (JSON.stringify(c.events[ev]) !== JSON.stringify(scorers)){ c.events[ev] = scorers; changed = true; }
-      }
-    } else if (ev && hg != null && ag != null && state === "in"){
-      const scorers = scorersFromGame(game, home.team.id, hg, ag);
-      const c = comp(lg);
-      c.events ??= {};
-      if (scorers.length && JSON.stringify(c.events[ev]) !== JSON.stringify(scorers)){ c.events[ev] = scorers; changed = true; }
     }
   }
+  refreshedAt = new Date(live.generated).getTime();
   return changed;
 }
 
-async function refreshLeague(lg, { force = false } = {}){
-  if (!LIVE || !comp(lg) || comp(lg).notStarted) return;
-  const last = REFRESHED.get(lg) ?? 0;
-  if (!force && Date.now() - last < 60000) return;
-  REFRESHED.set(lg, Date.now());
-  let changed = false;
-  const results = await Promise.allSettled([
-    fetchJSON(`${ESPN}/v2/sports/soccer/${COMP[lg].espn}/standings?season=${seasonStartYear()}`, 9000)
-      .then(j => { const rows = parseStandings(j); return rows ? adoptRows(lg, rows) : false; }),
-    refreshResults(lg)
-  ]);
-  for (const r of results) if (r.status === "fulfilled" && r.value) changed = true;
-  if (!results.some(r => r.status === "fulfilled")){
-    REFRESHED.set(lg, 0);        // nothing got through; let the next attempt retry
-    return;
-  }
-  refreshedAt = Date.now();
-  markFresh();
-  if (changed) render();
+async function pullLive(){
+  clearTimeout(liveTimer);
+  // Both copies are asked at once: whichever answers first is used, and
+  // applyLive ignores an older file if the slower copy turns out to be behind.
+  const bust = "?v=" + Date.now();
+  await Promise.allSettled(LIVE_URLS.map(url =>
+    fetchJSON(url + bust, 9000).then(live => {
+      if (!live?.generated || !live.comps) return;
+      const changed = applyLive(live);
+      markFresh();
+      if (changed) render();
+    })));
+  scheduleLive();
 }
 
-/* One sentence about where these numbers came from, used by the chip beside the
+function scheduleLive(){
+  clearTimeout(liveTimer);
+  if (!LIVE) return;
+  const inPlay = [...LIVE_NOW.values()].some(v => v.state === "in");
+  // The job writes every five minutes, so polling faster than that buys nothing.
+  if (inPlay || matchesNear(3).length) liveTimer = setTimeout(pullLive, inPlay ? 60000 : 300000);
+}
+
+/* One sentence about how fresh these numbers are, used by the chip beside the
    table and by the status pill, so the two can never disagree. */
 function freshnessLabel(){
   if (!refreshedAt) return `snapshot · ${esc(timeAgo(LIVE.generated))}`;
   const secs = Math.round((Date.now() - refreshedAt) / 1000);
-  return secs < 90 ? "live · checked just now"
-    : `live · checked ${esc(timeAgo(new Date(refreshedAt).toISOString()))}`;
+  return secs < 90 ? "live · updated just now"
+    : `live · updated ${esc(timeAgo(new Date(refreshedAt).toISOString()))}`;
 }
 
 function markFresh(){
   if (!refreshedAt) return;
   $("status").className = "status live";
-  $("status-txt").textContent = freshnessLabel().replace("checked ", "");
+  $("status-txt").textContent = freshnessLabel().replace("updated ", "");
 }
 
 /* ===================== theme ===================== */
@@ -2188,15 +2074,14 @@ $("view").addEventListener("click", e => {
   const el = e.target.closest("[data-act]");
   if (!el) return;
   const act = el.dataset.act;
-  if (act === "club"){ window.scrollTo(0,0); go({lg: el.dataset.lg || state.lg, view:"club", club: el.dataset.club, allComps:false}); refreshLeague(state.lg); }
+  if (act === "club"){ window.scrollTo(0,0); go({lg: el.dataset.lg || state.lg, view:"club", club: el.dataset.club, allComps:false}); }
   else if (act === "table") go({view:"table", round:null, club:null, match:null});
   else if (act === "mode") go({mode: el.dataset.mode, view:"table"}, true);
   else if (act === "season") go({season: el.dataset.season, view:"table", club:null}, true);
   else if (act === "round"){ window.scrollTo(0,0); go({view:"round", round: +el.dataset.round}); }
   else if (act === "match"){ window.scrollTo(0,0); go({lg: el.dataset.lg || state.lg, view:"match", match: el.dataset.ev}); }
   else if (act === "stat") go({stat: el.dataset.stat}, true);
-  else if (act === "recomment"){ COMMENTARY.delete(el.dataset.ev); paintFeed(el.dataset.lg, el.dataset.ev);
-    loadCommentary(el.dataset.lg, el.dataset.ev, matchById(el.dataset.lg, el.dataset.ev)); }
+  else if (act === "recomment") pullLive();
   else if (act === "allcomps") go({allComps: el.dataset.on === "1"}, true);
   else if (act === "fav") toggleFav(el.dataset.lg, el.dataset.club);
   else if (act === "ics") exportICS(el.dataset.lg, el.dataset.club);
@@ -2213,7 +2098,6 @@ document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
     state.q = ""; $("q").value = "";
     go({lg: tab.dataset.lg, view:"table", club:null, round:null});
-    refreshLeague(tab.dataset.lg);
   });
 });
 document.querySelector(".brand").addEventListener("click", e => {
@@ -2248,8 +2132,9 @@ window.addEventListener("hashchange", () => {
   if (s){ Object.assign(state, s, {q: state.q}); render(); }
 });
 // Coming back to the tab is the same as loading it again.
-document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshLeague(state.lg, { force: true }); });
-window.addEventListener("pageshow", (e) => { if (e.persisted) refreshLeague(state.lg, { force: true }); });
+// Coming back to the tab is the same as loading it again.
+document.addEventListener("visibilitychange", () => { if (!document.hidden) pullLive(); });
+window.addEventListener("pageshow", (e) => { if (e.persisted) pullLive(); });
 let lastNarrow = window.matchMedia("(max-width:680px)").matches;
 window.addEventListener("resize", () => {
   const narrow = window.matchMedia("(max-width:680px)").matches;
@@ -2268,7 +2153,7 @@ window.addEventListener("resize", () => {
     history.replaceState(null, "", hashOf(state));
   }
   render();
-  refreshLeague(state.lg).finally(scheduleLive);
+  pullLive();
 })();
 </script>
 </body>

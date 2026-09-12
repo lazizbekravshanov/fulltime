@@ -38,9 +38,8 @@ win and most clean sheets, per competition.
 **Top performers.** Goals, assists, shots on target, accurate passes, saves and
 yellow cards — the top eight in each, per competition, switchable in place.
 
-**Live scores.** If a match is kicking off around now, the page fetches that
-day's scoreboard directly and overlays live scores while it plays. Entirely
-opportunistic: any failure is silent and the committed snapshot stands.
+**Live scores.** Matches in play carry a running score and a LIVE badge, on the
+table, the matchday list and the club's season.
 
 **Yours.** Star a club and it pins above its table and becomes the landing
 view. Search filters as you type (`/` focuses it, Enter opens the top hit).
@@ -55,20 +54,26 @@ names so you know what you're reading.
 
 Two layers, so the page is never showing yesterday's table.
 
-**On every load** the competition you are looking at is brought up to the
-minute in your browser, straight from ESPN: the table from the standings feed,
-and results, scorers and live scores from the scoreboard. Switching competition
-refreshes that one, and returning to the tab refreshes again. A finished match
-is written into the fixture list, so the splits, records and season-shape chart
-move with it — not just the scoreline. Every one of those requests can fail
-silently; the committed snapshot is what the page falls back to.
+A browser cannot read ESPN directly. It answers `curl` with
+`Access-Control-Allow-Origin: *` but sends no such header to a real `fetch`, so
+every cross-origin request from the page is blocked. Everything is therefore
+pulled by scheduled jobs, which have no such restriction, and committed here.
 
-**Every hour** a scheduled GitHub Action pulls the same feeds and commits
-`data.json`. That is what gives the page its instant first paint, its full
-season of fixtures, and something to show when ESPN can't be reached. GitHub
-caches that file for ten minutes, so the page asks for it with a per-minute
-token to be sure a reload gets the newest one. The season rolls over
-automatically each August.
+**Every five minutes** `update-live.mjs` writes `live.json`: the current table,
+today's scores, goal scorers, and text commentary for the matches in play or
+just finished. It is one standings call and one scoreboard call per competition,
+so it stays quick. The page fetches it after first paint, applies it on top of
+the snapshot — a finished match is written into the fixture list, so the splits,
+records and season-shape chart all move with it — and polls it once a minute
+while a match is in play.
+
+**Every hour** `update-standings.mjs` writes `data.json`: the full season of
+fixtures, the archive, competition leaders and crests. That is what gives the
+page its instant first paint and something to show when nothing else can be
+reached.
+
+Both files are asked for with a per-minute token, because GitHub caches them for
+ten minutes. The season rolls over automatically each August.
 
 Sources: ESPN's public feed for standings, crests, kick-off instants, goal
 scorers, commentary, competition leaders and Champions League fixtures;
@@ -80,8 +85,11 @@ on a result, ESPN wins, because openfootball posts scores about a week late.
 ## Files
 
 - `index.html` — the entire site (vanilla HTML/CSS/JS, no build step)
-- `data.json` — standings, fixtures and leaders snapshot, committed by the Action
-- `scripts/update-standings.mjs` — the updater (Node 18+, zero dependencies)
+- `data.json` — the hourly snapshot: standings, fixtures, leaders, archive
+- `live.json` — the five-minute file: table, today's scores, scorers, commentary
+- `scripts/update-standings.mjs` — the hourly updater (Node 18+, zero dependencies)
+- `scripts/update-live.mjs` — the five-minute updater, sharing its helpers
+- `.github/scripts/live-check.mjs` — drives the published site in a real browser
 - `manifest.webmanifest`, `icon*.png`, `icon.svg` — home-screen install
 - `vercel.json` — config if you'd rather host it on Vercel
 
@@ -96,4 +104,6 @@ where each match's goals are `[minute, scorer, home?1:0, kind]` with kind `""`,
 ```sh
 python3 -m http.server 8000   # then open http://localhost:8000
 node scripts/update-standings.mjs   # refresh data.json by hand
+node scripts/update-live.mjs        # refresh live.json by hand
+node scripts/scorers.test.cjs       # unit-test the scorer parsing
 ```

@@ -6,17 +6,17 @@
 
 import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "data.json");
 
 // European seasons start in August; before July we are still in last year's season.
 const now = new Date();
-const startYear = now.getUTCMonth() >= 6 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
+export const startYear = now.getUTCMonth() >= 6 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
 const seasonLabel = `${startYear}/${String((startYear + 1) % 100).padStart(2, "0")}`;
 const ofSeason = `${startYear}-${String((startYear + 1) % 100).padStart(2, "0")}`;
 
-const COMPS = {
+export const COMPS = {
   epl: { name: "Premier League", espn: "eng.1", of: `${ofSeason}/en.1.json`, tz: "Europe/London" },
   liga: { name: "La Liga", espn: "esp.1", of: `${ofSeason}/es.1.json`, tz: "Europe/Madrid" },
   // openfootball publishes no Champions League file, so ESPN is the only source
@@ -91,7 +91,7 @@ const strip = (s) =>
 
 const dropTokens = new Set(["fc", "afc", "cf", "cd", "ca", "ud", "rc", "rcd", "sc", "ac", "as", "sl", "club", "de", "the", "balompie"]);
 
-function shortName(name) {
+export function shortName(name) {
   const key = strip(name);
   if (SHORT_NAMES[key]) return SHORT_NAMES[key];
   const tokens = key.split(/\s+/).filter((t) => !dropTokens.has(t));
@@ -105,7 +105,7 @@ function shortName(name) {
 
 // Loose matcher so ESPN and openfootball names can be joined (e.g. "Brighton &
 // Hove Albion" vs "Brighton & Hove Albion FC").
-function nameKey(name) {
+export function nameKey(name) {
   return strip(name)
     .replace(/&/g, "and")
     .split(/\s+/)
@@ -114,7 +114,7 @@ function nameKey(name) {
     .join(" ");
 }
 
-async function getJSON(url) {
+export async function getJSON(url) {
   const res = await fetch(url, { headers: { "user-agent": "league-tables-updater" } });
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   return res.json();
@@ -179,7 +179,7 @@ function stat(entry, ...names) {
   return null;
 }
 
-function parseESPN(json) {
+export function parseESPN(json) {
   const children = json.children ?? [];
   let entries = children.flatMap((c) => c.standings?.entries ?? []);
   if (!entries.length) entries = json.standings?.entries ?? [];
@@ -338,7 +338,7 @@ async function fixturesFromESPN(slug, year, { cluster = false } = {}) {
 // extra request. ESPN credits an own goal to the team the scorer plays for, not
 // the team that benefits, so check the tally against the scoreline and flip the
 // own goals when that is what reconciles it.
-function scorersFrom(game, homeTeamId, hg, ag) {
+export function scorersFrom(game, homeTeamId, hg, ag) {
   const out = [];
   for (const d of game.details ?? []) {
     if (!d?.scoringPlay || d.shootout) continue;
@@ -360,7 +360,7 @@ function scorersFrom(game, homeTeamId, hg, ag) {
 
 // Feeds name clubs differently ("Nottingham Forest FC" vs ESPN's "Nottm Forest"),
 // so re-key fixtures onto exactly the names the table shows.
-function renamer(rows) {
+export function renamer(rows) {
   const byKey = new Map(rows.map((r) => [nameKey(r.team), r.short]));
   const byTokens = rows.map((r) => [new Set(nameKey(r.team).split(" ").filter(Boolean)), r.short]);
   const cache = new Map();
@@ -623,4 +623,6 @@ async function build() {
   console.error(`wrote ${OUT}`);
 }
 
-await build();
+// Only run when invoked directly: the live job imports the helpers above.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await build();
+

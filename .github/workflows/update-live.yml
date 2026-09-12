@@ -1,0 +1,45 @@
+name: Update live
+
+# The fast half: the table, today's scores and commentary for matches in play.
+# Browsers cannot read ESPN directly, so this runs every five minutes and commits
+# a small file the page can poll.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/update-live.mjs
+      - .github/workflows/update-live.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Refresh live data
+        run: node scripts/update-live.mjs
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add live.json
+          if git diff --cached --quiet; then
+            echo "No change."
+          else
+            git commit -m "chore: refresh live data [skip ci]"
+            git pull --rebase --autostash -q origin main || true
+            git push
+          fi
