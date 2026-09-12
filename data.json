@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-11T21:04:10.819Z",
+ "generated": "2026-09-12T04:45:06.677Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -7250,6 +7250,22 @@
     },
     {
      "pos": 3,
+     "id": "243",
+     "team": "Sevilla",
+     "short": "Sevilla",
+     "p": 5,
+     "w": 3,
+     "d": 1,
+     "l": 1,
+     "gf": 8,
+     "ga": 6,
+     "gd": 2,
+     "pts": 10,
+     "form": "WWLD",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/243.png"
+    },
+    {
+     "pos": 4,
      "id": "86",
      "team": "Real Madrid",
      "short": "Real Madrid",
@@ -7265,7 +7281,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/86.png"
     },
     {
-     "pos": 4,
+     "pos": 5,
      "id": "244",
      "team": "Real Betis",
      "short": "Betis",
@@ -7281,7 +7297,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/244.png"
     },
     {
-     "pos": 5,
+     "pos": 6,
      "id": "90",
      "team": "Deportivo",
      "short": "Deportivo",
@@ -7297,7 +7313,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/90.png"
     },
     {
-     "pos": 6,
+     "pos": 7,
      "id": "1068",
      "team": "Atlético Madrid",
      "short": "Atlético",
@@ -7311,22 +7327,6 @@
      "pts": 7,
      "form": "WDWL",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/1068.png"
-    },
-    {
-     "pos": 7,
-     "id": "243",
-     "team": "Sevilla",
-     "short": "Sevilla",
-     "p": 4,
-     "w": 2,
-     "d": 1,
-     "l": 1,
-     "gf": 7,
-     "ga": 6,
-     "gd": 1,
-     "pts": 7,
-     "form": "WWLD",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/243.png"
     },
     {
      "pos": 8,
@@ -7525,13 +7525,13 @@
      "id": "94",
      "team": "Valencia",
      "short": "Valencia",
-     "p": 4,
+     "p": 5,
      "w": 0,
      "d": 1,
-     "l": 3,
+     "l": 4,
      "gf": 1,
-     "ga": 9,
-     "gd": -8,
+     "ga": 10,
+     "gd": -9,
      "pts": 1,
      "form": "LLL",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/94.png"
@@ -8269,8 +8269,8 @@
       "21:00",
       "Valencia",
       1,
-      null,
-      null
+      1,
+      0
      ],
      [
       6,
@@ -12741,8 +12741,8 @@
       "21:00",
       "Sevilla",
       0,
-      null,
-      null
+      0,
+      1
      ],
      [
       6,
