@@ -4,7 +4,7 @@
 // here from match results — tiebreak approximated as pts, GD, GF).
 // No dependencies; requires Node 18+.
 
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -237,7 +237,7 @@ function localToUTC(date, time, tz) {
   return [iso.slice(0, 10), iso.slice(11, 16) + "Z"];
 }
 
-// Fixture tuples are [matchday, date, time, opponent, home?1:0, goalsFor, goalsAgainst];
+// Fixture tuples are [matchday, date, time, opponent, home?1:0, goalsFor, goalsAgainst, eventId];
 // goals are null until a match is played. Baking them into data.json keeps the
 // page free of runtime fetches. Clubs are keyed by their raw feed name here and
 // renamed to the table's short names by alignFixtures().
@@ -277,6 +277,9 @@ function roundsByDate(dates) {
 // Champions League, which openfootball does not publish.
 async function fixturesFromESPN(slug, year, { cluster = false } = {}) {
   const out = {};
+  // Goals, keyed by ESPN event id: [minute, scorer, home?1:0, kind] where kind is
+  // "" for open play, "p" for a penalty and "o" for an own goal.
+  const events = {};
   const seen = new Set();
   const goals = (side) => {
     const raw = side?.score;
@@ -315,15 +318,44 @@ async function fixturesFromESPN(slug, year, { cluster = false } = {}) {
       const an = away.team.displayName ?? away.team.name ?? "?";
       const hg = played ? goals(home) : null;
       const ag = played ? goals(away) : null;
-      (out[hn] ??= []).push([null, date, time, an, 1, hg, ag]);
-      (out[an] ??= []).push([null, date, time, hn, 0, ag, hg]);
+      const id = String(event.id ?? "") || null;
+      if (id) {
+        const scorers = scorersFrom(game, home.team?.id, hg, ag);
+        if (scorers.length) events[id] = scorers;
+      }
+      (out[hn] ??= []).push([null, date, time, an, 1, hg, ag, id]);
+      (out[an] ??= []).push([null, date, time, hn, 0, ag, hg, id]);
     }
   }
   if (cluster) {
     const rounds = roundsByDate(Object.values(out).flat().map((t) => t[1]).filter(Boolean));
     for (const list of Object.values(out)) for (const t of list) t[0] = rounds.get(t[1]) ?? null;
   }
-  return out;
+  return { fixtures: out, events };
+}
+
+// The scoreboard already describes every scoring play, so match scorers cost no
+// extra request. ESPN credits an own goal to the team the scorer plays for, not
+// the team that benefits, so check the tally against the scoreline and flip the
+// own goals when that is what reconciles it.
+function scorersFrom(game, homeTeamId, hg, ag) {
+  const out = [];
+  for (const d of game.details ?? []) {
+    if (!d?.scoringPlay || d.shootout) continue;
+    const who = d.athletesInvolved?.[0];
+    const name = who?.shortName ?? who?.displayName ?? null;
+    if (!name) continue;
+    const minute = String(d.clock?.displayValue ?? "").replace(/'/g, "").trim() || null;
+    const side = String(d.team?.id ?? "") === String(homeTeamId) ? 1 : 0;
+    out.push([minute, name, side, d.ownGoal ? "o" : d.penaltyKick ? "p" : ""]);
+  }
+  const tally = (list) => [list.filter((g) => g[2] === 1).length, list.filter((g) => g[2] === 0).length];
+  if (hg == null || ag == null) return out;
+  const [h, a] = tally(out);
+  if (h === hg && a === ag) return out;
+  const flipped = out.map((g) => (g[3] === "o" ? [g[0], g[1], g[2] === 1 ? 0 : 1, g[3]] : g));
+  const [fh, fa] = tally(flipped);
+  return fh === hg && fa === ag ? flipped : out;
 }
 
 // Feeds name clubs differently ("Nottingham Forest FC" vs ESPN's "Nottm Forest"),
@@ -358,7 +390,7 @@ function alignFixtures(fixtures, rows) {
   const out = {};
   for (const [club, list] of Object.entries(fixtures)) {
     const sorted = [...list].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
-    const tuples = sorted.map((t) => [t[0], t[1], t[2], rename(t[3]), t[4], t[5], t[6]]);
+    const tuples = sorted.map((t) => [t[0], t[1], t[2], rename(t[3]), t[4], t[5], t[6], t[7] ?? null]);
     tuples.forEach((t, i) => { if (t[0] == null) t[0] = i + 1; });
     out[rename(club)] = tuples;
   }
@@ -374,6 +406,7 @@ function mergeFromESPN(base, fresh) {
   };
   let filled = 0;
   let retimed = 0;
+  let identified = 0;
   for (const [club, list] of Object.entries(base)) {
     const other = fresh[club];
     if (!other) continue;
@@ -384,10 +417,13 @@ function mergeFromESPN(base, fresh) {
       // instant; openfootball keeps the real matchday number. Take both.
       if (t[5] == null && hit[5] != null) { t[5] = hit[5]; t[6] = hit[6]; filled++; }
       if (hit[2] && (t[1] !== hit[1] || t[2] !== hit[2])) { t[1] = hit[1]; t[2] = hit[2]; retimed++; }
+      // Carry ESPN's event id across so openfootball-sourced fixtures can reach
+      // the match feed for scorers and commentary.
+      if (hit[7] && t[7] !== hit[7]) { t[7] = hit[7]; identified++; }
     }
     list.sort((a, b) => String(a[1]).localeCompare(String(b[1])) || String(a[2]).localeCompare(String(b[2])));
   }
-  return { filled, retimed };
+  return { filled, retimed, identified };
 }
 
 // Scoring leaders. ESPN's site API has no /leaders route for soccer (it 404s for
@@ -396,13 +432,23 @@ function mergeFromESPN(base, fresh) {
 // feed already gave us. Anything unrecognised yields null and the page drops the
 // section rather than rendering a broken one.
 const CORE = "https://sports.core.api.espn.com/v2/sports/soccer/leagues";
+// ESPN's category names, verified against the live feed. Goals and assists are
+// published twice (goalsLeaders/goals); either carries the same entries.
+const LEADER_CATS = [
+  ["goals", "goalsleaders"],
+  ["assists", "assistsleaders"],
+  ["shotsOnTarget", "shotsontarget"],
+  ["accuratePasses", "accuratepasses"],
+  ["saves", "saves"],
+  ["yellowCards", "yellowcards"],
+];
 const secure = (url) => String(url).replace(/^http:/, "https:");
 const refId = (ref) => {
   const m = /\/(?:athletes|teams)\/(\d+)/.exec(String(ref?.$ref ?? ref ?? ""));
   return m ? m[1] : null;
 };
 
-async function leadersFromESPN(slug, year, rows) {
+async function leadersFromESPN(slug, year, rows, nameCache) {
   let feed;
   try {
     feed = await getJSON(`${CORE}/${slug}/seasons/${year}/types/1/leaders`);
@@ -412,17 +458,19 @@ async function leadersFromESPN(slug, year, rows) {
   }
   const cats = feed?.categories;
   if (!Array.isArray(cats) || !cats.length) return null;
-  console.error(`[leaders] ${slug} categories: ${cats.map((c) => c?.name ?? "?").join(", ")}`);
+  const before = athletes.size;
 
   const byId = new Map(rows.filter((r) => r.id != null).map((r) => [String(r.id), r.short]));
   const rename = renamer(rows);
-  const athletes = new Map();
+  const athletes = nameCache;
   const teams = new Map();
 
+  let fetched = 0;
   const athleteName = async (ref) => {
     const id = refId(ref);
     if (!id) return null;
     if (!athletes.has(id)) {
+      fetched++;
       let name = null;
       try {
         const a = await getJSON(secure(ref.$ref));
@@ -454,11 +502,8 @@ async function leadersFromESPN(slug, year, rows) {
     return teams.get(id);
   };
 
-  const pick = async (want, avoid) => {
-    const cat = cats.find((c) => {
-      const n = `${c?.name ?? ""} ${c?.abbreviation ?? ""} ${c?.displayName ?? ""}`.toLowerCase();
-      return want.test(n) && !(avoid && avoid.test(n));
-    });
+  const pick = async (wanted) => {
+    const cat = cats.find((c) => String(c?.name ?? "").toLowerCase() === wanted);
     if (!Array.isArray(cat?.leaders)) return null;
     // Resolve names only for the entries that will actually be shown.
     const top = cat.leaders
@@ -475,14 +520,25 @@ async function leadersFromESPN(slug, year, rows) {
     return out.length ? out : null;
   };
 
-  const goals = await pick(/goal/, /conced|against|allowed|own|keeper|saved/);
-  const assists = await pick(/assist/);
-  if (!goals && !assists) return null;
-  return { goals, assists };
+  const out = {};
+  for (const [key, name] of LEADER_CATS) {
+    const list = await pick(name);
+    if (list) out[key] = list;
+  }
+  console.error(`[leaders] ${slug}: ${Object.entries(out).map(([k, v]) => `${k}=${v.length}`).join(" ") || "none"}`
+    + ` · ${fetched} athlete name(s) fetched, ${before} cached`);
+  return Object.keys(out).length ? out : null;
 }
 
 async function build() {
   const comps = {};
+  // Athlete names are stable, so carry last run's lookups forward: a steady-state
+  // refresh then fetches almost none.
+  let nameCache = new Map();
+  try {
+    const previous = JSON.parse(readFileSync(OUT, "utf8"));
+    nameCache = new Map(Object.entries(previous.athletes ?? {}));
+  } catch { /* first run, or the file is unreadable */ }
   for (const [key, cfg] of Object.entries(COMPS)) {
     let result = null;
     let source = null;
@@ -521,26 +577,35 @@ async function build() {
 
     if (result && result.rows.some((r) => (r.p ?? 0) > 0)) {
       const openfootball = ofData ? alignFixtures(fixturesFromOpenfootball(ofData, cfg.tz), result.rows) : {};
-      const espn = alignFixtures(await fixturesFromESPN(cfg.espn, startYear, { cluster: !cfg.of }), result.rows);
+      const fromESPN = await fixturesFromESPN(cfg.espn, startYear, { cluster: !cfg.of });
+      const espn = alignFixtures(fromESPN.fixtures, result.rows);
       let fixtures = espn;
       if (Object.keys(openfootball).length) {
-        const { filled, retimed } = mergeFromESPN(openfootball, espn);
-        console.error(`[${key}] ${filled} result(s) filled in and ${retimed} kick-off(s) retimed from ESPN`);
+        const { filled, retimed, identified } = mergeFromESPN(openfootball, espn);
+        console.error(`[${key}] ${filled} result(s) filled in, ${retimed} kick-off(s) retimed`
+          + ` and ${identified} fixture(s) matched to an ESPN match`);
         fixtures = openfootball;
       }
       const noFixtures = result.rows.filter((r) => !fixtures[r.short]).map((r) => r.short);
       if (noFixtures.length) console.error(`[${key}] no fixtures for: ${noFixtures.join(", ")}`);
-      const leaders = await leadersFromESPN(cfg.espn, startYear, result.rows);
+      const leaders = await leadersFromESPN(cfg.espn, startYear, result.rows, nameCache);
+      // Keep only the goals belonging to matches this snapshot actually lists.
+      const all = Object.values(fixtures).flat();
+      const listed = new Set(all.map((t) => t[7]).filter(Boolean));
+      const events = {};
+      for (const [id, scorers] of Object.entries(fromESPN.events)) if (listed.has(id)) events[id] = scorers;
       comps[key] = {
         name: cfg.name,
         source,
         matchday: result.matchday,
         rows: result.rows,
         fixtures,
+        ...(Object.keys(events).length ? { events } : {}),
         ...(leaders ? { leaders } : {}),
       };
-      console.error(`[${key}] leaders: ${leaders ? Object.entries(leaders).map(([k, v]) => `${k}=${v ? v.length : 0}`).join(" ") : "none"}`);
-      console.error(`[${key}] fixtures for ${Object.keys(fixtures).length} clubs`);
+      console.error(`[${key}] fixtures for ${Object.keys(fixtures).length} clubs`
+        + ` · ${all.filter((t) => t[7]).length}/${all.length} carry an event id`
+        + ` · ${Object.keys(events).length} match(es) with scorers`);
     } else {
       comps[key] = { name: cfg.name, notStarted: true };
     }
@@ -551,6 +616,7 @@ async function build() {
     generated: new Date().toISOString(),
     season: seasonLabel,
     comps,
+    athletes: Object.fromEntries(nameCache),
   };
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, JSON.stringify(out, null, 1) + "\n");

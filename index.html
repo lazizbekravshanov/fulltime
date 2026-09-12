@@ -390,6 +390,49 @@
   .fx .res.kick{font-weight:600;font-size:11.5px;color:var(--faint)}
   .fx .res.livenow{color:var(--drop)}
 
+  /* ---------------- match page ---------------- */
+  .mhead{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 14px;display:flex;flex-direction:column;gap:14px;align-items:center}
+  .score{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:14px;width:100%}
+  .team{display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;background:none;
+    border:none;color:inherit;font:inherit;cursor:pointer;padding:4px;border-radius:10px}
+  .team:hover{background:var(--surface-2)}
+  .team.h{justify-content:flex-end}
+  .team .crest{width:34px;height:34px;font-size:11px}
+  .team .nm{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bigscore{font-size:30px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;text-align:center}
+  .bigscore.soon{font-size:16px;font-weight:700;color:var(--dim)}
+  .bigscore.inplay{color:var(--drop)}
+  .sheet{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;width:100%;
+    font-size:12px;color:var(--dim);line-height:1.8}
+  .sheet .h{text-align:right}
+  .sheet .mid{color:var(--faint);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;align-self:start}
+  .sheet .goal{display:block;line-height:1.8}
+  .sheet b{color:var(--ink);font-weight:600}
+  .sheet .kind{color:var(--faint)}
+  .feed{max-height:520px;overflow-y:auto}
+  .feed .line{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;padding:9px 13px;
+    border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.55}
+  .feed .line:last-child{border-bottom:none}
+  .feed .min{color:var(--faint);font-weight:700;font-size:11px}
+  .feed .line.goal{background:color-mix(in srgb, var(--accent) 8%, transparent)}
+  .feed .line.goal .min{color:var(--accent)}
+  .feed .line.card .min{color:var(--warm)}
+  .loading{padding:18px 14px;font-size:12.5px;color:var(--dim)}
+
+  /* ---------------- top performers ---------------- */
+  .perf{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .perf ol{list-style:none}
+  .perf li{display:flex;align-items:center;gap:9px;padding:0 13px;height:38px;
+    border-bottom:1px solid var(--line);font-size:12.5px}
+  .perf li:last-child{border-bottom:none}
+  .perf .r{width:14px;font-size:11px;font-weight:700;color:var(--faint);text-align:right}
+  .perf .crest{width:19px;height:19px;font-size:7px}
+  .perf .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .perf .club{font-size:11px;color:var(--faint);flex:none}
+  .perf .v{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+  .perf li:first-child .v{color:var(--accent)}
+
   footer{
     margin-top:26px;border-top:1px solid var(--line);
     padding:18px 0 40px;font-size:11.5px;color:var(--faint);line-height:1.7;
@@ -428,6 +471,13 @@
     .leads{grid-template-columns:1fr}
   }
   @media (max-width:560px){
+    .score{gap:8px}
+    .team .crest{width:28px;height:28px;font-size:9px}
+    .team .nm{font-size:13px}
+    .bigscore{font-size:24px}
+    .sheet{font-size:11.5px;gap:8px}
+    .feed .line{grid-template-columns:38px minmax(0,1fr);gap:8px;padding:8px 11px;font-size:12px}
+    .perf .club{display:none}
     .bar{padding:12px 0 10px}
     .hero{flex-wrap:nowrap;gap:12px;align-items:flex-start}
     .hero > div{min-width:0}
@@ -644,8 +694,18 @@ let renderToken = 0;
 
 const state = {
   lg:"epl", view:"table", mode:"overall", season:"live",
-  club:null, round:null, allComps:false, q:""
+  club:null, round:null, match:null, allComps:false, q:"", stat:"goals"
 };
+
+// ESPN's leader categories, in the order they are offered.
+const STATS = [
+  ["goals","Goals","goals"],
+  ["assists","Assists","assists"],
+  ["shotsOnTarget","Shots on target","on target"],
+  ["accuratePasses","Accurate passes","passes"],
+  ["saves","Saves","saves"],
+  ["yellowCards","Yellow cards","yellows"]
+];
 
 const store = {
   get(k, d){ try { const v = localStorage.getItem("fulltime:"+k); return v==null ? d : JSON.parse(v); } catch { return d; } },
@@ -769,9 +829,9 @@ const logoOf = (lg, short) => rowFor(lg, short)?.logo ?? null;
 function fxOf(lg, short){
   const raw = comp(lg)?.fixtures?.[short];
   if (!Array.isArray(raw) || !raw.length) return null;
-  return raw.map(([md, date, time, opp, home, gf, ga]) => ({
+  return raw.map(([md, date, time, opp, home, gf, ga, ev]) => ({
     lg, md, date, time, opp, home: !!home,
-    gf: gf ?? null, ga: ga ?? null,
+    gf: gf ?? null, ga: ga ?? null, ev: ev ?? null,
     done: gf != null && ga != null
   }));
 }
@@ -974,6 +1034,26 @@ function currentRound(rounds){
   const keys = [...rounds.keys()].sort((a,b) => a-b);
   for (const k of keys) if (rounds.get(k).some(m => !m.done)) return k;
   return keys[keys.length-1] ?? 1;
+}
+
+/* ===================== matches ===================== */
+function matchById(lg, id){
+  const c = comp(lg);
+  if (!c?.fixtures) return null;
+  for (const club of Object.keys(c.fixtures)){
+    for (const f of fxOf(lg, club) ?? []){
+      if (f.ev !== id || !f.home) continue;
+      return {lg, home:club, away:f.opp, hg:f.gf, ag:f.ga, done:f.done, f};
+    }
+  }
+  return null;
+}
+/* Baked from the scoreboard: [minute, scorer, home?1:0, "" | "p" | "o"]. */
+function scorersOf(lg, ev){
+  const list = comp(lg)?.events?.[ev];
+  if (!Array.isArray(list) || !list.length) return null;
+  return list.map(([minute, name, side, kind]) => ({minute, name, home: side === 1, kind}))
+    .sort((a,b) => (parseInt(a.minute,10) || 0) - (parseInt(b.minute,10) || 0));
 }
 
 /* ===================== live overlay (opportunistic) ===================== */
@@ -1203,15 +1283,30 @@ function recordsHTML(lg){
   </div></div>`;
 }
 
-function leadersHTML(lg){
+function statsFor(lg){
   const L = comp(lg)?.leaders;
-  if (!L) return "";
-  const col = (title, list) => !list?.length ? "" : `<div class="lcard"><h3>${title}</h3><ol>${
-    list.map((e,i) => `<li><span class="r">${i+1}</span>${e.club ? crest(e.club, logoOf(lg, e.club)) : ""}
-      <span class="nm">${esc(e.player)}</span><span class="v">${e.value}</span></li>`).join("")}</ol></div>`;
-  const inner = col("Top scorers", L.goals) + col("Most assists", L.assists);
-  if (!inner) return "";
-  return `<div class="sect"><div class="leads">${inner}</div></div>`;
+  if (!L) return [];
+  return STATS.filter(([key]) => Array.isArray(L[key]) && L[key].length);
+}
+
+function performersHTML(lg){
+  const available = statsFor(lg);
+  if (!available.length) return "";
+  const pick = available.some(([k]) => k === state.stat) ? state.stat : available[0][0];
+  const list = comp(lg).leaders[pick].slice(0, 8);
+  const label = (STATS.find(([k]) => k === pick) ?? [])[1] ?? pick;
+  const tabs = `<div class="seg" role="group" aria-label="Statistic">${
+    available.map(([k,, short]) => `<button data-act="stat" data-stat="${k}" aria-pressed="${pick === k}">${short}</button>`).join("")}</div>`;
+  const rows = list.map((e,i) => `<li>
+      <span class="r">${i+1}</span>
+      ${e.club ? crest(e.club, logoOf(lg, e.club)) : ""}
+      <span class="nm">${esc(e.player)}</span>
+      ${e.club ? `<span class="club">${esc(e.club)}</span>` : ""}
+      <span class="v">${e.value}</span>
+    </li>`).join("");
+  return `<div class="sect"><div class="toolbar"><h3>Top performers</h3>${tabs}</div>
+    <div class="perf"><ol aria-label="${esc(label)}">${rows}</ol></div>
+    <p class="note">${esc(label)} this season, from ESPN's competition leaders.</p></div>`;
 }
 
 /* ===================== head-to-head ===================== */
@@ -1313,6 +1408,130 @@ function clubFixtures(lg, short, all){
   return merged.length ? merged : mine;
 }
 
+/* ===================== match page ===================== */
+const COMMENTARY = new Map();       // event id -> {lines, at}
+let feedTimer = null;
+
+/* Commentary is fetched only when a match is opened — never on the way to a
+   table — and any failure leaves the rest of the page untouched. */
+async function fetchCommentary(lg, ev){
+  const j = await fetchJSON(
+    `https://site.api.espn.com/apis/site/v2/sports/soccer/${COMP[lg].espn}/summary?event=${ev}`, 12000);
+  const lines = (j.commentary ?? []).map(c => ({
+    seq: Number(c?.sequence ?? 0),
+    minute: String(c?.time?.displayValue ?? "").replace(/'/g,"").trim(),
+    text: String(c?.text ?? "").trim()
+  })).filter(c => c.text);
+  if (!lines.length) throw new Error("no commentary");
+  lines.sort((a,b) => b.seq - a.seq);
+  return {lines, at: Date.now()};
+}
+
+function feedHTML(lines){
+  return `<div class="card feed">${lines.map(l => {
+    // Opta's wording is stable enough to tint the important lines; when it is
+    // not, the line simply renders plain.
+    const cls = /^goal[!.]/i.test(l.text) ? "goal"
+      : /(yellow card|red card|second yellow)/i.test(l.text) ? "card" : "";
+    return `<div class="line ${cls}"><span class="min">${l.minute ? esc(l.minute) + "'" : ""}</span>
+      <span>${esc(l.text)}</span></div>`;
+  }).join("")}</div>`;
+}
+
+function paintFeed(lg, ev, failed){
+  const slot = $("feed");
+  if (!slot) return;
+  const data = COMMENTARY.get(ev);
+  if (data) { slot.innerHTML = feedHTML(data.lines); return; }
+  slot.innerHTML = failed
+    ? `<div class="empty"><div class="big">Commentary didn't load</div>
+        <p>It comes live from ESPN when a match is opened, so a blocked or dropped request leaves
+           this section empty. The score and scorers above are from the hourly snapshot and stand
+           on their own. <button class="tbtn" data-act="recomment" data-lg="${lg}" data-ev="${esc(ev)}"
+           style="margin-left:6px">Try again</button></p></div>`
+    : `<div class="card"><div class="loading">Loading commentary…</div></div>`;
+}
+
+function matchIsLive(lg, m){
+  if (!m || m.done) return false;
+  const lv = liveFor(lg, m.home, m.away);
+  if (lv) return lv.state === "in";
+  const k = kickoff(m.f);
+  if (!k) return false;
+  const since = Date.now() - k.dt.getTime();
+  return since > 0 && since < 3 * 3600e3;
+}
+
+async function loadCommentary(lg, ev, m){
+  const token = renderToken;
+  try {
+    COMMENTARY.set(ev, await fetchCommentary(lg, ev));
+    if (token !== renderToken) return;
+    paintFeed(lg, ev);
+  } catch {
+    if (token !== renderToken) return;
+    paintFeed(lg, ev, true);
+  }
+  clearTimeout(feedTimer);
+  if (token === renderToken && matchIsLive(lg, m)) feedTimer = setTimeout(() => loadCommentary(lg, ev, m), 45000);
+}
+
+function viewMatch(){
+  const lg = state.lg;
+  const cfg = COMP[lg];
+  const m = matchById(lg, state.match);
+  const back = `<button class="back" data-act="table">${ICON.left} ${esc(cfg.title)} table</button>`;
+  if (!m){
+    return back + `<div class="empty"><div class="big">That match isn't in this snapshot</div>
+      <p>Matches appear here once the fixture list and the scoreboard agree on them. Pick one from a
+         matchday or a club's season.</p></div>`;
+  }
+  const lv = liveFor(lg, m.home, m.away);
+  const inPlay = lv && lv.state === "in";
+  const hg = inPlay ? lv.hg : m.hg;
+  const ag = inPlay ? lv.ag : m.ag;
+  const shown = inPlay || m.done;
+
+  const club = (name, side) => `<button class="team ${side}" data-act="club" data-lg="${lg}"
+      data-club="${esc(slug(name))}" aria-label="${esc(name)} season">
+    ${side === "h" ? `<span class="nm">${esc(name)}</span>${crest(name, logoOf(lg, name))}`
+                   : `${crest(name, logoOf(lg, name))}<span class="nm">${esc(name)}</span>`}</button>`;
+
+  const scorers = scorersOf(lg, m.f.ev);
+  const goalLine = (g) => `<span class="goal"><b>${esc(g.name)}</b> ${esc(g.minute ?? "")}'${
+    g.kind === "p" ? ` <span class="kind">pen</span>` : g.kind === "o" ? ` <span class="kind">og</span>` : ""}</span>`;
+  const sheet = scorers ? `<div class="sheet">
+      <div class="h">${scorers.filter(g => g.home).map(goalLine).join("") || "&nbsp;"}</div>
+      <div class="mid">Goals</div>
+      <div>${scorers.filter(g => !g.home).map(goalLine).join("") || "&nbsp;"}</div>
+    </div>` : "";
+
+  const head = `<div class="mhead">
+      <div class="meta">
+        <span class="chip">${fmtDateLong(m.f)}</span>
+        ${m.f.md ? `<span class="chip">Matchday <b>${m.f.md}</b></span>` : ""}
+        <span class="chip">${esc(cfg.title)}</span>
+        ${inPlay ? `<span class="chip acc">LIVE${lv.clock ? " · " + esc(lv.clock) : ""}</span>` : ""}
+      </div>
+      <div class="score">
+        ${club(m.home, "h")}
+        <span class="bigscore ${inPlay ? "inplay" : ""} ${shown ? "" : "soon"}">${
+          shown ? `${hg}–${ag}` : esc(fmtTime(m.f))}</span>
+        ${club(m.away, "a")}
+      </div>
+      ${sheet}
+    </div>`;
+
+  const commentary = `<div class="sect"><h3>Commentary</h3><div id="feed"></div></div>`;
+  const h2h = `<div class="sect"><h3>Head to head</h3><div class="card det" style="border-bottom:none">${
+    h2hHTML(lg, m.home, m.away, m.f.date)}</div></div>`;
+
+  if (m.f.ev) loadCommentary(lg, m.f.ev, m);
+  return back + head
+    + (m.f.ev ? commentary : `<p class="note">This fixture isn't matched to a match feed yet, so there is no commentary for it.</p>`)
+    + h2h;
+}
+
 /* ===================== views ===================== */
 function seasonSeg(){
   const live = LIVE?.season ?? seasonLabel();
@@ -1392,7 +1611,7 @@ function viewTable(){
     + `<p class="note">${explain} Tap a club for its full season. Source: ${
         c.source === "espn" ? "ESPN public feed" : "openfootball open data"}${
         q ? ` · showing ${hits.length} of ${rows.length} clubs` : ""}.</p>`
-    + recordsHTML(state.lg) + leadersHTML(state.lg);
+    + recordsHTML(state.lg) + performersHTML(state.lg);
 }
 
 function favPin(lg, rows, mode){
@@ -1459,15 +1678,17 @@ function viewRound(){
       : m.done ? `<span class="mscore">${m.hg}–${m.ag}</span>`
       : `<span class="mscore soon">${isPending(m.f) ? "—" : esc(fmtTime(m.f))}</span>`;
     const when = `${fmtDateLong(m.f)}${lv && lv.state === "in" && lv.clock ? ` · <b>${esc(lv.clock)}</b>` : ""}`;
-    return `<button class="mrow" data-act="h2h" data-lg="${state.lg}" data-club="${esc(m.home)}"
-        data-opp="${esc(m.away)}" data-date="${esc(m.date ?? "")}" aria-expanded="false"
-        aria-label="${esc(`${m.home} ${m.done ? m.hg+"–"+m.ag : "versus"} ${m.away}. Show both legs.`)}">
+    const open = m.f.ev
+      ? `data-act="match" data-lg="${state.lg}" data-ev="${esc(m.f.ev)}"`
+      : `data-act="h2h" data-lg="${state.lg}" data-club="${esc(m.home)}" data-opp="${esc(m.away)}" data-date="${esc(m.date ?? "")}" aria-expanded="false"`;
+    return `<button class="mrow" ${open}
+        aria-label="${esc(`${m.home} ${m.done ? m.hg+"–"+m.ag : "versus"} ${m.away}. ${m.f.ev ? "Open the match." : "Show both legs."}`)}">
       <span class="mdate">${when}</span>
       <span class="mteam h"><span class="nm">${esc(m.home)}</span>${crest(m.home, logoOf(state.lg, m.home))}</span>
       ${score}
       <span class="mteam a">${crest(m.away, logoOf(state.lg, m.away))}<span class="nm">${esc(m.away)}</span></span>
-      <span class="chev">${ICON.chev}</span>
-    </button><div class="det" hidden></div>`;
+      <span class="chev">${m.f.ev ? ICON.right : ICON.chev}</span>
+    </button>${m.f.ev ? "" : `<div class="det" hidden></div>`}`;
   }).join("");
 
   return `<button class="back" data-act="table">${ICON.left} ${esc(cfg.title)} table</button>
@@ -1620,16 +1841,18 @@ function fxRow(lg, short, f, isNext, showComp){
   const left = showComp
     ? `<span class="md cmp">${esc(COMP[f.lg].code)}</span>`
     : `<span class="md">${f.md ? "MD"+f.md : ""}</span>`;
-  return `<button class="fx ${o} ${isNext && !inPlay ? "next" : ""}" data-act="h2h" data-lg="${f.lg || lg}"
-      data-club="${esc(short)}" data-opp="${esc(f.opp)}" data-date="${esc(f.date ?? "")}" aria-expanded="false"
-      aria-label="${esc(`${f.home ? "Home" : "Away"} ${f.done ? "against" : "versus"} ${f.opp}${f.done ? `, ${f.gf}–${f.ga}` : ""}. Show both legs.`)}">
+  const open = f.ev
+    ? `data-act="match" data-lg="${f.lg || lg}" data-ev="${esc(f.ev)}"`
+    : `data-act="h2h" data-lg="${f.lg || lg}" data-club="${esc(short)}" data-opp="${esc(f.opp)}" data-date="${esc(f.date ?? "")}" aria-expanded="false"`;
+  return `<button class="fx ${o} ${isNext && !inPlay ? "next" : ""}" ${open}
+      aria-label="${esc(`${f.home ? "Home" : "Away"} ${f.done ? "against" : "versus"} ${f.opp}${f.done ? `, ${f.gf}–${f.ga}` : ""}. ${f.ev ? "Open the match." : "Show both legs."}`)}">
     ${left}
     <span class="dt">${fmtDate(f)}</span>
     <span class="ha" title="${f.home ? "Home" : "Away"}">${f.home ? "H" : "A"}</span>
     <span class="opp">${crest(f.opp, logoOf(f.lg || lg, f.opp))}<span class="nm">${esc(f.opp)}</span>${badge}</span>
     ${res}
-    <span class="chev">${ICON.chev}</span>
-  </button><div class="det" hidden></div>`;
+    <span class="chev">${f.ev ? ICON.right : ICON.chev}</span>
+  </button>${f.ev ? "" : `<div class="det" hidden></div>`}`;
 }
 
 /* The 25/26 archive: fetched only when a club from that table is opened. */
@@ -1674,10 +1897,11 @@ async function loadArchive(lg, short, token){
 function parseHash(){
   const parts = location.hash.replace(/^#\/?/,"").split("/").filter(Boolean);
   if (!LEAGUES.includes(parts[0])) return null;
-  const s = {lg:parts[0], view:"table", mode:"overall", season:"live", club:null, round:null, allComps:false};
+  const s = {lg:parts[0], view:"table", mode:"overall", season:"live", club:null, round:null, match:null, allComps:false};
   const t = parts[1];
   if (t === "final") s.season = "final";
   else if (t === "md" && parts[2]){ s.view = "round"; s.round = parseInt(parts[2],10) || 1; }
+  else if (t === "match" && parts[2]){ s.view = "match"; s.match = parts[2]; }
   else if (t === "club" && parts[2]){
     s.view = "club"; s.club = parts[2];
     s.allComps = parts[3] === "all";
@@ -1687,6 +1911,7 @@ function parseHash(){
   return s;
 }
 function hashOf(s){
+  if (s.view === "match") return `#${s.lg}/match/${s.match}`;
   if (s.view === "club") return `#${s.lg}/club/${s.club}${s.season === "final" ? "/final" : s.allComps ? "/all" : ""}`;
   if (s.view === "round") return `#${s.lg}/md/${s.round}`;
   if (s.season === "final") return `#${s.lg}/final`;
@@ -1708,12 +1933,18 @@ function render(){
   document.querySelectorAll(".tab").forEach(t =>
     t.setAttribute("aria-selected", String(t.dataset.lg === state.lg)));
   const view = $("view");
+  clearTimeout(feedTimer);
   if (state.view === "club") view.innerHTML = viewClub();
+  else if (state.view === "match") view.innerHTML = viewMatch();
   else if (state.view === "round") view.innerHTML = viewRound();
   else view.innerHTML = viewTable();
   document.title = state.view === "club" && state.club
     ? `${state.club.replace(/-/g," ")} · FULLTIME`
     : `${COMP[state.lg].title} · FULLTIME`;
+  if (state.view === "match"){
+    const m = matchById(state.lg, state.match);
+    if (m) document.title = `${m.home} v ${m.away} · FULLTIME`;
+  }
 }
 
 /* ===================== data loading ===================== */
@@ -1851,10 +2082,14 @@ $("view").addEventListener("click", e => {
   if (!el) return;
   const act = el.dataset.act;
   if (act === "club"){ window.scrollTo(0,0); go({lg: el.dataset.lg || state.lg, view:"club", club: el.dataset.club, allComps:false}); }
-  else if (act === "table") go({view:"table", round:null, club:null});
+  else if (act === "table") go({view:"table", round:null, club:null, match:null});
   else if (act === "mode") go({mode: el.dataset.mode, view:"table"}, true);
   else if (act === "season") go({season: el.dataset.season, view:"table", club:null}, true);
   else if (act === "round"){ window.scrollTo(0,0); go({view:"round", round: +el.dataset.round}); }
+  else if (act === "match"){ window.scrollTo(0,0); go({lg: el.dataset.lg || state.lg, view:"match", match: el.dataset.ev}); }
+  else if (act === "stat") go({stat: el.dataset.stat}, true);
+  else if (act === "recomment"){ COMMENTARY.delete(el.dataset.ev); paintFeed(el.dataset.lg, el.dataset.ev);
+    loadCommentary(el.dataset.lg, el.dataset.ev, matchById(el.dataset.lg, el.dataset.ev)); }
   else if (act === "allcomps") go({allComps: el.dataset.on === "1"}, true);
   else if (act === "fav") toggleFav(el.dataset.lg, el.dataset.club);
   else if (act === "ics") exportICS(el.dataset.lg, el.dataset.club);

@@ -18,8 +18,13 @@ by how high that opponent currently sits — a fixture-difficulty read at a
 glance. Faded means away.
 
 **Matchdays.** Every match in a round, league-wide, with prev/next and a jump
-back to the current round. Tap a match to see both legs between the two clubs
-with the head-to-head record.
+back to the current round.
+
+**Match pages.** Tap any match for the scoreline, every goal with its scorer and
+minute (penalties and own goals marked), live text commentary while it is being
+played, and the head-to-head record between the two clubs. Scorers come from the
+hourly snapshot and are always there; commentary is fetched from ESPN the moment
+you open a match and refreshes every 45 seconds while it is in play.
 
 **Clubs.** Tap any club for its whole season: every match in date order grouped
 by month, results and kick-offs, home/away splits, form, and a season-shape
@@ -30,7 +35,8 @@ both schedules into one chronological season. Any club's fixtures export as an
 **Season records.** Longest current unbeaten run, longest winless run, biggest
 win and most clean sheets, per competition.
 
-**Top scorers and assists**, when ESPN publishes them for the competition.
+**Top performers.** Goals, assists, shots on target, accurate passes, saves and
+yellow cards — the top eight in each, per competition, switchable in place.
 
 **Live scores.** If a match is kicking off around now, the page fetches that
 day's scoreboard directly and overlays live scores while it plays. Entirely
@@ -54,8 +60,8 @@ season rolls over automatically each August. If the snapshot ever goes more
 than a day stale, the page recomputes the domestic tables in the browser from
 open data rather than showing old numbers.
 
-Sources: ESPN's public feed for standings, crests, kick-off instants, scoring
-leaders and Champions League fixtures;
+Sources: ESPN's public feed for standings, crests, kick-off instants, goal
+scorers, commentary, competition leaders and Champions League fixtures;
 [openfootball](https://github.com/openfootball/football.json) open data for
 domestic fixtures and matchday numbers. Where the two disagree on a club's
 name, fixtures are re-keyed onto the name the table shows; where they disagree
@@ -70,8 +76,10 @@ on a result, ESPN wins, because openfootball posts scores about a week late.
 - `vercel.json` — config if you'd rather host it on Vercel
 
 Fixture tuples are `[matchday, date, time, opponent, home, goalsFor,
-goalsAgainst]`; the time is UTC with a trailing `Z`, and null goals mean the
-match hasn't been played.
+goalsAgainst, eventId]`; the time is UTC with a trailing `Z`, null goals mean the
+match hasn't been played, and the event id keys into `comps.<league>.events`,
+where each match's goals are `[minute, scorer, home?1:0, kind]` with kind `""`,
+`"p"` for a penalty or `"o"` for an own goal.
 
 ## Run it locally
 
