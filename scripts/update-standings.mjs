@@ -390,49 +390,95 @@ function mergeFromESPN(base, fresh) {
   return { filled, retimed };
 }
 
-// ESPN publishes scoring leaders per competition, but the feed's shape varies by
-// sport and season, so walk it defensively: anything unrecognised yields null and
-// the page drops the section rather than rendering a broken one.
-function parseLeaders(json) {
-  const cats = json?.leaders?.categories ?? json?.categories ?? json?.leaders ?? [];
+// Scoring leaders. ESPN's site API has no /leaders route for soccer (it 404s for
+// every competition), but the core API does — it just returns $ref links instead
+// of names, so athletes are fetched and teams are matched on the id the standings
+// feed already gave us. Anything unrecognised yields null and the page drops the
+// section rather than rendering a broken one.
+const CORE = "https://sports.core.api.espn.com/v2/sports/soccer/leagues";
+const secure = (url) => String(url).replace(/^http:/, "https:");
+const refId = (ref) => {
+  const m = /\/(?:athletes|teams)\/(\d+)/.exec(String(ref?.$ref ?? ref ?? ""));
+  return m ? m[1] : null;
+};
+
+async function leadersFromESPN(slug, year, rows) {
+  let feed;
+  try {
+    feed = await getJSON(`${CORE}/${slug}/seasons/${year}/types/1/leaders`);
+  } catch (e) {
+    console.error(`[leaders] ${slug}: ${e.message}`);
+    return null;
+  }
+  const cats = feed?.categories;
   if (!Array.isArray(cats) || !cats.length) return null;
-  const pick = (want, avoid) => {
+  console.error(`[leaders] ${slug} categories: ${cats.map((c) => c?.name ?? "?").join(", ")}`);
+
+  const byId = new Map(rows.filter((r) => r.id != null).map((r) => [String(r.id), r.short]));
+  const rename = renamer(rows);
+  const athletes = new Map();
+  const teams = new Map();
+
+  const athleteName = async (ref) => {
+    const id = refId(ref);
+    if (!id) return null;
+    if (!athletes.has(id)) {
+      let name = null;
+      try {
+        const a = await getJSON(secure(ref.$ref));
+        name = a?.displayName ?? a?.fullName ??
+          [a?.firstName, a?.lastName].filter(Boolean).join(" ") ?? null;
+      } catch (e) {
+        console.error(`[leaders] ${slug} athlete ${id}: ${e.message}`);
+      }
+      athletes.set(id, name || null);
+    }
+    return athletes.get(id);
+  };
+
+  const clubName = async (ref) => {
+    const id = refId(ref);
+    if (!id) return null;
+    if (byId.has(id)) return byId.get(id);
+    if (!teams.has(id)) {
+      let short = null;
+      try {
+        const t = await getJSON(secure(ref.$ref));
+        const name = t?.displayName ?? t?.name ?? null;
+        short = name ? rename(name) : null;
+      } catch (e) {
+        console.error(`[leaders] ${slug} team ${id}: ${e.message}`);
+      }
+      teams.set(id, short);
+    }
+    return teams.get(id);
+  };
+
+  const pick = async (want, avoid) => {
     const cat = cats.find((c) => {
       const n = `${c?.name ?? ""} ${c?.abbreviation ?? ""} ${c?.displayName ?? ""}`.toLowerCase();
       return want.test(n) && !(avoid && avoid.test(n));
     });
     if (!Array.isArray(cat?.leaders)) return null;
+    // Resolve names only for the entries that will actually be shown.
+    const top = cat.leaders
+      .map((e) => ({ raw: e, value: Number(e?.value ?? e?.displayValue) }))
+      .filter((e) => Number.isFinite(e.value))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
     const out = [];
-    for (const e of cat.leaders) {
-      const player = e?.athlete?.displayName ?? e?.athlete?.fullName ?? e?.displayName ?? null;
-      const team = e?.team?.displayName ?? e?.team?.name ?? e?.athlete?.team?.displayName ?? null;
-      const value = Number(e?.value ?? e?.displayValue);
-      if (!player || !Number.isFinite(value)) continue;
-      out.push({ player, team, value });
+    for (const e of top) {
+      const player = await athleteName(e.raw.athlete);
+      if (!player) continue;
+      out.push({ player, club: await clubName(e.raw.team), value: e.value });
     }
-    out.sort((a, b) => b.value - a.value);
-    return out.length ? out.slice(0, 8) : null;
+    return out.length ? out : null;
   };
-  const goals = pick(/goal/, /conced|against|allowed|own|keeper/);
-  const assists = pick(/assist/);
+
+  const goals = await pick(/goal/, /conced|against|allowed|own|keeper|saved/);
+  const assists = await pick(/assist/);
   if (!goals && !assists) return null;
   return { goals, assists };
-}
-
-async function leadersFromESPN(slug, year) {
-  const urls = [
-    `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/leaders?season=${year}`,
-    `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/leaders`,
-  ];
-  for (const url of urls) {
-    try {
-      const parsed = parseLeaders(await getJSON(url));
-      if (parsed) return parsed;
-    } catch (e) {
-      console.error(`[leaders] ${slug}: ${e.message}`);
-    }
-  }
-  return null;
 }
 
 async function build() {
@@ -484,13 +530,7 @@ async function build() {
       }
       const noFixtures = result.rows.filter((r) => !fixtures[r.short]).map((r) => r.short);
       if (noFixtures.length) console.error(`[${key}] no fixtures for: ${noFixtures.join(", ")}`);
-      const leaders = await leadersFromESPN(cfg.espn, startYear);
-      if (leaders) {
-        const rename = renamer(result.rows);
-        for (const list of Object.values(leaders)) {
-          for (const e of list ?? []) e.club = e.team ? rename(e.team) : null;
-        }
-      }
+      const leaders = await leadersFromESPN(cfg.espn, startYear, result.rows);
       comps[key] = {
         name: cfg.name,
         source,
