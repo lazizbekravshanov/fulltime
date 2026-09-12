@@ -1385,6 +1385,10 @@ function feedHTML(lines){
 
 function commentaryHTML(lg, m){
   const data = m.f.ev ? COMMENTARY.get(m.f.ev) : null;
+  const live = liveFor(lg, m.home, m.away)?.state === "in";
+  // Ask when the page opens, and again while the match is actually being played.
+  if (m.f.ev && Date.now() - commentaryAt > (live ? 60000 : 300000)) pullCommentary();
+  if (!data && !commentaryAt) return `<div class="card"><div class="loading">Loading commentary…</div></div>`;
   if (data?.lines?.length) return feedHTML(data.lines);
   const kick = kickoff(m.f);
   const started = kick && kick.dt.getTime() < Date.now();
@@ -1930,6 +1934,14 @@ const LIVE_URLS = [
   "https://raw.githubusercontent.com/lazizbekravshanov/fulltime/main/live.json",
   "./live.json"
 ];
+// Commentary is bulky, so it is a separate file fetched only when a match is
+// opened — never on the way to a table, and never in the polling loop.
+const COMMENTARY_URLS = [
+  "https://raw.githubusercontent.com/lazizbekravshanov/fulltime/main/commentary.json",
+  "./commentary.json"
+];
+let commentaryAt = 0;
+let commentaryPending = null;
 let refreshedAt = null;
 let liveGenerated = null;
 
@@ -1994,7 +2006,15 @@ function applyLive(live){
         }
       } else if (LIVE_NOW.delete(key)) changed = true;
     }
-    for (const [ev, lines] of Object.entries(l.commentary ?? {})){
+  }
+  refreshedAt = new Date(live.generated).getTime();
+  return changed;
+}
+
+function applyCommentary(file){
+  let changed = false;
+  for (const lg of LEAGUES){
+    for (const [ev, lines] of Object.entries(file?.comps?.[lg] ?? {})){
       const mapped = lines.map(([minute, text], i) => ({seq: i, minute, text})).reverse();
       const had = COMMENTARY.get(ev);
       if (!had || had.lines.length !== mapped.length){
@@ -2003,8 +2023,25 @@ function applyLive(live){
       }
     }
   }
-  refreshedAt = new Date(live.generated).getTime();
   return changed;
+}
+
+/* Fetched on demand when a match page is opened, and again at most once a minute
+   while that match is being played. */
+function pullCommentary(){
+  if (commentaryPending) return commentaryPending;
+  const bust = "?v=" + Date.now();
+  let answered = false;
+  commentaryPending = Promise.allSettled(COMMENTARY_URLS.map(url =>
+    fetchJSON(url + bust, 9000).then(file => { answered = true; return applyCommentary(file); })))
+    .then(results => {
+      // Record the attempt either way, so a failure shows its written state
+      // instead of spinning, and cannot trigger another fetch on every render.
+      commentaryAt = Date.now();
+      if (!answered || results.some(r => r.status === "fulfilled" && r.value)) render();
+    })
+    .finally(() => { commentaryPending = null; });
+  return commentaryPending;
 }
 
 async function pullLive(){
@@ -2081,7 +2118,7 @@ $("view").addEventListener("click", e => {
   else if (act === "round"){ window.scrollTo(0,0); go({view:"round", round: +el.dataset.round}); }
   else if (act === "match"){ window.scrollTo(0,0); go({lg: el.dataset.lg || state.lg, view:"match", match: el.dataset.ev}); }
   else if (act === "stat") go({stat: el.dataset.stat}, true);
-  else if (act === "recomment") pullLive();
+  else if (act === "recomment"){ commentaryAt = 0; pullCommentary(); }
   else if (act === "allcomps") go({allComps: el.dataset.on === "1"}, true);
   else if (act === "fav") toggleFav(el.dataset.lg, el.dataset.club);
   else if (act === "ics") exportICS(el.dataset.lg, el.dataset.club);

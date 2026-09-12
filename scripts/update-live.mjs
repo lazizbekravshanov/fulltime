@@ -13,6 +13,9 @@ import { COMPS, startYear, getJSON, parseESPN, scorersFrom, renamer } from "./up
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, "..", "live.json");
+// Commentary is bulky and only wanted when a match is opened, so it lives apart
+// from the file the page polls.
+const OUT_COMMENTARY = join(HERE, "..", "commentary.json");
 const SNAPSHOT = join(HERE, "..", "data.json");
 const SITE = "https://site.api.espn.com/apis";
 const MAX_COMMENTARY_MATCHES = 6;
@@ -104,6 +107,17 @@ async function league(key, cfg) {
 }
 
 const comps = {};
-for (const [key, cfg] of Object.entries(COMPS)) comps[key] = await league(key, cfg);
-writeFileSync(OUT, JSON.stringify({ generated: new Date().toISOString(), comps }) + "\n");
-console.error(`wrote ${OUT}`);
+const commentary = {};
+for (const [key, cfg] of Object.entries(COMPS)) {
+  const built = await league(key, cfg);
+  if (built.commentary) {
+    commentary[key] = built.commentary;
+    delete built.commentary;
+  }
+  comps[key] = built;
+}
+const generated = new Date().toISOString();
+writeFileSync(OUT, JSON.stringify({ generated, comps }) + "\n");
+writeFileSync(OUT_COMMENTARY, JSON.stringify({ generated, comps: commentary }) + "\n");
+const kb = (f) => (readFileSync(f, "utf8").length / 1024).toFixed(1) + "KB";
+console.error(`wrote ${OUT} (${kb(OUT)}) and ${OUT_COMMENTARY} (${kb(OUT_COMMENTARY)})`);

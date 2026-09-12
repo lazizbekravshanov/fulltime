@@ -59,13 +59,13 @@ A browser cannot read ESPN directly. It answers `curl` with
 every cross-origin request from the page is blocked. Everything is therefore
 pulled by scheduled jobs, which have no such restriction, and committed here.
 
-**Every five minutes** `update-live.mjs` writes `live.json`: the current table,
-today's scores, goal scorers, and text commentary for the matches in play or
-just finished. It is one standings call and one scoreboard call per competition,
-so it stays quick. The page fetches it after first paint, applies it on top of
-the snapshot — a finished match is written into the fixture list, so the splits,
-records and season-shape chart all move with it — and polls it once a minute
-while a match is in play.
+**Every five minutes** `update-live.mjs` writes two files. `live.json` is small
+— the current table, today's scores and goal scorers — and the page fetches it
+after first paint, applies it on top of the snapshot, and polls it once a minute
+while a match is in play. A finished match is written into the fixture list, so
+the splits, records and season-shape chart all move with it. `commentary.json`
+holds the text commentary for the matches in play or just finished; it is bulky,
+so it is fetched only when you open a match, never on the way to a table.
 
 **Every hour** `update-standings.mjs` writes `data.json`: the full season of
 fixtures, the archive, competition leaders and crests. That is what gives the
@@ -86,7 +86,8 @@ on a result, ESPN wins, because openfootball posts scores about a week late.
 
 - `index.html` — the entire site (vanilla HTML/CSS/JS, no build step)
 - `data.json` — the hourly snapshot: standings, fixtures, leaders, archive
-- `live.json` — the five-minute file: table, today's scores, scorers, commentary
+- `live.json` — the five-minute file: table, today's scores, scorers
+- `commentary.json` — text commentary, fetched only when a match is opened
 - `scripts/update-standings.mjs` — the hourly updater (Node 18+, zero dependencies)
 - `scripts/update-live.mjs` — the five-minute updater, sharing its helpers
 - `.github/scripts/live-check.mjs` — drives the published site in a real browser
