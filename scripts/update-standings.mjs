@@ -458,7 +458,7 @@ async function leadersFromESPN(slug, year, rows, nameCache) {
   }
   const cats = feed?.categories;
   if (!Array.isArray(cats) || !cats.length) return null;
-  const before = athletes.size;
+  const cachedNames = nameCache.size;
 
   const byId = new Map(rows.filter((r) => r.id != null).map((r) => [String(r.id), r.short]));
   const rename = renamer(rows);
@@ -526,7 +526,7 @@ async function leadersFromESPN(slug, year, rows, nameCache) {
     if (list) out[key] = list;
   }
   console.error(`[leaders] ${slug}: ${Object.entries(out).map(([k, v]) => `${k}=${v.length}`).join(" ") || "none"}`
-    + ` · ${fetched} athlete name(s) fetched, ${before} cached`);
+    + ` · ${fetched} athlete name(s) fetched, ${cachedNames} already cached`);
   return Object.keys(out).length ? out : null;
 }
 
