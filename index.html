@@ -1535,8 +1535,9 @@ function viewTable(){
     + legendHTML(cfg.legend, hasFx
         ? `<span><i style="background:var(--line-2)"></i>Next 5: bar shows how high the opponent sits, faded means away</span>` : "")
     + `<p class="note">${explain} Tap a club for its full season. ${
-        refreshedAt ? "The table was read from ESPN when you opened this page."
-                    : "Showing the last committed snapshot — the live feed couldn't be reached."}${
+        c.computed ? "The table is recomputed from results as they land, on points, then goal difference, then goals scored."
+          : refreshedAt ? "Read fresh when you opened this page."
+          : "Showing the last committed snapshot — no live source could be reached."}${
         q ? ` · showing ${hits.length} of ${rows.length} clubs` : ""}.</p>`
     + recordsHTML(state.lg) + performersHTML(state.lg);
 }
@@ -2044,6 +2045,123 @@ function pullCommentary(){
   return commentaryPending;
 }
 
+/* ===================== live from the source =====================
+   GitHub runs a five-minute schedule every few hours in practice, so the committed
+   files alone cannot keep up with a match. ESPN refuses cross-origin reads, but
+   TheSportsDB answers a browser fetch, so the page reads results and live scores
+   from it directly. Free-tier quirks: its table endpoint returns only five rows,
+   which is why results are applied to the fixture list and the table recomputed
+   from that instead. */
+const SDB = "https://www.thesportsdb.com/api/v1/json/3/";
+const SDB_ID = { epl:"4328", liga:"4335", ucl:"4480" };
+let sourcesAt = null;
+const finished = (s) => /^(ft|aet|pen|match finished|finished)$/i.test(String(s ?? "").trim());
+
+/* Write a result onto both clubs' copies of the fixture. */
+function setResultByClubs(lg, home, away, date, hg, ag){
+  const fx = comp(lg)?.fixtures;
+  const list = fx?.[home];
+  if (!list) return false;
+  const near = (a, b) => {
+    const x = Date.parse(a + "T12:00:00Z"), y = Date.parse(b + "T12:00:00Z");
+    return Number.isFinite(x) && Number.isFinite(y) && Math.abs(x - y) <= 2 * 864e5;
+  };
+  for (const t of list){
+    if (t[4] !== 1 || t[3] !== away) continue;
+    if (date && t[1] && !near(t[1], date)) continue;
+    if (t[5] === hg && t[6] === ag) return false;
+    t[5] = hg; t[6] = ag;
+    for (const u of fx[away] ?? []) if (u[4] === 0 && u[3] === home && u[1] === t[1]){ u[5] = ag; u[6] = hg; }
+    return true;
+  }
+  return false;
+}
+
+/* The feed's table is capped at five rows on the free tier, so once the fixture
+   list knows about a match the table does not, rebuild the table from fixtures.
+   Tiebreaks are points, goal difference, goals scored — the note says so. */
+function syncTable(lg){
+  const c = comp(lg);
+  if (!c?.fixtures || !c.rows?.length) return false;
+  const behind = c.rows.some(r => (fxOf(lg, r.short) ?? []).filter(f => f.done).length > (r.p ?? 0));
+  if (!behind) return false;
+  const rows = c.rows.map(r => ({...r, ...agg((fxOf(lg, r.short) ?? []).filter(f => f.done))}));
+  rows.sort((x,y) => y.pts - x.pts || y.gd - x.gd || y.gf - x.gf || x.short.localeCompare(y.short));
+  rows.forEach((r,i) => { r.pos = i + 1; });
+  c.rows = rows;
+  c.computed = true;
+  c.matchday = Math.max(0, ...rows.map(r => r.p ?? 0));
+  return true;
+}
+
+function applyLiveScores(feed){
+  const list = feed?.livescore;
+  if (!Array.isArray(list)) return null;
+  let changed = false;
+  const seen = new Set();
+  for (const m of list){
+    const lg = LEAGUES.find(k => SDB_ID[k] === String(m.idLeague));
+    if (!lg || !comp(lg)) continue;
+    const hg = Number(m.intHomeScore), ag = Number(m.intAwayScore);
+    if (!Number.isFinite(hg) || !Number.isFinite(ag)) continue;
+    const home = resolveClub(lg, m.strHomeTeam), away = resolveClub(lg, m.strAwayTeam);
+    const key = liveKey(lg, home, away);
+    if (finished(m.strStatus)){
+      if (setResultByClubs(lg, home, away, m.dateEvent, hg, ag)) changed = true;
+      if (LIVE_NOW.delete(key)) changed = true;
+      continue;
+    }
+    seen.add(key);
+    const mins = String(m.strProgress ?? "").replace(/[^0-9+]/g, "");
+    const rec = {state:"in", hg, ag, clock: mins ? mins + "'" : (m.strStatus || null)};
+    const was = LIVE_NOW.get(key);
+    if (!was || was.hg !== rec.hg || was.ag !== rec.ag || was.clock !== rec.clock){
+      LIVE_NOW.set(key, rec);
+      changed = true;
+    }
+  }
+  // The feed lists every live match, so anything of ours it omits has ended.
+  for (const [key, v] of [...LIVE_NOW]) {
+    if (v.state === "in" && !seen.has(key) && LEAGUES.some(lg => key.startsWith(lg + "|"))){
+      LIVE_NOW.delete(key);
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+function applyResults(lg, feed){
+  const events = feed?.events;
+  if (!Array.isArray(events)) return null;
+  let changed = false;
+  for (const e of events){
+    const hg = Number(e.intHomeScore), ag = Number(e.intAwayScore);
+    if (!Number.isFinite(hg) || !Number.isFinite(ag)) continue;
+    if (e.strStatus && !finished(e.strStatus)) continue;
+    if (setResultByClubs(lg, resolveClub(lg, e.strHomeTeam), resolveClub(lg, e.strAwayTeam),
+                         e.dateEvent, hg, ag)) changed = true;
+  }
+  return changed;
+}
+
+/* Read the source directly. Any failure is silent: the committed files stand. */
+async function pullSources(lg){
+  if (!LIVE || !comp(lg) || !SDB_ID[lg]) return;
+  let understood = false;
+  let changed = false;
+  const note = (value) => { if (value !== null) understood = true; if (value) changed = true; };
+  await Promise.allSettled([
+    fetchJSON(`${SDB}livescore.php?s=Soccer`, 9000).then(j => note(applyLiveScores(j))),
+    fetchJSON(`${SDB}eventspastleague.php?id=${SDB_ID[lg]}`, 9000).then(j => note(applyResults(lg, j)))
+  ]);
+  if (!understood) return;
+  if (syncTable(lg)) changed = true;
+  sourcesAt = Date.now();
+  refreshedAt = sourcesAt;
+  markFresh();
+  if (changed) render();
+}
+
 async function pullLive(){
   clearTimeout(liveTimer);
   // Both copies are asked at once: whichever answers first is used, and
@@ -2063,14 +2181,19 @@ function scheduleLive(){
   clearTimeout(liveTimer);
   if (!LIVE) return;
   const inPlay = [...LIVE_NOW.values()].some(v => v.state === "in");
-  // The job writes every five minutes, so polling faster than that buys nothing.
-  if (inPlay || matchesNear(3).length) liveTimer = setTimeout(pullLive, inPlay ? 60000 : 300000);
+  if (!inPlay && !matchesNear(3).length) return;
+  liveTimer = setTimeout(() => {
+    // The source is what moves during a match; the committed files move rarely.
+    pullSources(state.lg);
+    pullLive();
+  }, inPlay ? 60000 : 300000);
 }
 
 /* One sentence about how fresh these numbers are, used by the chip beside the
    table and by the status pill, so the two can never disagree. */
 function freshnessLabel(){
   if (!refreshedAt) return `snapshot · ${esc(timeAgo(LIVE.generated))}`;
+  if (sourcesAt && Date.now() - sourcesAt < 90000) return "live · read just now";
   const secs = Math.round((Date.now() - refreshedAt) / 1000);
   return secs < 90 ? "live · updated just now"
     : `live · updated ${esc(timeAgo(new Date(refreshedAt).toISOString()))}`;
@@ -2135,6 +2258,7 @@ document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
     state.q = ""; $("q").value = "";
     go({lg: tab.dataset.lg, view:"table", club:null, round:null});
+    pullSources(tab.dataset.lg);
   });
 });
 document.querySelector(".brand").addEventListener("click", e => {
@@ -2170,8 +2294,9 @@ window.addEventListener("hashchange", () => {
 });
 // Coming back to the tab is the same as loading it again.
 // Coming back to the tab is the same as loading it again.
-document.addEventListener("visibilitychange", () => { if (!document.hidden) pullLive(); });
-window.addEventListener("pageshow", (e) => { if (e.persisted) pullLive(); });
+// Coming back to the tab is the same as loading it again.
+document.addEventListener("visibilitychange", () => { if (!document.hidden){ pullLive(); pullSources(state.lg); } });
+window.addEventListener("pageshow", (e) => { if (e.persisted){ pullLive(); pullSources(state.lg); } });
 let lastNarrow = window.matchMedia("(max-width:680px)").matches;
 window.addEventListener("resize", () => {
   const narrow = window.matchMedia("(max-width:680px)").matches;
@@ -2191,6 +2316,7 @@ window.addEventListener("resize", () => {
   }
   render();
   pullLive();
+  pullSources(state.lg);
 })();
 </script>
 </body>
