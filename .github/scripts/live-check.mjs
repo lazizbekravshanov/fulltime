@@ -36,7 +36,7 @@ const seen = [];
 const failures = [];
 page.on("response", (r) => {
   const u = r.url();
-  if (/espn\.com/.test(u)) seen.push(`${r.status()} ${u.replace(/https:\/\/[^/]+/, "").slice(0, 78)}`);
+  if (/espn\.com|thesportsdb/.test(u)) seen.push(`${r.status()} ${u.replace(/https:\/\/[^/]+/, "").slice(0, 70)}`);
 });
 page.on("pageerror", (e) => failures.push("pageerror: " + e.message));
 page.on("console", (m) => { if (m.type() === "error" && !/net::|Failed to load resource/.test(m.text())) failures.push("console: " + m.text()); });
@@ -78,7 +78,8 @@ console.log("  live.json says it should be:       "
 console.log("  status pill: " + after.pill + "   chip: " + after.chip);
 console.log("  rows: " + after.rows + " · crest images loaded: " + after.crests + "/" + after.crestTotal);
 console.log("  top performers: " + after.performers + " rows · tabs: " + after.stats);
-console.log("  ESPN requests made by the page:");
+console.log("  in-play badges on the page: " + await page.locator(".livedot").count());
+console.log("  live-source requests made by the page:");
 for (const s of [...new Set(seen)]) console.log("    " + s);
 await page.screenshot({ path: `${SHOTS}/screenshot-table.png` });
 
