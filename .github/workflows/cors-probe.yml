@@ -1,0 +1,23 @@
+name: CORS probe
+
+# Temporary: finds which live sources the published page is actually allowed to
+# read, tested from a real browser on the real origin.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/pw" playwright@1.49.1
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Probe
+        run: node .github/scripts/cors-probe.mjs
+        env:
+          PW_MODULE: ${{ runner.temp }}/pw/node_modules/playwright
