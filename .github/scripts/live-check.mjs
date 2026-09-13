@@ -104,6 +104,25 @@ if (match) {
   await page.screenshot({ path: `${SHOTS}/screenshot-match.png` });
 }
 
+// Whichever competition has a match on right now is the one worth looking at.
+console.log("\n=== live scores, per competition");
+for (const lg of ["epl", "liga", "ucl"]) {
+  await page.goto(`${SITE}#${lg}`, { waitUntil: "load" });
+  await page.waitForSelector(".trow[data-club]", { timeout: 20000 });
+  await page.waitForTimeout(3500);
+  const seen = await page.evaluate(() => ({
+    badges: document.querySelectorAll(".livedot").length,
+    strip: [...document.querySelectorAll(".sect")].find(s => /In play/.test(s.textContent))
+      ?.textContent.replace(/\s+/g, " ").trim() ?? null,
+    leader: document.querySelector(".trow .nm")?.textContent.trim()
+      + " " + document.querySelector(".trow .pts")?.textContent.trim(),
+    note: document.querySelector(".note")?.textContent.replace(/\s+/g, " ").trim().slice(0, 100)
+  }));
+  console.log(`  ${lg}: leader ${seen.leader} · ${seen.badges} club(s) in play`
+    + (seen.strip ? `\n     ${seen.strip}` : ""));
+  if (seen.badges) await page.screenshot({ path: `${SHOTS}/screenshot-live.png` });
+}
+
 const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark", timezoneId: "Europe/London" });
 await phone.goto(SITE + "#liga", { waitUntil: "load" });
 await phone.waitForSelector(".trow[data-club]", { timeout: 20000 });
