@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-13T14:31:09.682Z",
+ "generated": "2026-09-13T18:14:46.525Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -28,14 +28,14 @@
      "id": "382",
      "team": "Manchester City",
      "short": "Man City",
-     "p": 3,
-     "w": 3,
+     "p": 4,
+     "w": 4,
      "d": 0,
      "l": 0,
-     "gf": 7,
+     "gf": 8,
      "ga": 2,
-     "gd": 5,
-     "pts": 9,
+     "gd": 6,
+     "pts": 12,
      "form": "WWW",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/382.png"
     },
@@ -57,6 +57,22 @@
     },
     {
      "pos": 4,
+     "id": "331",
+     "team": "Brighton & Hove Albion",
+     "short": "Brighton",
+     "p": 4,
+     "w": 2,
+     "d": 1,
+     "l": 1,
+     "gf": 13,
+     "ga": 5,
+     "gd": 8,
+     "pts": 7,
+     "form": "WLD",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/331.png"
+    },
+    {
+     "pos": 5,
      "id": "363",
      "team": "Chelsea",
      "short": "Chelsea",
@@ -72,7 +88,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/363.png"
     },
     {
-     "pos": 5,
+     "pos": 6,
      "id": "337",
      "team": "Brentford",
      "short": "Brentford",
@@ -88,7 +104,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/337.png"
     },
     {
-     "pos": 6,
+     "pos": 7,
      "id": "364",
      "team": "Liverpool",
      "short": "Liverpool",
@@ -104,7 +120,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/364.png"
     },
     {
-     "pos": 7,
+     "pos": 8,
      "id": "368",
      "team": "Everton",
      "short": "Everton",
@@ -120,7 +136,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/368.png"
     },
     {
-     "pos": 8,
+     "pos": 9,
      "id": "373",
      "team": "Ipswich Town",
      "short": "Ipswich",
@@ -136,7 +152,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/373.png"
     },
     {
-     "pos": 9,
+     "pos": 10,
      "id": "361",
      "team": "Newcastle United",
      "short": "Newcastle",
@@ -152,7 +168,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/361.png"
     },
     {
-     "pos": 10,
+     "pos": 11,
      "id": "357",
      "team": "Leeds United",
      "short": "Leeds",
@@ -168,7 +184,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/357.png"
     },
     {
-     "pos": 11,
+     "pos": 12,
      "id": "393",
      "team": "Nottingham Forest",
      "short": "Nottm Forest",
@@ -184,33 +200,17 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/393.png"
     },
     {
-     "pos": 12,
-     "id": "331",
-     "team": "Brighton & Hove Albion",
-     "short": "Brighton",
-     "p": 3,
-     "w": 1,
-     "d": 1,
-     "l": 1,
-     "gf": 8,
-     "ga": 5,
-     "gd": 3,
-     "pts": 4,
-     "form": "WLD",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/331.png"
-    },
-    {
      "pos": 13,
      "id": "360",
      "team": "Manchester United",
      "short": "Man United",
-     "p": 3,
+     "p": 4,
      "w": 1,
      "d": 1,
-     "l": 1,
+     "l": 2,
      "gf": 7,
-     "ga": 6,
-     "gd": 1,
+     "ga": 7,
+     "gd": 0,
      "pts": 4,
      "form": "LWD",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/360.png"
@@ -316,13 +316,13 @@
      "id": "388",
      "team": "Coventry City",
      "short": "Coventry",
-     "p": 3,
+     "p": 4,
      "w": 0,
      "d": 0,
-     "l": 3,
+     "l": 4,
      "gf": 0,
-     "ga": 5,
-     "gd": -5,
+     "ga": 10,
+     "gd": -10,
      "pts": 0,
      "form": "LLL",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/388.png"
@@ -748,8 +748,8 @@
       "13:00Z",
       "Brighton",
       1,
-      null,
-      null,
+      0,
+      5,
       "401879282"
      ],
      [
@@ -1512,8 +1512,8 @@
       "15:30Z",
       "Man City",
       1,
-      null,
-      null,
+      0,
+      1,
       "401879278"
      ],
      [
@@ -4950,8 +4950,8 @@
       "15:30Z",
       "Man United",
       0,
-      null,
-      null,
+      1,
+      0,
       "401879278"
      ],
      [
@@ -5714,8 +5714,8 @@
       "13:00Z",
       "Coventry",
       0,
-      null,
-      null,
+      5,
+      0,
       "401879282"
      ],
      [
@@ -7985,6 +7985,14 @@
       "p"
      ]
     ],
+    "401879278": [
+     [
+      "60",
+      "E. Haaland",
+      0,
+      ""
+     ]
+    ],
     "401879281": [
      [
       "14",
@@ -8013,6 +8021,38 @@
      [
       "90",
       "Z. Flemming",
+      0,
+      ""
+     ]
+    ],
+    "401879282": [
+     [
+      "35",
+      "C. Kostoulas",
+      0,
+      ""
+     ],
+     [
+      "51",
+      "M. Yalcouyé",
+      0,
+      ""
+     ],
+     [
+      "70",
+      "P. Gross",
+      0,
+      "p"
+     ],
+     [
+      "83",
+      "L. Dunk",
+      0,
+      ""
+     ],
+     [
+      "90+4",
+      "Y. Ayari",
       0,
       ""
      ]
@@ -8921,14 +8961,14 @@
      "id": "83",
      "team": "Barcelona",
      "short": "Barcelona",
-     "p": 4,
-     "w": 4,
+     "p": 5,
+     "w": 5,
      "d": 0,
      "l": 0,
-     "gf": 17,
-     "ga": 2,
-     "gd": 15,
-     "pts": 12,
+     "gf": 21,
+     "ga": 4,
+     "gd": 17,
+     "pts": 15,
      "form": "WWWW",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/83.png"
     },
@@ -9113,13 +9153,13 @@
      "id": "1538",
      "team": "Levante",
      "short": "Levante",
-     "p": 4,
+     "p": 5,
      "w": 1,
      "d": 2,
-     "l": 1,
-     "gf": 5,
-     "ga": 5,
-     "gd": 0,
+     "l": 2,
+     "gf": 7,
+     "ga": 9,
+     "gd": -2,
      "pts": 5,
      "form": "LW",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/1538.png"
@@ -11959,8 +11999,8 @@
       "14:15Z",
       "Barcelona",
       1,
-      null,
-      null,
+      2,
+      4,
       "401882883"
      ],
      [
@@ -13487,8 +13527,8 @@
       "12:00Z",
       "Celta Vigo",
       0,
-      null,
-      null,
+      1,
+      1,
       "401882885"
      ],
      [
@@ -15407,8 +15447,8 @@
       "12:00Z",
       "Málaga",
       1,
-      null,
-      null,
+      1,
+      1,
       "401882885"
      ],
      [
@@ -16161,8 +16201,8 @@
       "14:15Z",
       "Levante",
       0,
-      null,
-      null,
+      4,
+      2,
       "401882883"
      ],
      [
@@ -16954,11 +16994,63 @@
       ""
      ]
     ],
+    "401882883": [
+     [
+      "5",
+      "X. Espart",
+      0,
+      ""
+     ],
+     [
+      "19",
+      "L. Yamal",
+      0,
+      ""
+     ],
+     [
+      "48",
+      "L. Yamal",
+      0,
+      "p"
+     ],
+     [
+      "79",
+      "I. Romero",
+      1,
+      ""
+     ],
+     [
+      "88",
+      "R. Brugué",
+      1,
+      ""
+     ],
+     [
+      "90+3",
+      "K. Adeyemi",
+      0,
+      ""
+     ]
+    ],
+    "401882884": [
+     [
+      "66",
+      "R. Terrats",
+      1,
+      ""
+     ]
+    ],
     "401882885": [
      [
       "41",
       "F. Jutglà",
       1,
+      ""
+     ],
+     [
+      "83",
+      "A. Niño",
+      0,
       ""
      ]
     ],
