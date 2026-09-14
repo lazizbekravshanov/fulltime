@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-14T19:29:13.446Z",
+ "generated": "2026-09-14T23:13:14.649Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -41,6 +41,22 @@
     },
     {
      "pos": 3,
+     "id": "357",
+     "team": "Leeds United",
+     "short": "Leeds",
+     "p": 4,
+     "w": 2,
+     "d": 2,
+     "l": 0,
+     "gf": 7,
+     "ga": 3,
+     "gd": 4,
+     "pts": 8,
+     "form": "WDD",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/357.png"
+    },
+    {
+     "pos": 4,
      "id": "306",
      "team": "Hull City",
      "short": "Hull",
@@ -56,7 +72,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/306.png"
     },
     {
-     "pos": 4,
+     "pos": 5,
      "id": "331",
      "team": "Brighton & Hove Albion",
      "short": "Brighton",
@@ -72,7 +88,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/331.png"
     },
     {
-     "pos": 5,
+     "pos": 6,
      "id": "363",
      "team": "Chelsea",
      "short": "Chelsea",
@@ -88,7 +104,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/363.png"
     },
     {
-     "pos": 6,
+     "pos": 7,
      "id": "337",
      "team": "Brentford",
      "short": "Brentford",
@@ -104,7 +120,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/337.png"
     },
     {
-     "pos": 7,
+     "pos": 8,
      "id": "364",
      "team": "Liverpool",
      "short": "Liverpool",
@@ -120,7 +136,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/364.png"
     },
     {
-     "pos": 8,
+     "pos": 9,
      "id": "368",
      "team": "Everton",
      "short": "Everton",
@@ -136,7 +152,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/368.png"
     },
     {
-     "pos": 9,
+     "pos": 10,
      "id": "373",
      "team": "Ipswich Town",
      "short": "Ipswich",
@@ -152,39 +168,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/373.png"
     },
     {
-     "pos": 10,
-     "id": "361",
-     "team": "Newcastle United",
-     "short": "Newcastle",
-     "p": 3,
-     "w": 1,
-     "d": 2,
-     "l": 0,
-     "gf": 6,
-     "ga": 4,
-     "gd": 2,
-     "pts": 5,
-     "form": "DWD",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/361.png"
-    },
-    {
      "pos": 11,
-     "id": "357",
-     "team": "Leeds United",
-     "short": "Leeds",
-     "p": 3,
-     "w": 1,
-     "d": 2,
-     "l": 0,
-     "gf": 3,
-     "ga": 2,
-     "gd": 1,
-     "pts": 5,
-     "form": "WDD",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/357.png"
-    },
-    {
-     "pos": 12,
      "id": "393",
      "team": "Nottingham Forest",
      "short": "Nottm Forest",
@@ -198,6 +182,22 @@
      "pts": 5,
      "form": "LD",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/393.png"
+    },
+    {
+     "pos": 12,
+     "id": "361",
+     "team": "Newcastle United",
+     "short": "Newcastle",
+     "p": 4,
+     "w": 1,
+     "d": 2,
+     "l": 1,
+     "gf": 7,
+     "ga": 8,
+     "gd": -1,
+     "pts": 5,
+     "form": "DWD",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/361.png"
     },
     {
      "pos": 13,
@@ -3040,8 +3040,8 @@
       "19:00Z",
       "Newcastle",
       1,
-      null,
-      null,
+      4,
+      1,
       "401879280"
      ],
      [
@@ -6478,8 +6478,8 @@
       "19:00Z",
       "Leeds",
       0,
-      null,
-      null,
+      1,
+      4,
       "401879280"
      ],
      [
@@ -7993,6 +7993,38 @@
       ""
      ]
     ],
+    "401879280": [
+     [
+      "32",
+      "L. Miley",
+      1,
+      "o"
+     ],
+     [
+      "34",
+      "J. Bogle",
+      1,
+      ""
+     ],
+     [
+      "45+1",
+      "D. Calvert-Lewin",
+      1,
+      ""
+     ],
+     [
+      "59",
+      "N. Okafor",
+      1,
+      ""
+     ],
+     [
+      "90",
+      "B. Touré",
+      0,
+      ""
+     ]
+    ],
     "401879281": [
      [
       "14",
@@ -8990,6 +9022,22 @@
     },
     {
      "pos": 3,
+     "id": "244",
+     "team": "Real Betis",
+     "short": "Betis",
+     "p": 5,
+     "w": 4,
+     "d": 0,
+     "l": 1,
+     "gf": 7,
+     "ga": 6,
+     "gd": 1,
+     "pts": 12,
+     "form": "WWLW",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/244.png"
+    },
+    {
+     "pos": 4,
      "id": "96",
      "team": "Alavés",
      "short": "Alavés",
@@ -9005,7 +9053,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/96.png"
     },
     {
-     "pos": 4,
+     "pos": 5,
      "id": "1068",
      "team": "Atlético Madrid",
      "short": "Atlético",
@@ -9021,7 +9069,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/1068.png"
     },
     {
-     "pos": 5,
+     "pos": 6,
      "id": "243",
      "team": "Sevilla",
      "short": "Sevilla",
@@ -9037,7 +9085,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/243.png"
     },
     {
-     "pos": 6,
+     "pos": 7,
      "id": "90",
      "team": "Deportivo",
      "short": "Deportivo",
@@ -9051,22 +9099,6 @@
      "pts": 9,
      "form": "",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/90.png"
-    },
-    {
-     "pos": 7,
-     "id": "244",
-     "team": "Real Betis",
-     "short": "Betis",
-     "p": 4,
-     "w": 3,
-     "d": 0,
-     "l": 1,
-     "gf": 5,
-     "ga": 5,
-     "gd": 0,
-     "pts": 9,
-     "form": "WWLW",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/244.png"
     },
     {
      "pos": 8,
@@ -9233,13 +9265,13 @@
      "id": "102",
      "team": "Villarreal",
      "short": "Villarreal",
-     "p": 4,
+     "p": 5,
      "w": 0,
      "d": 2,
-     "l": 2,
-     "gf": 6,
-     "ga": 8,
-     "gd": -2,
+     "l": 3,
+     "gf": 7,
+     "ga": 10,
+     "gd": -3,
      "pts": 2,
      "form": "DDLL",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/102.png"
