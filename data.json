@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-15T07:53:03.652Z",
+ "generated": "2026-09-15T13:41:07.085Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -8899,6 +8899,16 @@
     ],
     "saves": [
      {
+      "player": "Lukás Hornícek",
+      "club": "Newcastle",
+      "value": 16
+     },
+     {
+      "player": "James Trafford",
+      "club": "Leeds",
+      "value": 15
+     },
+     {
       "player": "Caoimhín Kelleher",
       "club": "Brentford",
       "value": 15
@@ -8919,11 +8929,6 @@
       "value": 14
      },
      {
-      "player": "Lukás Hornícek",
-      "club": "Newcastle",
-      "value": 13
-     },
-     {
       "player": "Alisson Becker",
       "club": "Liverpool",
       "value": 12
@@ -8932,11 +8937,6 @@
       "player": "Dean Henderson",
       "club": "C Palace",
       "value": 12
-     },
-     {
-      "player": "Jordan Pickford",
-      "club": "Everton",
-      "value": 11
      }
     ],
     "yellowCards": [
@@ -8948,6 +8948,11 @@
      {
       "player": "Adam Smith",
       "club": "Bournemouth",
+      "value": 3
+     },
+     {
+      "player": "Dominic Calvert-Lewin",
+      "club": "Leeds",
       "value": 3
      },
      {
@@ -8973,11 +8978,6 @@
      {
       "player": "Pascal Gross",
       "club": "Brighton",
-      "value": 2
-     },
-     {
-      "player": "Marcus Tavernier",
-      "club": "Bournemouth",
       "value": 2
      }
     ]
@@ -18076,17 +18076,22 @@
       "value": 9
      },
      {
-      "player": "Fermín López",
-      "club": "Barcelona",
-      "value": 8
+      "player": "Antony",
+      "club": "Betis",
+      "value": 9
      },
      {
-      "player": "Mariano Díaz",
-      "club": "Alavés",
+      "player": "Fermín López",
+      "club": "Barcelona",
       "value": 8
      }
     ],
     "accuratePasses": [
+     {
+      "player": "Renato Veiga",
+      "club": "Villarreal",
+      "value": 369
+     },
      {
       "player": "Pau Cubarsí",
       "club": "Barcelona",
@@ -18121,17 +18126,17 @@
       "player": "Ángel Recio",
       "club": "Málaga",
       "value": 302
-     },
-     {
-      "player": "Aymeric Laporte",
-      "club": "Athletic",
-      "value": 300
      }
     ],
     "saves": [
      {
       "player": "Julen Agirrezabala",
       "club": "Racing",
+      "value": 23
+     },
+     {
+      "player": "Álvaro Valles",
+      "club": "Betis",
       "value": 23
      },
      {
@@ -18162,11 +18167,6 @@
      {
       "player": "Andrei Radu",
       "club": "Celta Vigo",
-      "value": 16
-     },
-     {
-      "player": "Leo Román",
-      "club": "Deportivo",
       "value": 16
      }
     ],
