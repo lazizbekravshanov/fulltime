@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-16T06:10:16.410Z",
+ "generated": "2026-09-16T11:49:25.672Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -16198,6 +16198,16 @@
      {
       "player": "Kylian Mbappé",
       "club": "Real Madrid",
+      "value": 7
+     },
+     {
+      "player": "Roberto Fernández",
+      "club": "Espanyol",
+      "value": 6
+     },
+     {
+      "player": "Sergio Camello",
+      "club": "Rayo",
       "value": 6
      },
      {
@@ -16211,18 +16221,8 @@
       "value": 6
      },
      {
-      "player": "Sergio Camello",
-      "club": "Rayo",
-      "value": 6
-     },
-     {
       "player": "Pierre-Emerick Aubameyang",
       "club": "Deportivo",
-      "value": 5
-     },
-     {
-      "player": "Roberto Fernández",
-      "club": "Espanyol",
       "value": 5
      },
      {
@@ -16231,12 +16231,17 @@
       "value": 5
      },
      {
-      "player": "Ante Budimir",
-      "club": "Osasuna",
+      "player": "Lucas Boyé",
+      "club": "Alavés",
       "value": 4
      }
     ],
     "assists": [
+     {
+      "player": "Javi Hernandez",
+      "club": "Espanyol",
+      "value": 4
+     },
      {
       "player": "Anthony Gordon",
       "club": "Barcelona",
@@ -16248,8 +16253,8 @@
       "value": 3
      },
      {
-      "player": "Raphinha",
-      "club": "Barcelona",
+      "player": "Ángel Pérez",
+      "club": "Alavés",
       "value": 3
      },
      {
@@ -16258,23 +16263,18 @@
       "value": 3
      },
      {
-      "player": "Javi Hernandez",
-      "club": "Espanyol",
-      "value": 3
-     },
-     {
-      "player": "Ángel Pérez",
-      "club": "Alavés",
-      "value": 3
-     },
-     {
       "player": "Mariano Díaz",
       "club": "Alavés",
       "value": 3
      },
      {
-      "player": "Mikel Oyarzabal",
-      "club": "Real Sociedad",
+      "player": "Raphinha",
+      "club": "Barcelona",
+      "value": 3
+     },
+     {
+      "player": "Kylian Mbappé",
+      "club": "Real Madrid",
       "value": 2
      }
     ],
@@ -16282,7 +16282,7 @@
      {
       "player": "Kylian Mbappé",
       "club": "Real Madrid",
-      "value": 21
+      "value": 22
      },
      {
       "player": "Lamine Yamal",
@@ -16290,13 +16290,13 @@
       "value": 11
      },
      {
-      "player": "Ante Budimir",
-      "club": "Osasuna",
+      "player": "Sergio Camello",
+      "club": "Rayo",
       "value": 10
      },
      {
-      "player": "Sergio Camello",
-      "club": "Rayo",
+      "player": "Ante Budimir",
+      "club": "Osasuna",
       "value": 10
      },
      {
@@ -16315,12 +16315,17 @@
       "value": 9
      },
      {
-      "player": "Fermín López",
-      "club": "Barcelona",
+      "player": "Mariano Díaz",
+      "club": "Alavés",
       "value": 8
      }
     ],
     "accuratePasses": [
+     {
+      "player": "Víctor Chust",
+      "club": "Elche",
+      "value": 418
+     },
      {
       "player": "Renato Veiga",
       "club": "Villarreal",
@@ -16342,9 +16347,9 @@
       "value": 336
      },
      {
-      "player": "Víctor Chust",
-      "club": "Elche",
-      "value": 326
+      "player": "Dean Huijsen",
+      "club": "Real Madrid",
+      "value": 327
      },
      {
       "player": "Dávid Hancko",
@@ -16355,11 +16360,6 @@
       "player": "Miguel Román",
       "club": "Celta Vigo",
       "value": 320
-     },
-     {
-      "player": "Ángel Recio",
-      "club": "Málaga",
-      "value": 302
      }
     ],
     "saves": [
@@ -16374,6 +16374,16 @@
       "value": 23
      },
      {
+      "player": "Marko Dmitrovic",
+      "club": "Espanyol",
+      "value": 19
+     },
+     {
+      "player": "Stole Dimitrievski",
+      "club": "Valencia",
+      "value": 19
+     },
+     {
       "player": "Alfonso Herrero",
       "club": "Málaga",
       "value": 19
@@ -16384,34 +16394,24 @@
       "value": 19
      },
      {
-      "player": "Marko Dmitrovic",
-      "club": "Espanyol",
-      "value": 19
-     },
-     {
       "player": "Mathew Ryan",
       "club": "Levante",
       "value": 19
      },
      {
-      "player": "Unai Simón",
-      "club": "Athletic",
+      "player": "Antonio Sivera",
+      "club": "Alavés",
       "value": 17
-     },
-     {
-      "player": "Andrei Radu",
-      "club": "Celta Vigo",
-      "value": 16
      }
     ],
     "yellowCards": [
      {
-      "player": "Jon Aramburu",
-      "club": "Real Sociedad",
+      "player": "Antonio Blanco",
+      "club": "Alavés",
       "value": 3
      },
      {
-      "player": "Yangel Herrera",
+      "player": "Jon Aramburu",
       "club": "Real Sociedad",
       "value": 3
      },
@@ -16421,8 +16421,18 @@
       "value": 3
      },
      {
+      "player": "Yangel Herrera",
+      "club": "Real Sociedad",
+      "value": 3
+     },
+     {
       "player": "Cala",
       "club": "Espanyol",
+      "value": 3
+     },
+     {
+      "player": "Ibrahima Konaté",
+      "club": "Real Madrid",
       "value": 3
      },
      {
@@ -16434,16 +16444,6 @@
       "player": "Enrique Barja",
       "club": "Osasuna",
       "value": 3
-     },
-     {
-      "player": "Yoel Lago",
-      "club": "Celta Vigo",
-      "value": 2
-     },
-     {
-      "player": "Lorenzo Amatucci",
-      "club": "Deportivo",
-      "value": 2
      }
     ]
    }
@@ -17356,6 +17356,7 @@
   "249524": "Cody Gakpo",
   "250787": "Phil Foden",
   "251100": "Pau Torres",
+  "251634": "Ibrahima Konaté",
   "252107": "Vinícius Júnior",
   "252389": "Kiernan Dewsbury-Hall",
   "253989": "Erling Haaland",
@@ -17369,6 +17370,7 @@
   "265907": "Marc Guéhi",
   "265958": "Zion Suzuki",
   "265995": "Víctor Chust",
+  "265997": "Antonio Blanco",
   "268782": "Anthony Gordon",
   "269136": "Ermedin Demirovic",
   "271170": "Bryan Mbeumo",
