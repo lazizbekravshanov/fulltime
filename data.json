@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-16T17:08:13.501Z",
+ "generated": "2026-09-16T20:15:05.958Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -8264,6 +8264,38 @@
     },
     {
      "pos": 3,
+     "id": "1068",
+     "team": "Atlético Madrid",
+     "short": "Atlético",
+     "p": 6,
+     "w": 4,
+     "d": 1,
+     "l": 1,
+     "gf": 14,
+     "ga": 6,
+     "gd": 8,
+     "pts": 13,
+     "form": "WDWL",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/1068.png"
+    },
+    {
+     "pos": 4,
+     "id": "243",
+     "team": "Sevilla",
+     "short": "Sevilla",
+     "p": 6,
+     "w": 4,
+     "d": 1,
+     "l": 1,
+     "gf": 9,
+     "ga": 6,
+     "gd": 3,
+     "pts": 13,
+     "form": "WWLD",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/243.png"
+    },
+    {
+     "pos": 5,
      "id": "244",
      "team": "Real Betis",
      "short": "Betis",
@@ -8279,7 +8311,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/244.png"
     },
     {
-     "pos": 4,
+     "pos": 6,
      "id": "96",
      "team": "Alavés",
      "short": "Alavés",
@@ -8295,49 +8327,17 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/96.png"
     },
     {
-     "pos": 5,
-     "id": "1068",
-     "team": "Atlético Madrid",
-     "short": "Atlético",
-     "p": 5,
-     "w": 3,
-     "d": 1,
-     "l": 1,
-     "gf": 10,
-     "ga": 6,
-     "gd": 4,
-     "pts": 10,
-     "form": "WDWL",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/1068.png"
-    },
-    {
-     "pos": 6,
-     "id": "243",
-     "team": "Sevilla",
-     "short": "Sevilla",
-     "p": 5,
-     "w": 3,
-     "d": 1,
-     "l": 1,
-     "gf": 8,
-     "ga": 6,
-     "gd": 2,
-     "pts": 10,
-     "form": "WWLD",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/243.png"
-    },
-    {
      "pos": 7,
      "id": "90",
      "team": "Deportivo",
      "short": "Deportivo",
-     "p": 5,
+     "p": 6,
      "w": 2,
      "d": 3,
-     "l": 0,
+     "l": 1,
      "gf": 9,
-     "ga": 6,
-     "gd": 3,
+     "ga": 7,
+     "gd": 2,
      "pts": 9,
      "form": "",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/90.png"
@@ -8392,22 +8392,6 @@
     },
     {
      "pos": 11,
-     "id": "97",
-     "team": "Osasuna",
-     "short": "Osasuna",
-     "p": 5,
-     "w": 2,
-     "d": 1,
-     "l": 2,
-     "gf": 5,
-     "ga": 8,
-     "gd": -3,
-     "pts": 7,
-     "form": "WWL",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/97.png"
-    },
-    {
-     "pos": 12,
      "id": "101",
      "team": "Rayo Vallecano",
      "short": "Rayo",
@@ -8423,7 +8407,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/101.png"
     },
     {
-     "pos": 13,
+     "pos": 12,
      "id": "89",
      "team": "Real Sociedad",
      "short": "Real Sociedad",
@@ -8437,6 +8421,22 @@
      "pts": 7,
      "form": "",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/89.png"
+    },
+    {
+     "pos": 13,
+     "id": "97",
+     "team": "Osasuna",
+     "short": "Osasuna",
+     "p": 6,
+     "w": 2,
+     "d": 1,
+     "l": 3,
+     "gf": 5,
+     "ga": 12,
+     "gd": -7,
+     "pts": 7,
+     "form": "WWL",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/97.png"
     },
     {
      "pos": 14,
