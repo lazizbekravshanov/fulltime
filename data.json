@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-17T18:21:10.725Z",
+ "generated": "2026-09-17T21:32:24.676Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -8264,6 +8264,22 @@
     },
     {
      "pos": 3,
+     "id": "244",
+     "team": "Real Betis",
+     "short": "Betis",
+     "p": 6,
+     "w": 5,
+     "d": 0,
+     "l": 1,
+     "gf": 8,
+     "ga": 6,
+     "gd": 2,
+     "pts": 15,
+     "form": "WWLW",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/244.png"
+    },
+    {
+     "pos": 4,
      "id": "1068",
      "team": "Atlético Madrid",
      "short": "Atlético",
@@ -8279,7 +8295,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/1068.png"
     },
     {
-     "pos": 4,
+     "pos": 5,
      "id": "243",
      "team": "Sevilla",
      "short": "Sevilla",
@@ -8293,22 +8309,6 @@
      "pts": 13,
      "form": "WWLD",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/243.png"
-    },
-    {
-     "pos": 5,
-     "id": "244",
-     "team": "Real Betis",
-     "short": "Betis",
-     "p": 5,
-     "w": 4,
-     "d": 0,
-     "l": 1,
-     "gf": 7,
-     "ga": 6,
-     "gd": 1,
-     "pts": 12,
-     "form": "WWLW",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/244.png"
     },
     {
      "pos": 6,
@@ -8440,6 +8440,22 @@
     },
     {
      "pos": 14,
+     "id": "102",
+     "team": "Villarreal",
+     "short": "Villarreal",
+     "p": 6,
+     "w": 1,
+     "d": 2,
+     "l": 3,
+     "gf": 10,
+     "ga": 11,
+     "gd": -1,
+     "pts": 5,
+     "form": "DDLL",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/102.png"
+    },
+    {
+     "pos": 15,
      "id": "1538",
      "team": "Levante",
      "short": "Levante",
@@ -8455,23 +8471,23 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/1538.png"
     },
     {
-     "pos": 15,
+     "pos": 16,
      "id": "2922",
      "team": "Getafe",
      "short": "Getafe",
-     "p": 5,
+     "p": 6,
      "w": 1,
      "d": 2,
-     "l": 2,
+     "l": 3,
      "gf": 3,
-     "ga": 6,
-     "gd": -3,
+     "ga": 7,
+     "gd": -4,
      "pts": 5,
      "form": "LWLD",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/2922.png"
     },
     {
-     "pos": 16,
+     "pos": 17,
      "id": "85",
      "team": "Celta Vigo",
      "short": "Celta Vigo",
@@ -8487,7 +8503,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/85.png"
     },
     {
-     "pos": 17,
+     "pos": 18,
      "id": "94",
      "team": "Valencia",
      "short": "Valencia",
@@ -8503,36 +8519,20 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/94.png"
     },
     {
-     "pos": 18,
+     "pos": 19,
      "id": "99",
      "team": "Málaga",
      "short": "Málaga",
-     "p": 5,
+     "p": 6,
      "w": 0,
      "d": 3,
-     "l": 2,
-     "gf": 2,
-     "ga": 8,
-     "gd": -6,
+     "l": 3,
+     "gf": 3,
+     "ga": 11,
+     "gd": -8,
      "pts": 3,
      "form": "LDL",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/99.png"
-    },
-    {
-     "pos": 19,
-     "id": "102",
-     "team": "Villarreal",
-     "short": "Villarreal",
-     "p": 5,
-     "w": 0,
-     "d": 2,
-     "l": 3,
-     "gf": 7,
-     "ga": 10,
-     "gd": -3,
-     "pts": 2,
-     "form": "DDLL",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/102.png"
     },
     {
      "pos": 20,
