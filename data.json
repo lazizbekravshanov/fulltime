@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-18T06:02:58.643Z",
+ "generated": "2026-09-18T11:28:24.379Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -16295,6 +16295,11 @@
       "value": 13
      },
      {
+      "player": "Antony",
+      "club": "Betis",
+      "value": 13
+     },
+     {
       "player": "Ante Budimir",
       "club": "Osasuna",
       "value": 10
@@ -16310,26 +16315,21 @@
       "value": 9
      },
      {
-      "player": "Antony",
-      "club": "Betis",
-      "value": 9
-     },
-     {
-      "player": "Yassir Zabiri",
-      "club": "Racing",
+      "player": "Georges Mikautadze",
+      "club": "Villarreal",
       "value": 8
      }
     ],
     "accuratePasses": [
      {
+      "player": "Renato Veiga",
+      "club": "Villarreal",
+      "value": 451
+     },
+     {
       "player": "Víctor Chust",
       "club": "Elche",
       "value": 418
-     },
-     {
-      "player": "Renato Veiga",
-      "club": "Villarreal",
-      "value": 369
      },
      {
       "player": "Pau Cubarsí",
@@ -16352,14 +16352,14 @@
       "value": 336
      },
      {
+      "player": "Ángel Recio",
+      "club": "Málaga",
+      "value": 335
+     },
+     {
       "player": "Dávid Hancko",
       "club": "Atlético",
       "value": 333
-     },
-     {
-      "player": "Pedri",
-      "club": "Barcelona",
-      "value": 332
      }
     ],
     "saves": [
@@ -16371,12 +16371,22 @@
      {
       "player": "Álvaro Valles",
       "club": "Betis",
-      "value": 23
+      "value": 25
+     },
+     {
+      "player": "Alfonso Herrero",
+      "club": "Málaga",
+      "value": 22
      },
      {
       "player": "Leo Román",
       "club": "Deportivo",
       "value": 21
+     },
+     {
+      "player": "David Soria",
+      "club": "Getafe",
+      "value": 19
      },
      {
       "player": "Marko Dmitrovic",
@@ -16391,16 +16401,6 @@
      {
       "player": "Mathew Ryan",
       "club": "Levante",
-      "value": 19
-     },
-     {
-      "player": "Alfonso Herrero",
-      "club": "Málaga",
-      "value": 19
-     },
-     {
-      "player": "Álex Remiro",
-      "club": "Real Sociedad",
       "value": 19
      }
     ],
@@ -17317,6 +17317,7 @@
   "189045": "Stas Pokatilov",
   "191360": "Sergio Herrera",
   "193010": "Oliver McBurnie",
+  "196339": "David Soria",
   "196876": "Alisson Becker",
   "197717": "Dominic Calvert-Lewin",
   "198832": "Mariano Díaz",
