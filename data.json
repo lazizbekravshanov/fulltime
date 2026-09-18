@@ -1,11 +1,11 @@
 {
- "generated": "2026-09-18T19:44:43.733Z",
+ "generated": "2026-09-18T22:40:19.191Z",
  "season": "2026/27",
  "comps": {
   "epl": {
    "name": "Premier League",
    "source": "espn",
-   "matchday": 4,
+   "matchday": 5,
    "rows": [
     {
      "pos": 1,
@@ -41,6 +41,22 @@
     },
     {
      "pos": 3,
+     "id": "337",
+     "team": "Brentford",
+     "short": "Brentford",
+     "p": 5,
+     "w": 2,
+     "d": 3,
+     "l": 0,
+     "gf": 10,
+     "ga": 4,
+     "gd": 6,
+     "pts": 9,
+     "form": "WDD",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/337.png"
+    },
+    {
+     "pos": 4,
      "id": "357",
      "team": "Leeds United",
      "short": "Leeds",
@@ -56,7 +72,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/357.png"
     },
     {
-     "pos": 4,
+     "pos": 5,
      "id": "306",
      "team": "Hull City",
      "short": "Hull",
@@ -72,7 +88,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/306.png"
     },
     {
-     "pos": 5,
+     "pos": 6,
      "id": "331",
      "team": "Brighton & Hove Albion",
      "short": "Brighton",
@@ -88,36 +104,20 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/331.png"
     },
     {
-     "pos": 6,
+     "pos": 7,
      "id": "363",
      "team": "Chelsea",
      "short": "Chelsea",
-     "p": 4,
+     "p": 5,
      "w": 2,
      "d": 1,
-     "l": 1,
+     "l": 2,
      "gf": 10,
-     "ga": 9,
-     "gd": 1,
+     "ga": 12,
+     "gd": -2,
      "pts": 7,
      "form": "WWL",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/363.png"
-    },
-    {
-     "pos": 7,
-     "id": "337",
-     "team": "Brentford",
-     "short": "Brentford",
-     "p": 4,
-     "w": 1,
-     "d": 3,
-     "l": 0,
-     "gf": 7,
-     "ga": 4,
-     "gd": 3,
-     "pts": 6,
-     "form": "WDD",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/337.png"
     },
     {
      "pos": 8,
@@ -8228,7 +8228,7 @@
   "liga": {
    "name": "La Liga",
    "source": "espn",
-   "matchday": 6,
+   "matchday": 7,
    "rows": [
     {
      "pos": 1,
@@ -8344,22 +8344,6 @@
     },
     {
      "pos": 8,
-     "id": "88",
-     "team": "Espanyol",
-     "short": "Espanyol",
-     "p": 6,
-     "w": 2,
-     "d": 1,
-     "l": 3,
-     "gf": 9,
-     "ga": 7,
-     "gd": 2,
-     "pts": 7,
-     "form": "",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/88.png"
-    },
-    {
-     "pos": 9,
      "id": "93",
      "team": "Athletic Club",
      "short": "Athletic",
@@ -8373,6 +8357,22 @@
      "pts": 7,
      "form": "LLWW",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/93.png"
+    },
+    {
+     "pos": 9,
+     "id": "88",
+     "team": "Espanyol",
+     "short": "Espanyol",
+     "p": 7,
+     "w": 2,
+     "d": 1,
+     "l": 4,
+     "gf": 10,
+     "ga": 10,
+     "gd": 0,
+     "pts": 7,
+     "form": "",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/88.png"
     },
     {
      "pos": 10,
@@ -8488,6 +8488,22 @@
     },
     {
      "pos": 17,
+     "id": "3751",
+     "team": "Elche",
+     "short": "Elche",
+     "p": 7,
+     "w": 1,
+     "d": 2,
+     "l": 4,
+     "gf": 11,
+     "ga": 17,
+     "gd": -6,
+     "pts": 5,
+     "form": "DLLL",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/3751.png"
+    },
+    {
+     "pos": 18,
      "id": "85",
      "team": "Celta Vigo",
      "short": "Celta Vigo",
@@ -8503,7 +8519,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/85.png"
     },
     {
-     "pos": 18,
+     "pos": 19,
      "id": "94",
      "team": "Valencia",
      "short": "Valencia",
@@ -8519,7 +8535,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/94.png"
     },
     {
-     "pos": 19,
+     "pos": 20,
      "id": "99",
      "team": "Málaga",
      "short": "Málaga",
@@ -8533,22 +8549,6 @@
      "pts": 3,
      "form": "LDL",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/99.png"
-    },
-    {
-     "pos": 20,
-     "id": "3751",
-     "team": "Elche",
-     "short": "Elche",
-     "p": 6,
-     "w": 0,
-     "d": 2,
-     "l": 4,
-     "gf": 8,
-     "ga": 16,
-     "gd": -8,
-     "pts": 2,
-     "form": "DLLL",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/3751.png"
     }
    ],
    "fixtures": {
