@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-20T06:26:52.877Z",
+ "generated": "2026-09-20T12:29:36.187Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -7978,6 +7978,11 @@
       "value": 4
      },
      {
+      "player": "Pascal Gross",
+      "club": "Brighton",
+      "value": 3
+     },
+     {
       "player": "Kevin Schade",
       "club": "Brentford",
       "value": 3
@@ -7985,6 +7990,11 @@
      {
       "player": "Morgan Rogers",
       "club": "Chelsea",
+      "value": 3
+     },
+     {
+      "player": "Bukayo Saka",
+      "club": "Arsenal",
       "value": 3
      },
      {
@@ -8001,19 +8011,14 @@
       "player": "Marcus Tavernier",
       "club": "Bournemouth",
       "value": 3
-     },
-     {
-      "player": "Bukayo Saka",
-      "club": "Arsenal",
-      "value": 3
-     },
-     {
-      "player": "Alexander Isak",
-      "club": "Liverpool",
-      "value": 3
      }
     ],
     "assists": [
+     {
+      "player": "Pascal Gross",
+      "club": "Brighton",
+      "value": 3
+     },
      {
       "player": "João Pedro",
       "club": "Chelsea",
@@ -8035,27 +8040,27 @@
       "value": 3
      },
      {
-      "player": "Cole Palmer",
-      "club": "Chelsea",
-      "value": 2
-     },
-     {
-      "player": "Antoine Semenyo",
-      "club": "Man City",
-      "value": 2
-     },
-     {
       "player": "Morgan Gibbs-White",
       "club": "Nottm Forest",
       "value": 2
      },
      {
-      "player": "Pascal Gross",
-      "club": "Brighton",
+      "player": "Harvey Barnes",
+      "club": "Newcastle",
+      "value": 2
+     },
+     {
+      "player": "Cole Palmer",
+      "club": "Chelsea",
       "value": 2
      }
     ],
     "shotsOnTarget": [
+     {
+      "player": "Bukayo Saka",
+      "club": "Arsenal",
+      "value": 9
+     },
      {
       "player": "Erling Haaland",
       "club": "Man City",
@@ -8067,13 +8072,13 @@
       "value": 8
      },
      {
-      "player": "Bukayo Saka",
-      "club": "Arsenal",
-      "value": 8
-     },
-     {
       "player": "Kevin Schade",
       "club": "Brentford",
+      "value": 6
+     },
+     {
+      "player": "Kai Havertz",
+      "club": "Arsenal",
       "value": 6
      },
      {
@@ -8087,13 +8092,8 @@
       "value": 6
      },
      {
-      "player": "Cole Palmer",
-      "club": "Chelsea",
-      "value": 5
-     },
-     {
-      "player": "Morgan Rogers",
-      "club": "Chelsea",
+      "player": "Kiernan Dewsbury-Hall",
+      "club": "Everton",
       "value": 5
      }
     ],
@@ -8102,6 +8102,11 @@
       "player": "Rúben Dias",
       "club": "Man City",
       "value": 370
+     },
+     {
+      "player": "Jan Paul van Hecke",
+      "club": "Spurs",
+      "value": 358
      },
      {
       "player": "Lewis Dunk",
@@ -8114,36 +8119,41 @@
       "value": 327
      },
      {
+      "player": "Luka Vuskovic",
+      "club": "Brighton",
+      "value": 322
+     },
+     {
       "player": "Marc Guéhi",
       "club": "Man City",
       "value": 322
      },
      {
+      "player": "Declan Rice",
+      "club": "Arsenal",
+      "value": 312
+     },
+     {
       "player": "Virgil van Dijk",
       "club": "Liverpool",
       "value": 302
-     },
-     {
-      "player": "Jan Paul van Hecke",
-      "club": "Spurs",
-      "value": 299
-     },
-     {
-      "player": "Luka Vuskovic",
-      "club": "Brighton",
-      "value": 295
-     },
-     {
-      "player": "Jérémy Jacquet",
-      "club": "Liverpool",
-      "value": 262
      }
     ],
     "saves": [
      {
+      "player": "Lukás Hornícek",
+      "club": "Newcastle",
+      "value": 19
+     },
+     {
       "player": "Emiliano Martínez",
       "club": "Chelsea",
       "value": 18
+     },
+     {
+      "player": "Konstantinos Tzolakis",
+      "club": "Hull",
+      "value": 17
      },
      {
       "player": "Caoimhín Kelleher",
@@ -8151,9 +8161,9 @@
       "value": 17
      },
      {
-      "player": "Lukás Hornícek",
-      "club": "Newcastle",
-      "value": 16
+      "player": "Jordan Pickford",
+      "club": "Everton",
+      "value": 15
      },
      {
       "player": "James Trafford",
@@ -8161,30 +8171,25 @@
       "value": 15
      },
      {
-      "player": "Kjell Scherpen",
-      "club": "Ipswich",
+      "player": "Zion Suzuki",
+      "club": "Aston Villa",
       "value": 15
      },
      {
-      "player": "Konstantinos Tzolakis",
-      "club": "Hull",
-      "value": 14
-     },
-     {
-      "player": "Alisson Becker",
-      "club": "Liverpool",
-      "value": 12
-     },
-     {
-      "player": "Dean Henderson",
-      "club": "C Palace",
-      "value": 12
+      "player": "Kjell Scherpen",
+      "club": "Ipswich",
+      "value": 15
      }
     ],
     "yellowCards": [
      {
       "player": "Vitaly Janelt",
       "club": "Brentford",
+      "value": 3
+     },
+     {
+      "player": "Jacob Murphy",
+      "club": "Newcastle",
       "value": 3
      },
      {
@@ -8198,19 +8203,9 @@
       "value": 3
      },
      {
-      "player": "Igor Thiago",
-      "club": "Brentford",
-      "value": 2
-     },
-     {
-      "player": "Mamadou Sangare",
-      "club": "Brentford",
-      "value": 2
-     },
-     {
-      "player": "Danny Ballard",
-      "club": "Sunderland",
-      "value": 2
+      "player": "Matt Crooks",
+      "club": "Hull",
+      "value": 3
      },
      {
       "player": "Gabriel Magalhães",
@@ -8218,8 +8213,13 @@
       "value": 2
      },
      {
-      "player": "Harry Maguire",
-      "club": "Man United",
+      "player": "Pascal Gross",
+      "club": "Brighton",
+      "value": 2
+     },
+     {
+      "player": "Harrison Armstrong",
+      "club": "Everton",
       "value": 2
      }
     ]
@@ -16198,16 +16198,21 @@
      {
       "player": "Raphinha",
       "club": "Barcelona",
-      "value": 9
-     },
-     {
-      "player": "Kylian Mbappé",
-      "club": "Real Madrid",
-      "value": 7
+      "value": 12
      },
      {
       "player": "Lamine Yamal",
       "club": "Barcelona",
+      "value": 7
+     },
+     {
+      "player": "Sergio Camello",
+      "club": "Rayo",
+      "value": 7
+     },
+     {
+      "player": "Kylian Mbappé",
+      "club": "Real Madrid",
       "value": 7
      },
      {
@@ -16216,27 +16221,27 @@
       "value": 6
      },
      {
-      "player": "Sergio Camello",
-      "club": "Rayo",
-      "value": 6
-     },
-     {
       "player": "Yassir Zabiri",
       "club": "Racing",
       "value": 6
      },
      {
-      "player": "Fer Niño",
-      "club": "Elche",
+      "player": "Ante Budimir",
+      "club": "Osasuna",
       "value": 5
      },
      {
-      "player": "Pierre-Emerick Aubameyang",
-      "club": "Deportivo",
+      "player": "Fer Niño",
+      "club": "Elche",
       "value": 5
      }
     ],
     "assists": [
+     {
+      "player": "Lamine Yamal",
+      "club": "Barcelona",
+      "value": 4
+     },
      {
       "player": "Javi Hernandez",
       "club": "Espanyol",
@@ -16248,13 +16253,8 @@
       "value": 4
      },
      {
-      "player": "José Antonio Morente",
-      "club": "Elche",
-      "value": 3
-     },
-     {
-      "player": "Vinícius Júnior",
-      "club": "Real Madrid",
+      "player": "Unai López",
+      "club": "Rayo",
       "value": 3
      },
      {
@@ -16268,8 +16268,8 @@
       "value": 3
      },
      {
-      "player": "Unai López",
-      "club": "Rayo",
+      "player": "José Antonio Morente",
+      "club": "Elche",
       "value": 3
      },
      {
@@ -16285,14 +16285,14 @@
       "value": 22
      },
      {
-      "player": "Lamine Yamal",
-      "club": "Barcelona",
-      "value": 13
-     },
-     {
       "player": "Raphinha",
       "club": "Barcelona",
-      "value": 13
+      "value": 16
+     },
+     {
+      "player": "Lamine Yamal",
+      "club": "Barcelona",
+      "value": 14
      },
      {
       "player": "Antony",
@@ -16302,12 +16302,12 @@
      {
       "player": "Ante Budimir",
       "club": "Osasuna",
-      "value": 10
+      "value": 11
      },
      {
       "player": "Sergio Camello",
       "club": "Rayo",
-      "value": 10
+      "value": 11
      },
      {
       "player": "Fer Niño",
@@ -16322,6 +16322,11 @@
     ],
     "accuratePasses": [
      {
+      "player": "Pau Cubarsí",
+      "club": "Barcelona",
+      "value": 457
+     },
+     {
       "player": "Renato Veiga",
       "club": "Villarreal",
       "value": 451
@@ -16332,46 +16337,46 @@
       "value": 437
      },
      {
-      "player": "Pau Cubarsí",
+      "player": "Eric García",
       "club": "Barcelona",
-      "value": 365
+      "value": 394
      },
      {
-      "player": "Marcos Alonso",
-      "club": "Celta Vigo",
-      "value": 360
+      "player": "Pedri",
+      "club": "Barcelona",
+      "value": 390
+     },
+     {
+      "player": "Aymeric Laporte",
+      "club": "Athletic",
+      "value": 386
      },
      {
       "player": "Gerard Martín",
       "club": "Barcelona",
-      "value": 340
+      "value": 378
      },
      {
       "player": "Yoel Lago",
       "club": "Celta Vigo",
-      "value": 336
-     },
-     {
-      "player": "Ángel Recio",
-      "club": "Málaga",
-      "value": 335
-     },
-     {
-      "player": "Dávid Hancko",
-      "club": "Atlético",
-      "value": 333
+      "value": 373
      }
     ],
     "saves": [
      {
       "player": "Julen Agirrezabala",
       "club": "Racing",
-      "value": 26
+      "value": 30
      },
      {
       "player": "Álvaro Valles",
       "club": "Betis",
       "value": 25
+     },
+     {
+      "player": "Antonio Sivera",
+      "club": "Alavés",
+      "value": 23
      },
      {
       "player": "Marko Dmitrovic",
@@ -16384,50 +16389,40 @@
       "value": 22
      },
      {
+      "player": "Andrei Radu",
+      "club": "Celta Vigo",
+      "value": 21
+     },
+     {
       "player": "Leo Román",
       "club": "Deportivo",
       "value": 21
      },
      {
-      "player": "David Soria",
-      "club": "Getafe",
-      "value": 19
-     },
-     {
-      "player": "Stole Dimitrievski",
-      "club": "Valencia",
-      "value": 19
-     },
-     {
-      "player": "Mathew Ryan",
-      "club": "Levante",
-      "value": 19
+      "player": "Odisseas Vlachodimos",
+      "club": "Sevilla",
+      "value": 20
      }
     ],
     "yellowCards": [
+     {
+      "player": "Yassir Zabiri",
+      "club": "Racing",
+      "value": 4
+     },
      {
       "player": "Isaac Romero",
       "club": "Sevilla",
       "value": 4
      },
      {
-      "player": "Cala",
-      "club": "Espanyol",
+      "player": "Pathé Ciss",
+      "club": "Rayo",
       "value": 3
      },
      {
-      "player": "Lorenzo Amatucci",
-      "club": "Deportivo",
-      "value": 3
-     },
-     {
-      "player": "Antonio Blanco",
-      "club": "Alavés",
-      "value": 3
-     },
-     {
-      "player": "Jon Aramburu",
-      "club": "Real Sociedad",
+      "player": "Yoel Lago",
+      "club": "Celta Vigo",
       "value": 3
      },
      {
@@ -16436,12 +16431,17 @@
       "value": 3
      },
      {
-      "player": "Yangel Herrera",
-      "club": "Real Sociedad",
+      "player": "Antonio Blanco",
+      "club": "Alavés",
       "value": 3
      },
      {
-      "player": "Clemens Riedel",
+      "player": "Jon Moncayola",
+      "club": "Osasuna",
+      "value": 3
+     },
+     {
+      "player": "Cala",
       "club": "Espanyol",
       "value": 3
      }
@@ -17294,6 +17294,7 @@
   "122260": "Pierre-Emerick Aubameyang",
   "122268": "Adam Smith",
   "124091": "Bruno Fernandes",
+  "128714": "Eric García",
   "132659": "Pascal Gross",
   "134283": "Thibaut Courtois",
   "141438": "Mathew Ryan",
@@ -17302,14 +17303,17 @@
   "146127": "Marcos Alonso",
   "147106": "Lewis Dunk",
   "149981": "Granit Xhaka",
+  "153613": "Matt Crooks",
   "156898": "Florian Thauvin",
   "157073": "Harry Maguire",
   "157892": "Virgil van Dijk",
   "158626": "Emiliano Martínez",
+  "159135": "Odisseas Vlachodimos",
   "159317": "Aymeric Laporte",
   "159443": "Jordan Pickford",
   "162843": "John McGinn",
   "165334": "Stole Dimitrievski",
+  "172836": "Jacob Murphy",
   "178237": "Jorge Salinas",
   "179211": "Marko Dmitrovic",
   "186381": "Serhou Guirassy",
@@ -17339,6 +17343,7 @@
   "229018": "Mikel Oyarzabal",
   "229744": "Ousmane Dembélé",
   "231050": "Raphinha",
+  "231182": "Kai Havertz",
   "231388": "Kylian Mbappé",
   "234172": "Dean Henderson",
   "234878": "Rúben Dias",
@@ -17353,6 +17358,7 @@
   "240533": "Josep Martínez",
   "240624": "Alfonso Herrero",
   "243364": "Marcus Tavernier",
+  "243386": "Harvey Barnes",
   "243396": "Morgan Gibbs-White",
   "245916": "Justin Kluivert",
   "246244": "Kjell Scherpen",
@@ -17394,11 +17400,13 @@
   "284199": "Konstantinos Tzolakis",
   "284699": "Iñigo Vicente",
   "284960": "João Pedro",
+  "286176": "Jon Moncayola",
   "286831": "Michael Olise",
   "288897": "Vitinha",
   "289824": "Djordje Petrovic",
   "290232": "Angelo Stiller",
   "291281": "Jude Bellingham",
+  "294228": "Pathé Ciss",
   "296395": "Cole Palmer",
   "297788": "Lee Han-Beom",
   "298329": "Riccardo Calafiori",
@@ -17447,6 +17455,7 @@
   "368992": "Pau Cubarsí",
   "374621": "Ángel Pérez",
   "375514": "Miguel Sierra",
+  "378458": "Harrison Armstrong",
   "384643": "Yoel Lago",
   "390389": "Yassir Zabiri",
   "403582": "Xavi Espart",
