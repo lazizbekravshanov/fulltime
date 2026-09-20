@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-20T16:52:46.597Z",
+ "generated": "2026-09-20T19:32:47.786Z",
  "season": "2026/27",
  "comps": {
   "epl": {
@@ -185,6 +185,22 @@
     },
     {
      "pos": 12,
+     "id": "360",
+     "team": "Manchester United",
+     "short": "Man United",
+     "p": 5,
+     "w": 1,
+     "d": 2,
+     "l": 2,
+     "gf": 8,
+     "ga": 8,
+     "gd": 0,
+     "pts": 5,
+     "form": "LWDL",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/360.png"
+    },
+    {
+     "pos": 13,
      "id": "393",
      "team": "Nottingham Forest",
      "short": "Nottm Forest",
@@ -198,22 +214,6 @@
      "pts": 5,
      "form": "LDW",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/393.png"
-    },
-    {
-     "pos": 13,
-     "id": "360",
-     "team": "Manchester United",
-     "short": "Man United",
-     "p": 4,
-     "w": 1,
-     "d": 1,
-     "l": 2,
-     "gf": 7,
-     "ga": 7,
-     "gd": 0,
-     "pts": 4,
-     "form": "LWDL",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/360.png"
     },
     {
      "pos": 14,
@@ -297,6 +297,22 @@
     },
     {
      "pos": 19,
+     "id": "370",
+     "team": "Fulham",
+     "short": "Fulham",
+     "p": 5,
+     "w": 0,
+     "d": 2,
+     "l": 3,
+     "gf": 5,
+     "ga": 8,
+     "gd": -3,
+     "pts": 2,
+     "form": "LLL",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/370.png"
+    },
+    {
+     "pos": 20,
      "id": "367",
      "team": "Tottenham Hotspur",
      "short": "Spurs",
@@ -310,22 +326,6 @@
      "pts": 2,
      "form": "LL",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/367.png"
-    },
-    {
-     "pos": 20,
-     "id": "370",
-     "team": "Fulham",
-     "short": "Fulham",
-     "p": 4,
-     "w": 0,
-     "d": 1,
-     "l": 3,
-     "gf": 4,
-     "ga": 7,
-     "gd": -3,
-     "pts": 1,
-     "form": "LLL",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/370.png"
     }
    ],
    "fixtures": {
@@ -8264,6 +8264,22 @@
     },
     {
      "pos": 3,
+     "id": "244",
+     "team": "Real Betis",
+     "short": "Betis",
+     "p": 7,
+     "w": 5,
+     "d": 1,
+     "l": 1,
+     "gf": 9,
+     "ga": 7,
+     "gd": 2,
+     "pts": 16,
+     "form": "WLWWW",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/244.png"
+    },
+    {
+     "pos": 4,
      "id": "86",
      "team": "Real Madrid",
      "short": "Real Madrid",
@@ -8277,22 +8293,6 @@
      "pts": 15,
      "form": "WWLWW",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/86.png"
-    },
-    {
-     "pos": 4,
-     "id": "244",
-     "team": "Real Betis",
-     "short": "Betis",
-     "p": 6,
-     "w": 5,
-     "d": 0,
-     "l": 1,
-     "gf": 8,
-     "ga": 6,
-     "gd": 2,
-     "pts": 15,
-     "form": "WLWWW",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/244.png"
     },
     {
      "pos": 5,
@@ -8331,19 +8331,35 @@
      "id": "90",
      "team": "Deportivo",
      "short": "Deportivo",
-     "p": 6,
+     "p": 7,
      "w": 2,
-     "d": 3,
+     "d": 4,
      "l": 1,
-     "gf": 9,
-     "ga": 7,
+     "gf": 10,
+     "ga": 8,
      "gd": 2,
-     "pts": 9,
+     "pts": 10,
      "form": "",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/90.png"
     },
     {
      "pos": 8,
+     "id": "102",
+     "team": "Villarreal",
+     "short": "Villarreal",
+     "p": 7,
+     "w": 2,
+     "d": 2,
+     "l": 3,
+     "gf": 13,
+     "ga": 12,
+     "gd": 1,
+     "pts": 8,
+     "form": "DLLLW",
+     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/102.png"
+    },
+    {
+     "pos": 9,
      "id": "93",
      "team": "Athletic Club",
      "short": "Athletic",
@@ -8359,7 +8375,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/93.png"
     },
     {
-     "pos": 9,
+     "pos": 10,
      "id": "2922",
      "team": "Getafe",
      "short": "Getafe",
@@ -8375,7 +8391,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/2922.png"
     },
     {
-     "pos": 10,
+     "pos": 11,
      "id": "101",
      "team": "Rayo Vallecano",
      "short": "Rayo",
@@ -8391,7 +8407,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/101.png"
     },
     {
-     "pos": 11,
+     "pos": 12,
      "id": "97",
      "team": "Osasuna",
      "short": "Osasuna",
@@ -8407,7 +8423,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/97.png"
     },
     {
-     "pos": 12,
+     "pos": 13,
      "id": "85",
      "team": "Celta Vigo",
      "short": "Celta Vigo",
@@ -8423,7 +8439,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/85.png"
     },
     {
-     "pos": 13,
+     "pos": 14,
      "id": "88",
      "team": "Espanyol",
      "short": "Espanyol",
@@ -8439,7 +8455,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/88.png"
     },
     {
-     "pos": 14,
+     "pos": 15,
      "id": "89",
      "team": "Real Sociedad",
      "short": "Real Sociedad",
@@ -8455,7 +8471,7 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/89.png"
     },
     {
-     "pos": 15,
+     "pos": 16,
      "id": "87",
      "team": "Racing Santander",
      "short": "Racing",
@@ -8471,33 +8487,17 @@
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/87.png"
     },
     {
-     "pos": 16,
-     "id": "102",
-     "team": "Villarreal",
-     "short": "Villarreal",
-     "p": 6,
-     "w": 1,
-     "d": 2,
-     "l": 3,
-     "gf": 10,
-     "ga": 11,
-     "gd": -1,
-     "pts": 5,
-     "form": "DLLLW",
-     "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/102.png"
-    },
-    {
      "pos": 17,
      "id": "1538",
      "team": "Levante",
      "short": "Levante",
-     "p": 5,
+     "p": 6,
      "w": 1,
      "d": 2,
-     "l": 2,
-     "gf": 7,
-     "ga": 9,
-     "gd": -2,
+     "l": 3,
+     "gf": 8,
+     "ga": 12,
+     "gd": -4,
      "pts": 5,
      "form": "LWL",
      "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/1538.png"
