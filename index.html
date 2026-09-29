@@ -6,6 +6,14 @@
 <title>FULLTIME · League Tables</title>
 <meta name="description" content="Premier League, La Liga and Champions League standings, fixtures and form — auto-updated every hour from open data.">
 <meta name="theme-color" content="#0d1117">
+<link rel="canonical" href="https://lazizbekravshanov.github.io/fulltime/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FULLTIME">
+<meta property="og:title" content="FULLTIME · League Tables">
+<meta property="og:description" content="Premier League, La Liga and Champions League standings, fixtures and form — auto-updated every hour from open data.">
+<meta property="og:url" content="https://lazizbekravshanov.github.io/fulltime/">
+<meta property="og:image" content="https://lazizbekravshanov.github.io/fulltime/icon-512.png">
+<meta name="twitter:card" content="summary">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./icon-192.png">
@@ -24,7 +32,7 @@
     --line-2:rgba(240,246,252,.16);
     --ink:#e6edf3;
     --dim:#9198a1;
-    --faint:#6a737d;
+    --faint:#8b949e;
     --accent:#00ff85;
     --accent-ink:#062b18;
     --q1:#3fb950;
@@ -43,8 +51,8 @@
       --bg:#f4f6f8; --surface:#ffffff; --surface-2:#f0f2f5;
       --raise:rgba(13,17,23,.04);
       --line:rgba(13,17,23,.10); --line-2:rgba(13,17,23,.18);
-      --ink:#0d1117; --dim:#586069; --faint:#858e99;
-      --accent:#00a05a; --accent-ink:#ffffff;
+      --ink:#0d1117; --dim:#586069; --faint:#656d76;
+      --accent:#00803f; --accent-ink:#ffffff;
       --q1:#1a7f37; --q2:#0969da; --drop:#cf222e; --warm:#9a6700;
       --win:#1a7f37; --draw:#6e7781; --loss:#cf222e;
     }
@@ -54,8 +62,8 @@
     --bg:#f4f6f8; --surface:#ffffff; --surface-2:#f0f2f5;
     --raise:rgba(13,17,23,.04);
     --line:rgba(13,17,23,.10); --line-2:rgba(13,17,23,.18);
-    --ink:#0d1117; --dim:#586069; --faint:#858e99;
-    --accent:#00a05a; --accent-ink:#ffffff;
+    --ink:#0d1117; --dim:#586069; --faint:#656d76;
+    --accent:#00803f; --accent-ink:#ffffff;
     --q1:#1a7f37; --q2:#0969da; --drop:#cf222e; --warm:#9a6700;
     --win:#1a7f37; --draw:#6e7781; --loss:#cf222e;
   }
@@ -118,7 +126,9 @@
   /* ---------------- tabs ---------------- */
   .tabbar{
     position:sticky;top:0;z-index:30;
-    background:color-mix(in srgb, var(--bg) 88%, transparent);
+    /* Content scrolls under this bar, so the tint has to be opaque enough that
+       the tab labels keep 4.5:1 against whatever shows through. 88% did not. */
+    background:color-mix(in srgb, var(--bg) 93%, transparent);
     backdrop-filter:blur(12px);
     border-bottom:1px solid var(--line);
   }
@@ -140,8 +150,11 @@
   main{padding:20px 0 8px;display:flex;flex-direction:column;gap:14px}
   .ptop{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
   h1{font-size:clamp(22px,5vw,30px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
-  h2{font-size:clamp(19px,4.6vw,26px);font-weight:800;letter-spacing:-.025em;line-height:1.1}
-  h3{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .hero h1{font-size:clamp(19px,4.6vw,26px);letter-spacing:-.025em}
+  /* Reachable by keyboard and screen reader, out of the way visually. */
+  .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+      clip-path:inset(50%);white-space:nowrap;border:0}
+  .sh{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
   .meta{display:flex;flex-wrap:wrap;gap:6px}
   .chip{
     font-size:11.5px;font-weight:600;color:var(--dim);
@@ -225,7 +238,7 @@
     flex:none;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
     color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:2px 7px;
   }
-  .club .tag.gold{color:#e3b341;border-color:color-mix(in srgb,#e3b341 40%,transparent)}
+  .club .tag.gold{color:var(--warm);border-color:color-mix(in srgb,var(--warm) 40%,transparent)}
   .num{font-size:12.5px;color:var(--dim);text-align:center}
   .gd{font-size:12.5px;text-align:right;color:var(--dim)}
   .gd.up{color:var(--q1)}.gd.down{color:var(--drop)}
@@ -243,7 +256,10 @@
   .n5[data-d="hard"]{--bar:var(--drop)}
   .n5[data-d="mid"]{--bar:var(--warm)}
   .n5[data-d="easy"]{--bar:var(--q1)}
-  .n5.away{opacity:.6}
+  /* Dimming the whole chip dragged the monogram's contrast under the floor.
+     The crest image dims; the difficulty bar goes hollow to mark an away tie. */
+  .n5.away .crest img{opacity:.55}
+  .n5.away::after{background:transparent;box-shadow:inset 0 0 0 1px var(--bar,var(--line-2))}
   .next5 .none{font-size:12px;color:var(--faint)}
   .livedot{
     flex:none;display:inline-flex;align-items:center;gap:4px;
@@ -281,16 +297,6 @@
   .rec .w .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rec .crest{width:18px;height:18px;font-size:6.5px}
 
-  .leads{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .lcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-  .lcard h3{padding:11px 13px 9px;border-bottom:1px solid var(--line)}
-  .lcard ol{list-style:none}
-  .lcard li{display:flex;align-items:center;gap:8px;padding:0 13px;height:36px;border-bottom:1px solid var(--line);font-size:12.5px}
-  .lcard li:last-child{border-bottom:none}
-  .lcard .r{width:14px;font-size:11px;font-weight:700;color:var(--faint);text-align:right}
-  .lcard .crest{width:18px;height:18px;font-size:6.5px}
-  .lcard .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .lcard .v{margin-left:auto;font-weight:800}
 
   /* ---------------- matchday ---------------- */
   .mnav{display:flex;align-items:center;gap:6px}
@@ -345,7 +351,7 @@
   .splits{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   .splits .chip .form{display:inline-flex;gap:3px;margin-left:6px;vertical-align:-1px}
   .shape{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 13px}
-  .shape h3{margin-bottom:9px}
+  .shape .sh{margin-bottom:9px}
   .shape svg{display:block;width:100%;height:auto;max-width:100%;overflow:visible}
   .shape .ax{fill:var(--faint);font-size:7.5px;font-weight:700}
   .shape .ln{fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
@@ -468,7 +474,6 @@
     .mteam .crest{width:20px;height:20px;font-size:7px}
     .mscore{font-size:12.5px;padding:4px 0}
     .mdate{grid-column:1/-1}
-    .leads{grid-template-columns:1fr}
   }
   @media (max-width:560px){
     .score{gap:8px}
@@ -531,7 +536,7 @@
   </div>
 </header>
 
-<div class="tabbar">
+<nav class="tabbar" aria-label="Competitions">
   <div class="wrap">
     <div class="tabs" role="tablist" aria-label="Competition">
       <button class="tab" role="tab" data-lg="epl" aria-selected="true">Premier League</button>
@@ -539,9 +544,18 @@
       <button class="tab" role="tab" data-lg="ucl" aria-selected="false">Champions League</button>
     </div>
   </div>
-</div>
+</nav>
 
 <main class="wrap" id="view"></main>
+<noscript>
+  <div class="wrap">
+    <div class="empty"><div class="big">This page needs JavaScript</div>
+      <p>The tables are built in the browser from a JSON snapshot, so there is nothing to show
+         without scripting. The snapshot itself is plain, readable JSON:
+         <a href="./data.json">data.json</a> for the season and <a href="./live.json">live.json</a>
+         for today.</p></div>
+  </div>
+</noscript>
 
 <div class="wrap">
   <footer>
@@ -595,6 +609,42 @@ function clubStyle(short){
   if (CLUB_STYLE[short]) return CLUB_STYLE[short];
   let h=0; for (const ch of short) h=(h*31+ch.charCodeAt(0))>>>0;
   return [FALLBACK_COLORS[h%FALLBACK_COLORS.length]];
+}
+
+/* A club colour is a brand colour, not a palette entry, so a monogram drawn on
+   one is legible only by luck — white on Arsenal red lands at 4.5:1, on United
+   red well under. These pick the ink that contrasts better and then deepen or
+   lift the badge, in small steps, until the pair clears 4.5:1. The hue survives
+   because the steps stop the moment the ratio does. */
+const srgb = c => (c /= 255) <= .04045 ? c/12.92 : ((c+.055)/1.055)**2.4;
+const lumOf = ([r,g,b]) => .2126*srgb(r) + .7152*srgb(g) + .0722*srgb(b);
+const toRGB = h => {
+  if (!h) return null;
+  const x = String(h).replace("#","").trim();
+  const parts = x.length === 3 ? [...x].map(c => c+c) : [x.slice(0,2), x.slice(2,4), x.slice(4,6)];
+  return parts.map(v => parseInt(v,16) || 0);
+};
+const WHITE = [255,255,255], NEAR_BLACK = [11,15,20];
+const toHex = rgb => "#" + rgb.map(v =>
+  Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2,"0")).join("");
+const ratioOf = (a,b) => {
+  const [hi,lo] = [lumOf(a), lumOf(b)].sort((x,y) => y-x);
+  return (hi + .05) / (lo + .05);
+};
+const BADGE = new Map();
+function badgeStyle(short){
+  if (BADGE.has(short)) return BADGE.get(short);
+  const [bg, fg] = clubStyle(short);
+  let face = toRGB(bg);
+  // Whichever ink starts closer wins, so a bright brand colour keeps the white
+  // monogram everyone expects and only pale colours flip to dark.
+  const ink = toRGB(fg) ?? (ratioOf(face, WHITE) >= ratioOf(face, NEAR_BLACK) ? WHITE : NEAR_BLACK);
+  const away = lumOf(ink) > .5 ? 0 : 255;
+  // 40 steps of 7% reaches the end of the ramp, so a colour that can pass does.
+  for (let i = 0; i < 40 && ratioOf(face, ink) < 4.5; i++) face = face.map(v => v + (away - v) * .07);
+  const pair = [toHex(face), toHex(ink)];
+  BADGE.set(short, pair);
+  return pair;
 }
 function monogram(short){
   const words = short.replace(/[^\p{L}\p{N} ]/gu," ").trim().split(/\s+/);
@@ -1090,11 +1140,11 @@ function matchesNear(hours){
 
 /* ===================== pieces ===================== */
 function crest(short, logo){
-  const [bg, fg] = clubStyle(short);
+  const [bg, fg] = badgeStyle(short);
   // The monogram is always drawn; a crest image layers over it and removes
   // itself if it fails, so the chip is never blank.
   const img = logo ? `<img src="${esc(logo)}" alt="" loading="lazy" onerror="this.remove()">` : "";
-  return `<span class="crest" style="background:${bg};color:${fg || "#fff"}">${esc(monogram(short))}${img}</span>`;
+  return `<span class="crest" style="background:${bg};color:${fg}">${esc(monogram(short))}${img}</span>`;
 }
 function gdCell(gd){
   if (gd == null) return `<span class="gd">–</span>`;
@@ -1212,7 +1262,7 @@ function liveStripHTML(lg){
     rows.push(`<span class="chip"><b>${esc(h)} ${v.hg}–${v.ag} ${esc(a)}</b>${v.clock ? " · "+esc(v.clock) : ""}</span>`);
   }
   if (!rows.length) return "";
-  return `<div class="sect"><h3>In play</h3><div class="meta">${rows.join("")}</div></div>`;
+  return `<div class="sect"><h2 class="sh">In play</h2><div class="meta">${rows.join("")}</div></div>`;
 }
 
 function recordsHTML(lg){
@@ -1221,7 +1271,7 @@ function recordsHTML(lg){
   const who = r => `<div class="w">${crest(r.short, r.logo)}<span class="txt">${esc(r.short)}</span></div>`;
   const cell = (k, v, inner) => `<div class="rec"><div class="k">${k}</div><div class="v">${v}</div>${inner}</div>`;
   const b = rec.biggest;
-  return `<div class="sect"><h3>Season records</h3><div class="recs">
+  return `<div class="sect"><h2 class="sh">Season records</h2><div class="recs">
     ${cell("Unbeaten run", rec.unbeaten.n || "—", who(rec.unbeaten.r))}
     ${cell("Without a win", rec.winless.n || "—", who(rec.winless.r))}
     ${b ? cell("Biggest win", `${b.gf}–${b.ga}`,
@@ -1251,7 +1301,7 @@ function performersHTML(lg){
       ${e.club ? `<span class="club">${esc(e.club)}</span>` : ""}
       <span class="v">${e.value}</span>
     </li>`).join("");
-  return `<div class="sect"><div class="toolbar"><h3>Top performers</h3>${tabs}</div>
+  return `<div class="sect"><div class="toolbar"><h2 class="sh">Top performers</h2>${tabs}</div>
     <div class="perf"><ol aria-label="${esc(label)}">${rows}</ol></div>
     <p class="note">${esc(label)} this season, from ESPN's competition leaders.</p></div>`;
 }
@@ -1433,6 +1483,7 @@ function viewMatch(){
     </div>` : "";
 
   const head = `<div class="mhead">
+      <h1 class="vh">${esc(m.home)} v ${esc(m.away)} · ${esc(cfg.title)}</h1>
       <div class="meta">
         <span class="chip">${fmtDateLong(m.f)}</span>
         ${m.f.md ? `<span class="chip">Matchday <b>${m.f.md}</b></span>` : ""}
@@ -1449,8 +1500,8 @@ function viewMatch(){
       ${sheet}
     </div>`;
 
-  const commentary = `<div class="sect"><h3>Commentary</h3>${commentaryHTML(lg, m)}</div>`;
-  const h2h = `<div class="sect"><h3>Head to head</h3><div class="card det" style="border-bottom:none">${
+  const commentary = `<div class="sect"><h2 class="sh">Commentary</h2>${commentaryHTML(lg, m)}</div>`;
+  const h2h = `<div class="sect"><h2 class="sh">Head to head</h2><div class="card det" style="border-bottom:none">${
     h2hHTML(lg, m.home, m.away, m.f.date)}</div></div>`;
 
   return back + head
@@ -1533,11 +1584,11 @@ function viewTable(){
     + `<div class="toolbar">${seg}${roundBtn}</div>`
     + pin + body
     + legendHTML(cfg.legend, hasFx
-        ? `<span><i style="background:var(--line-2)"></i>Next 5: bar shows how high the opponent sits, faded means away</span>` : "")
+        ? `<span><i style="background:var(--line-2)"></i>Next 5: bar shows how high the opponent sits, hollow means away</span>` : "")
     + `<p class="note">${explain} Tap a club for its full season. ${
-        c.computed ? "The table is recomputed from results as they land, on points, then goal difference, then goals scored."
-          : refreshedAt ? "Read fresh when you opened this page."
-          : "Showing the last committed snapshot — no live source could be reached."}${
+        c.computed ? "The table is recomputed from results as they land, on points, then goal difference, then goals scored"
+          : refreshedAt ? "Read fresh when you opened this page"
+          : "Showing the last committed snapshot — no live source could be reached"}${
         q ? ` · showing ${hits.length} of ${rows.length} clubs` : ""}.</p>`
     + recordsHTML(state.lg) + performersHTML(state.lg);
 }
@@ -1547,7 +1598,7 @@ function favPin(lg, rows, mode){
   const r = rows.find(x => x.short === fav.short);
   if (!r) return "";
   const card = mode === "projected" ? projectedCard(lg, [r], false) : standingsCard(lg, [r], false);
-  return `<div class="pin"><h3>Your club</h3>${card}</div>`;
+  return `<div class="pin"><h2 class="sh">Your club</h2>${card}</div>`;
 }
 
 function viewFinal(){
@@ -1572,7 +1623,7 @@ function viewFinal(){
       <span class="pts">${pts}</span>
     </${archive ? "button" : "div"}>`;
   }).join("");
-  const out = w.out ? `<div class="sect"><h3 style="color:var(--drop)">Out of Europe · 25–36</h3>
+  const out = w.out ? `<div class="sect"><h2 class="sh" style="color:var(--drop)">Out of Europe · 25–36</h2>
       <div class="meta">${w.out.map(([p,n]) => `<span class="chip"><b>${p}</b> ${esc(n)}</span>`).join("")}</div></div>` : "";
   return warn + head + stories
     + `<div class="card tbl" style="--cols:32px minmax(0,1fr) 60px">
@@ -1647,7 +1698,7 @@ function shapeHTML(lg, hist){
   const best = Math.min(...points.map(p => p.pos));
   const worst = Math.max(...points.map(p => p.pos));
   const now = points[points.length-1];
-  return `<div class="shape"><h3>Season shape</h3>
+  return `<div class="shape"><h2 class="sh">Season shape</h2>
     <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Position by matchday: ${points.map(p => `matchday ${p.md} ${ord(p.pos)}`).join(", ")}">
       ${bands.map(b => `<rect class="${cls[b.z]}" x="${left}" y="${edge(b.from).toFixed(1)}" width="${W-left-pad}" height="${(edge(b.to+1)-edge(b.from)).toFixed(1)}"/>`).join("")}
       <text class="ax" x="2" y="${(y(1)+2.5).toFixed(1)}">1st</text>
@@ -1689,7 +1740,7 @@ function viewClub(){
 
   const head = `<button class="back" data-act="table">${ICON.left} ${esc(cfg.title)} table</button>
     <div class="hero">${crest(short, found.logo)}
-      <div><h2>${esc(short)}</h2><div class="sub">${chips}</div></div>
+      <div><h1>${esc(short)}</h1><div class="sub">${chips}</div></div>
     </div>${acts}`;
 
   if (archive){
