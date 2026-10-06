@@ -162,6 +162,9 @@
     border-radius:999px;padding:4px 10px;white-space:nowrap;
   }
   .chip b{color:var(--ink);font-weight:700}
+  /* Season stories are sentences, not labels, so they wrap instead of running
+     off the side of a phone. */
+  .chip.story{white-space:normal;line-height:1.5;max-width:100%}
   .chip.acc{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 35%, transparent)}
 
   /* ---------------- segmented controls ---------------- */
@@ -183,7 +186,7 @@
     padding:7px 11px;display:inline-flex;align-items:center;gap:6px;
   }
   .tbtn:hover{color:var(--ink);border-color:var(--line-2)}
-  .tbtn[aria-pressed="true"]{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 40%, transparent)}
+  .tbtn[aria-pressed="true"],.tbtn.acc{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 40%, transparent)}
   .tbtn svg{flex:none}
 
   /* ---------------- stat strip ---------------- */
@@ -197,8 +200,8 @@
 
   /* ---------------- table ---------------- */
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-  .tbl{--cols:32px minmax(0,1fr) repeat(4,28px) 46px 46px 62px 118px}
-  .tbl.nonext{--cols:32px minmax(0,1fr) repeat(4,28px) 46px 46px 62px}
+  .tbl{--cols:32px minmax(0,1fr) repeat(4,28px) repeat(2,30px) 46px 46px 62px 118px}
+  .tbl.nonext{--cols:32px minmax(0,1fr) repeat(4,28px) repeat(2,30px) 46px 46px 62px}
   .tbl.proj{--cols:32px minmax(0,1fr) 34px 52px 50px 58px}
   .thead,.trow{display:grid;grid-template-columns:var(--cols);align-items:center;gap:8px;padding:0 14px;text-align:left}
   .thead{
@@ -207,6 +210,18 @@
   }
   .thead .c{text-align:center}
   .thead .r{text-align:right}
+  /* The stat headings order the table. They stay the size of the label they
+     replace so turning sorting on does not move the columns. */
+  .thead .th{
+    font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;
+    background:none;border:0;padding:0;margin:0;cursor:pointer;min-width:0;
+    display:flex;align-items:center;gap:3px;border-radius:4px;
+  }
+  .thead .th.c{justify-content:center}
+  .thead .th.r{justify-content:flex-end}
+  .thead .th:hover{color:var(--ink)}
+  .thead .th.on{color:var(--accent)}
+  .thead .th .ar{font-style:normal;font-size:7px;line-height:1}
   .trow{
     height:var(--row);width:100%;border:none;border-bottom:1px solid var(--line);
     border-left:3px solid transparent;padding-left:11px;
@@ -343,7 +358,37 @@
   .acts{display:flex;flex-wrap:wrap;gap:7px}
   .acts .star[aria-pressed="true"] svg{fill:var(--accent)}
   .cgrid{display:grid;grid-template-columns:minmax(0,1fr) 312px;gap:16px;align-items:start}
-  .side{display:flex;flex-direction:column;gap:10px;position:sticky;top:62px}
+  /* The rail follows the list it sits beside. If it ever grows past the window
+     it scrolls on its own rather than hiding its own bottom. */
+  .side{
+    display:flex;flex-direction:column;gap:10px;position:sticky;top:62px;
+    max-height:calc(100vh - 74px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;
+  }
+  .nextm{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
+    padding:9px 11px;cursor:pointer;color:inherit;font:inherit;
+  }
+  .nextm:hover{border-color:var(--line-2)}
+  .nextm .crest{width:30px;height:30px;font-size:10px}
+  .nextm .who{display:grid;gap:2px;min-width:0}
+  .nextm .nm{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nextm .sub{font-size:11px;color:var(--dim)}
+  .nextm .ha{
+    margin-left:auto;flex:none;font-size:10.5px;font-weight:800;
+    color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:3px 7px;
+  }
+  .near{list-style:none}
+  .near li{display:flex;align-items:center;gap:8px;height:31px;font-size:12.5px;border-bottom:1px solid var(--line)}
+  .near li:last-child{border-bottom:none}
+  .near li.on{font-weight:800}
+  .near li.on .nm{color:var(--accent)}
+  .near .r{width:16px;text-align:right;font-weight:700;color:var(--dim);font-size:11.5px}
+  .near .crest{width:19px;height:19px;font-size:7px}
+  .near .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+  .near li.on .nm{font-weight:800}
+  .near .gd{margin-left:auto;font-size:11px;color:var(--faint);text-align:right}
+  .near .v{width:26px;text-align:right;font-weight:800}
   .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
   .kv .cell{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 6px;text-align:center}
   .kv .k{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
@@ -356,11 +401,45 @@
   .shape .ax{fill:var(--faint);font-size:7.5px;font-weight:700}
   .shape .ln{fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
   .shape .pt{fill:var(--accent)}
+  .shape .pt.last{stroke:var(--surface);stroke-width:1.6}
+  .shape .gl{stroke:var(--line);stroke-width:.6}
+  .shape .md{fill:var(--faint);font-size:7.5px;font-weight:700}
+  .shape .md.end{text-anchor:end}
   .shape .z1{fill:var(--q1);opacity:.13}
   .shape .z2{fill:var(--q2);opacity:.13}
   .shape .zr{fill:var(--drop);opacity:.13}
   .shape .foot{margin-top:8px;font-size:11px;color:var(--dim);line-height:1.5}
 
+  /* Side panels: the matchday rail, and anything else that rides alongside a list. */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 13px}
+  .panel .sh{margin-bottom:10px}
+  .panel .kv.two{grid-template-columns:repeat(2,1fr)}
+  .pnote{margin-top:9px;font-size:11.5px;color:var(--dim);line-height:1.55}
+  .pnote b{color:var(--ink)}
+  .split{display:flex;gap:3px;margin-top:10px;height:26px}
+  .split .s{
+    display:grid;place-items:center;border-radius:6px;min-width:22px;
+    font-size:11px;font-weight:800;color:var(--accent-ink);
+  }
+  .split .s.h{background:var(--q1)}
+  /* A draw is the neutral outcome, and reads better as the unfilled segment —
+     which also keeps its label well clear of the contrast floor in both themes. */
+  .split .s.d{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-2)}
+  .split .s.a{background:var(--q2)}
+  .panel .legend{margin-top:7px;display:flex;flex-wrap:wrap;gap:10px;font-size:10.5px;color:var(--faint)}
+  .panel .legend span{display:inline-flex;align-items:center;gap:5px}
+  .sw{width:8px;height:8px;border-radius:2px;display:inline-block}
+  .sw.h{background:var(--q1)}
+  .sw.d{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line-2)}
+  .sw.a{background:var(--q2)}
+  .movers{list-style:none;margin-top:2px}
+  .movers li{display:flex;align-items:center;gap:8px;height:32px;font-size:12.5px;border-bottom:1px solid var(--line)}
+  .movers li:last-child{border-bottom:none}
+  .movers .r{width:16px;text-align:right;font-weight:700;color:var(--dim);font-size:11.5px}
+  .movers .crest{width:19px;height:19px;font-size:7px}
+  .movers .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .movers .mv{margin-left:auto;font-size:10.5px;font-weight:800}
+  .movers .was{width:56px;text-align:right;font-size:10.5px;color:var(--faint)}
   .fxgroup{display:flex;flex-direction:column;gap:7px}
   .fxmonth{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
   .fx{
@@ -450,13 +529,19 @@
     *{animation-duration:0s !important;transition:none !important}
   }
 
+  @media (max-width:1120px){
+    .tbl{--cols:32px minmax(0,1fr) repeat(4,28px) 46px 46px 62px 118px}
+    .tbl.nonext{--cols:32px minmax(0,1fr) repeat(4,28px) 46px 46px 62px}
+    .col-ga{display:none}
+  }
   @media (max-width:940px){
     .tbl{--cols:32px minmax(0,1fr) repeat(4,28px) 46px 46px 62px}
     .col-next{display:none}
     .stats{grid-template-columns:repeat(2,1fr)}
     .recs{grid-template-columns:repeat(2,1fr)}
     .cgrid{display:flex;flex-direction:column}
-    .side{position:static;order:-1}
+    .side{position:static;order:-1;max-height:none;overflow:visible}
+    .cgrid.tail .side{order:1}
     .kv{grid-template-columns:repeat(6,1fr)}
   }
   @media (max-width:680px){
@@ -744,8 +829,39 @@ let renderToken = 0;
 
 const state = {
   lg:"epl", view:"table", mode:"overall", season:"live",
-  club:null, round:null, match:null, allComps:false, q:"", stat:"goals"
+  club:null, round:null, match:null, allComps:false, q:"", stat:"goals",
+  sort:null                            // {k, dir} while a column is driving the order
 };
+
+/* The stat columns, in the order they are drawn. Each one can order the table;
+   position is always the tiebreak, so clubs level on a stat stay in the order the
+   competition itself puts them. */
+const COLS = [
+  {k:"p",   label:"P",   name:"played",           cls:"c",         get:r => r.p   ?? 0},
+  {k:"w",   label:"W",   name:"won",              cls:"c col-wdl", get:r => r.w   ?? 0},
+  {k:"d",   label:"D",   name:"drawn",            cls:"c col-wdl", get:r => r.d   ?? 0},
+  {k:"l",   label:"L",   name:"lost",             cls:"c col-wdl", get:r => r.l   ?? 0},
+  {k:"gf",  label:"GF",  name:"goals for",        cls:"c col-ga",  get:r => r.gf  ?? 0},
+  {k:"ga",  label:"GA",  name:"goals against",    cls:"c col-ga",  get:r => r.ga  ?? 0},
+  {k:"gd",  label:"GD",  name:"goal difference",  cls:"r",         get:r => r.gd  ?? 0},
+  {k:"pts", label:"Pts", name:"points",           cls:"r",         get:r => r.pts ?? 0}
+];
+const colFor = k => COLS.find(c => c.k === k) ?? null;
+
+function sortRows(rows){
+  const col = state.sort && colFor(state.sort.k);
+  if (!col) return rows;
+  const sign = state.sort.dir === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => sign * (col.get(a) - col.get(b)) || a.pos - b.pos);
+}
+
+// Click once for the strongest value first, again to flip it, a third time to
+// hand the order back to the competition.
+function cycleSort(k){
+  const s = state.sort;
+  state.sort = !s || s.k !== k ? {k, dir:"desc"} : s.dir === "desc" ? {k, dir:"asc"} : null;
+  render();
+}
 
 // ESPN's leader categories, in the order they are offered.
 const STATS = [
@@ -775,7 +891,8 @@ const ICON = {
   cal:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><rect x="2" y="3.5" width="12" height="10.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2 7h12M5.5 2v3M10.5 2v3" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>`,
   chev:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M4 6.2l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`,
   left:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M9.5 3.5l-4 4.5 4 4.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>`,
-  right:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M6.5 3.5l4 4.5-4 4.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>`
+  right:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M6.5 3.5l4 4.5-4 4.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>`,
+  undo:`<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M3 7.5h7a3 3 0 010 6H7M3 7.5l3-3M3 7.5l3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 };
 
 /* Club naming mirrors scripts/update-standings.mjs so feed names collapse onto
@@ -983,6 +1100,20 @@ function tableFor(lg, mode){
   return out;
 }
 
+/* The standings as they stood once a round was complete. The matchday page uses
+   two of these — this round and the one before — to say who actually moved. */
+function tableAt(lg, md){
+  const c = comp(lg);
+  if (!c?.rows?.length || !c.fixtures) return null;
+  const out = c.rows.map(r => {
+    const list = (fxOf(lg, r.short) ?? []).filter(f => f.done && f.md != null && f.md <= md);
+    return {...r, ...agg(list)};
+  });
+  out.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.short.localeCompare(b.short));
+  out.forEach((r, i) => { r.pos = i + 1; });
+  return out;
+}
+
 function projectedTable(lg){
   const c = comp(lg);
   const out = c.rows.map(r => {
@@ -1180,18 +1311,25 @@ function nextStrip(lg, short){
   }).join("") + `</span>`;
 }
 
-function standingsCard(lg, rows, withHead = true){
+function standingsCard(lg, rows, withHead = true, sortable = false){
   const cfg = COMP[lg];
   const live = liveClubs(lg);
   const hasFx = !!comp(lg)?.fixtures;
+  const th = c => {
+    if (!sortable) return `<span class="${c.cls}">${c.label}</span>`;
+    const on = state.sort?.k === c.k;
+    const next = !on ? "highest first" : state.sort.dir === "desc" ? "lowest first" : "league order";
+    return `<button class="th ${c.cls}${on ? " on" : ""}" data-act="sort" data-k="${c.k}"
+      aria-label="${c.name}${on ? `, sorted ${state.sort.dir === "asc" ? "lowest" : "highest"} first` : ""}. Sort by ${c.name}, ${next}."
+      >${c.label}${on ? `<i class="ar">${state.sort.dir === "asc" ? "▲" : "▼"}</i>` : ""}</button>`;
+  };
   const head = `<div class="thead">
       <span class="c">#</span><span>Club</span>
-      <span class="c">P</span>
-      <span class="c col-wdl">W</span><span class="c col-wdl">D</span><span class="c col-wdl">L</span>
-      <span class="r">GD</span><span class="r">Pts</span><span class="r col-form">Form</span>
+      ${COLS.map(th).join("")}
+      <span class="r col-form">Form</span>
       ${hasFx ? `<span class="r col-next">Next 5</span>` : ""}
     </div>`;
-  const body = rows.map(r => {
+  const body = (sortable ? sortRows(rows) : rows).map(r => {
     const z = cfg.zones(r.pos);
     const label = `${r.pos}. ${r.short}, ${r.pts ?? 0} points from ${r.p ?? 0} played. Open season.`;
     const lv = live.has(r.short) ? `<span class="livedot" title="Playing now"><i></i>LIVE</span>` : "";
@@ -1203,6 +1341,8 @@ function standingsCard(lg, rows, withHead = true){
       <span class="num col-wdl">${r.w ?? "–"}</span>
       <span class="num col-wdl">${r.d ?? "–"}</span>
       <span class="num col-wdl">${r.l ?? "–"}</span>
+      <span class="num col-ga">${r.gf ?? "–"}</span>
+      <span class="num col-ga">${r.ga ?? "–"}</span>
       <span>${gdCell(r.gd)}</span>
       <span class="pts">${r.pts ?? "–"}</span>
       <span class="col-form">${formCell(r.form)}</span>
@@ -1304,6 +1444,110 @@ function performersHTML(lg){
   return `<div class="sect"><div class="toolbar"><h2 class="sh">Top performers</h2>${tabs}</div>
     <div class="perf"><ol aria-label="${esc(label)}">${rows}</ol></div>
     <p class="note">${esc(label)} this season, from ESPN's competition leaders.</p></div>`;
+}
+
+/* ===================== club panels ===================== */
+function nextPanel(lg, short, f){
+  if (!f) return `<div class="panel"><h2 class="sh">Next match</h2>
+    <p class="pnote">Nothing left to play — the season is done for ${esc(short)}.</p></div>`;
+  const opp = rowFor(lg, f.opp);
+  const k = kickoff(f);
+  const when = k
+    ? `${esc(k.dt.toLocaleDateString("en-GB", {weekday:"long", day:"numeric", month:"long"}))}${f.time ? ` · <b>${esc(fmtTime(f))}</b>` : ""}`
+    : "Date to be confirmed";
+  const open = f.ev
+    ? `data-act="match" data-lg="${lg}" data-ev="${esc(f.ev)}"`
+    : `data-act="club" data-lg="${lg}" data-club="${esc(slug(f.opp))}"`;
+  return `<div class="panel"><h2 class="sh">Next match</h2>
+    <button class="nextm" ${open} aria-label="${esc(`${f.home ? "Home" : "Away"} to ${f.opp}${k ? ", " + k.dt.toLocaleDateString("en-GB", {weekday:"long", day:"numeric", month:"long"}) : ""}`)}">
+      ${crest(f.opp, logoOf(lg, f.opp))}
+      <span class="who"><span class="nm">${esc(f.opp)}</span>
+        <span class="sub">${f.home ? "at home" : "away"}${opp ? ` · ${ord(opp.pos)}, ${opp.pts} pts` : ""}</span></span>
+      <span class="ha">${f.home ? "H" : "A"}</span>
+    </button>
+    <p class="pnote">${when}${f.md ? ` · matchday <b>${f.md}</b>` : ""}.</p>
+  </div>`;
+}
+
+function neighbourPanel(lg, short){
+  const rows = rowsOf(lg);
+  const at = rows.findIndex(r => r.short === short);
+  if (at < 0 || rows.length < 4) return "";
+  // Two either side, shifted at the ends so the slice is always the same height.
+  const from = Math.min(Math.max(0, at - 2), Math.max(0, rows.length - 5));
+  const slice = rows.slice(from, from + 5);
+  const list = slice.map(r => `<li${r.short === short ? ` class="on" aria-current="true"` : ""}>
+      <span class="r">${r.pos}</span>${crest(r.short, r.logo)}
+      <span class="nm">${esc(r.short)}</span>
+      <span class="gd">${r.gd > 0 ? "+" : ""}${r.gd ?? 0}</span>
+      <span class="v">${r.pts ?? 0}</span>
+    </li>`).join("");
+  const above = rows[at - 1], below = rows[at + 1];
+  const me = rows[at];
+  const gap = (other, word) => other
+    ? `${Math.abs((me.pts ?? 0) - (other.pts ?? 0))} ${Math.abs((me.pts ?? 0) - (other.pts ?? 0)) === 1 ? "point" : "points"} ${word} ${esc(other.short)}`
+    : null;
+  const notes = [gap(above, "behind"), gap(below, "ahead of")].filter(Boolean).join(", ");
+  return `<div class="panel"><h2 class="sh">In the table</h2>
+    <ol class="near" aria-label="${esc(short)} and its neighbours in the ${esc(COMP[lg].title)}">${list}</ol>
+    ${notes ? `<p class="pnote">${notes}.</p>` : ""}
+  </div>`;
+}
+
+/* ===================== matchday panels ===================== */
+function roundGlance(lg, md, list){
+  const done = list.filter(m => m.done);
+  if (!done.length) return `<div class="panel"><h2 class="sh">Round at a glance</h2>
+    <p class="pnote">Nothing has been played in matchday ${md} yet. The numbers fill in as results land.</p></div>`;
+  const goals = done.reduce((n, m) => n + m.hg + m.ag, 0);
+  const homeW = done.filter(m => m.hg > m.ag).length;
+  const draws = done.filter(m => m.hg === m.ag).length;
+  const awayW = done.length - homeW - draws;
+  const blanks = done.filter(m => m.hg === 0 || m.ag === 0).length;
+  const big = done.reduce((b, m) => Math.abs(m.hg - m.ag) > Math.abs(b.hg - b.ag) ? m : b);
+  const level = big.hg === big.ag;
+  const seg = (n, cls, label) => n
+    ? `<span class="s ${cls}" style="flex:${n}" title="${n} ${label}"><b>${n}</b></span>` : "";
+  return `<div class="panel"><h2 class="sh">Round at a glance</h2>
+    <div class="kv two">
+      <div class="cell"><div class="k">Goals</div><div class="v">${goals}</div></div>
+      <div class="cell"><div class="k">Per match</div><div class="v">${(goals / done.length).toFixed(1)}</div></div>
+    </div>
+    <div class="split" role="img" aria-label="${homeW} home ${homeW === 1 ? "win" : "wins"}, ${draws} ${draws === 1 ? "draw" : "draws"}, ${awayW} away ${awayW === 1 ? "win" : "wins"}">
+      ${seg(homeW, "h", "home wins")}${seg(draws, "d", "draws")}${seg(awayW, "a", "away wins")}
+    </div>
+    <div class="legend"><span><i class="sw h"></i>Home</span><span><i class="sw d"></i>Draw</span><span><i class="sw a"></i>Away</span></div>
+    <p class="pnote">${level
+      ? `Nothing was settled by more than a goal.`
+      : `Widest margin <b>${esc(big.home)} ${big.hg}–${big.ag} ${esc(big.away)}</b>.`}
+      ${blanks ? `${blanks} of ${done.length} ended with a side shut out.` : "Every side scored."}</p>
+  </div>`;
+}
+
+function roundMovers(lg, md){
+  const after = tableAt(lg, md), before = tableAt(lg, md - 1);
+  if (!after || !before) return "";
+  // Before a ball is kicked every club is level, so the first round moves
+  // everyone and says nothing.
+  if (!before.some(r => r.p > 0)) return "";
+  const was = new Map(before.map(r => [r.short, r.pos]));
+  const moved = after
+    .map(r => ({r, from: was.get(r.short) ?? r.pos, to: r.pos}))
+    .filter(m => m.from !== m.to)
+    .sort((a, b) => Math.abs(b.from - b.to) - Math.abs(a.from - a.to) || a.to - b.to)
+    .slice(0, 8);
+  if (!moved.length) return `<div class="panel"><h2 class="sh">Movers</h2>
+    <p class="pnote">Nobody changed position in matchday ${md}.</p></div>`;
+  const rows = moved.map(({r, from, to}) => `<li>
+      <span class="r">${to}</span>${crest(r.short, r.logo)}
+      <span class="nm">${esc(r.short)}</span>
+      <span class="mv ${to < from ? "up" : "down"}">${to < from ? "▲" : "▼"}${Math.abs(from - to)}</span>
+      <span class="was">from ${from}</span>
+    </li>`).join("");
+  return `<div class="panel"><h2 class="sh">Movers</h2>
+    <ol class="movers" aria-label="Position changes in matchday ${md}">${rows}</ol>
+    <p class="pnote">Position after matchday ${md} against the round before, on the same tiebreaks the table uses.</p>
+  </div>`;
 }
 
 /* ===================== head-to-head ===================== */
@@ -1560,6 +1804,12 @@ function viewTable(){
       ${!hasFx && DERIVED.has(k) ? "disabled title='Needs the fixture list, which this competition has not published yet'" : ""}>${l}</button>`).join("")}</div>`;
   const roundBtn = rounds
     ? `<button class="tbtn" data-act="round" data-round="${currentRound(rounds)}">Matchday ${currentRound(rounds)} ${ICON.right}</button>` : "";
+  // A sorted table is a detour, so the way back is always on screen.
+  const sorted = mode !== "projected" && state.sort && colFor(state.sort.k);
+  const sortBtn = sorted
+    ? `<button class="tbtn acc" data-act="unsort"
+         aria-label="Back to league order. The table is sorted by ${esc(sorted.name)}, ${state.sort.dir === "asc" ? "lowest" : "highest"} first."
+         >${ICON.undo} League order</button>` : "";
 
   let body;
   if (q && !hits.length){
@@ -1567,7 +1817,7 @@ function viewTable(){
       <p>The search covers one table at a time, and it stays on while you move between competitions.</p>
       <p><button class="tbtn" data-act="clearq" style="margin-top:10px">Clear the search</button></p></div>`;
   } else {
-    body = mode === "projected" ? projectedCard(state.lg, hits) : standingsCard(state.lg, hits);
+    body = mode === "projected" ? projectedCard(state.lg, hits) : standingsCard(state.lg, hits, true, true);
   }
 
   const explain = {
@@ -1581,7 +1831,7 @@ function viewTable(){
   const pin = favPin(state.lg, rows, mode);
 
   return head + meta + liveStripHTML(state.lg) + statStrip(state.lg)
-    + `<div class="toolbar">${seg}${roundBtn}</div>`
+    + `<div class="toolbar">${seg}${sortBtn}${roundBtn}</div>`
     + pin + body
     + legendHTML(cfg.legend, hasFx
         ? `<span><i style="background:var(--line-2)"></i>Next 5: bar shows how high the opponent sits, hollow means away</span>` : "")
@@ -1611,7 +1861,7 @@ function viewFinal(){
   const cfg = COMP[key];
   const head = `<div class="meta"><span class="chip"><b>2025/26</b> · final table</span>
       <span class="chip">${esc(cfg.region)}</span></div>`;
-  const stories = `<div class="meta">${w.stories.map(s => `<span class="chip">${s}</span>`).join("")}</div>`;
+  const stories = `<div class="meta">${w.stories.map(s => `<span class="chip story">${s}</span>`).join("")}</div>`;
   const rows = w.rows.map(([pos, short, pts, z, tag]) => {
     const archive = key !== "ucl";   // openfootball publishes domestic 25/26 fixtures
     const open = archive ? `data-act="club" data-club="${esc(slug(short))}" data-lg="${key}"` : "";
@@ -1674,16 +1924,22 @@ function viewRound(){
     <div class="ptop"><h1>Matchday ${md}</h1>${nav}</div>
     <div class="meta"><span class="chip">${esc(cfg.title)}</span><span class="chip"><b>${list.length}</b> matches</span>
       <span class="chip"><b>${played}</b> played</span>${TZ_LABEL ? `<span class="chip">Times in <b>${esc(TZ_LABEL)}</b></span>` : ""}</div>
-    <div class="card rounds">${rows}</div>
-    <p class="note">Every match in the round, league-wide. Tap one to see both legs between the two clubs.
-      ${state.lg === "ucl" ? "Champions League rounds are grouped by kick-off window." : ""}</p>`;
+    <div class="cgrid tail">
+      <div class="sect">
+        <div class="card rounds">${rows}</div>
+        <p class="note">Every match in the round, league-wide. Tap one to see both legs between the two clubs.
+          ${state.lg === "ucl" ? "Champions League rounds are grouped by kick-off window." : ""}</p>
+      </div>
+      <div class="side">${roundGlance(state.lg, md, list)}${roundMovers(state.lg, md)}</div>
+    </div>`;
 }
 
 function shapeHTML(lg, hist){
-  const W = 300, H = 104, pad = 9, left = 20;
   const {points, size} = hist;
-  const y = pos => pad + (H - 2*pad) * ((pos - .5)/size);
-  const edge = pos => pad + (H - 2*pad) * ((pos - 1)/size);
+  const W = 300, H = 136, pad = 9, left = 22, foot = 15;
+  const plot = H - foot;
+  const y = pos => pad + (plot - 2*pad) * ((pos - .5)/size);
+  const edge = pos => pad + (plot - 2*pad) * ((pos - 1)/size);
   const x = i => left + (W - left - pad) * (points.length < 2 ? 0 : i/(points.length-1));
   // Qualification bands come from the same zone rule the table uses.
   const zones = COMP[lg].zones;
@@ -1698,18 +1954,27 @@ function shapeHTML(lg, hist){
   const best = Math.min(...points.map(p => p.pos));
   const worst = Math.max(...points.map(p => p.pos));
   const now = points[points.length-1];
+  const first = points[0];
+  // One tick per matchday while they still fit; after that, every fifth.
+  const every = points.length <= 14 ? 1 : 5;
+  const ticks = points.map((p,i) => ({p, i})).filter(({p,i}) =>
+    i === 0 || i === points.length-1 || (every > 1 ? p.md % every === 0 : true));
+  const move = now.pos - first.pos;
   return `<div class="shape"><h2 class="sh">Season shape</h2>
     <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Position by matchday: ${points.map(p => `matchday ${p.md} ${ord(p.pos)}`).join(", ")}">
       ${bands.map(b => `<rect class="${cls[b.z]}" x="${left}" y="${edge(b.from).toFixed(1)}" width="${W-left-pad}" height="${(edge(b.to+1)-edge(b.from)).toFixed(1)}"/>`).join("")}
+      ${ticks.map(({i}) => `<line class="gl" x1="${x(i).toFixed(1)}" y1="${pad.toFixed(1)}" x2="${x(i).toFixed(1)}" y2="${(plot-pad).toFixed(1)}"/>`).join("")}
       <text class="ax" x="2" y="${(y(1)+2.5).toFixed(1)}">1st</text>
       <text class="ax" x="2" y="${(y(size)+2.5).toFixed(1)}">${size}th</text>
       <polyline class="ln" points="${points.map((p,i) => `${x(i).toFixed(1)},${y(p.pos).toFixed(1)}`).join(" ")}"/>
-      ${points.map((p,i) => `<circle class="pt" cx="${x(i).toFixed(1)}" cy="${y(p.pos).toFixed(1)}" r="1.7"><title>MD${p.md}: ${ord(p.pos)}, ${p.pts} pts</title></circle>`).join("")}
+      ${points.map((p,i) => `<circle class="pt${i === points.length-1 ? " last" : ""}" cx="${x(i).toFixed(1)}" cy="${y(p.pos).toFixed(1)}" r="${i === points.length-1 ? 3 : 1.8}"><title>MD${p.md}: ${ord(p.pos)}, ${p.pts} pts</title></circle>`).join("")}
+      <text class="md" x="${left}" y="${H-4}">MD${first.md}</text>
+      <text class="md end" x="${W-pad}" y="${H-4}">MD${now.md}</text>
     </svg>
-    <div class="foot">High <b>${ord(best)}</b> · low <b>${ord(worst)}</b> · now <b>${ord(now.pos)}</b> after ${points.length} matchday${points.length === 1 ? "" : "s"}.</div>
+    <div class="foot">High <b>${ord(best)}</b> · low <b>${ord(worst)}</b> · now <b>${ord(now.pos)}</b>${
+      move === 0 ? ", level with where it started" : `, ${Math.abs(move)} ${Math.abs(move) === 1 ? "place" : "places"} ${move < 0 ? "up on" : "down on"} matchday ${first.md}`}.</div>
   </div>`;
 }
-
 function viewClub(){
   const found = findClub(state.lg, state.club);
   const cfg = COMP[found?.lg ?? state.lg];
@@ -1782,11 +2047,17 @@ function clubBody(lg, short, fx, multi){
       <span class="chip"><b>${fx.length - played.length}</b> to play</span>
     </div>`;
 
-  const hist = state.allComps && multi ? null : positionHistory(lg, short);
-  const side = `<div class="side">${kv}${splits}${hist ? shapeHTML(lg, hist) : ""}</div>`;
-
   let nextIdx = fx.findIndex(f => !f.done && !isPending(f));
   if (nextIdx < 0) nextIdx = fx.findIndex(f => !f.done);
+
+  const hist = state.allComps && multi ? null : positionHistory(lg, short);
+  const single = !(state.allComps && multi);
+  const side = `<div class="side">
+      ${single ? nextPanel(lg, short, nextIdx >= 0 ? fx[nextIdx] : null) : ""}
+      ${kv}${splits}
+      ${single ? neighbourPanel(lg, short) : ""}
+      ${hist ? shapeHTML(lg, hist) : ""}
+    </div>`;
   const groups = [];
   fx.forEach((f,i) => {
     const label = monthOf(f);
@@ -1933,8 +2204,43 @@ async function fetchJSON(url, ms = 15000){
   return res.json();
 }
 
+/* data.json stores each match once, against interned club, date and time tables,
+   and leaves off anything the page can work out for itself. Everything below this
+   line still sees the per-club fixture lists and the full rows it always has. A
+   snapshot written before that change arrives with `fixtures` already built, so
+   both shapes load and a stale CDN copy is never a blank page. */
+const LOGO = id => `https://a.espncdn.com/i/teamlogos/soccer/500/${id}.png`;
+const fillRow = r => ({
+  ...r,
+  gd: r.gd ?? (r.gf ?? 0) - (r.ga ?? 0),
+  logo: r.logo ?? (r.id != null ? LOGO(r.id) : null)
+});
+
+function expand(c){
+  const rows = Array.isArray(c.rows) ? c.rows.map(fillRow) : c.rows;
+  if (!Array.isArray(c.matches)) return {...c, rows};
+  const {clubs = [], dates = [], times = [], matches, ...rest} = c;
+  const fixtures = {};
+  const put = (club, t) => (fixtures[club] ??= []).push(t);
+  for (const [md, di, ti, hi, ai, hg = null, ag = null, ev = null] of matches){
+    const date = dates[di] ?? null, time = times[ti] ?? null;
+    const home = clubs[hi], away = clubs[ai];
+    if (home == null || away == null) continue;
+    put(home, [md ?? null, date, time, away, 1, hg, ag, ev]);
+    put(away, [md ?? null, date, time, home, 0, ag, hg, ev]);
+  }
+  for (const list of Object.values(fixtures)) list.sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+  return {...rest, rows, fixtures};
+}
+
+function normalise(snapshot){
+  if (!snapshot?.comps) return snapshot;
+  return {...snapshot, comps: Object.fromEntries(
+    Object.entries(snapshot.comps).map(([lg, c]) => [lg, expand(c)]))};
+}
+
 function adopt(snapshot){
-  LIVE = snapshot;
+  LIVE = normalise(snapshot);
   offline = false;
   const age = Date.now() - new Date(snapshot.generated).getTime();
   $("status").className = "status " + (age < 6*3600e3 ? "live" : "stale");
@@ -2020,7 +2326,7 @@ function adoptRows(lg, rows){
   const byKey = new Map(c.rows.map(r => [normKey(r.team), r]));
   c.rows = rows.map(r => {
     const was = byId.get(String(r.id)) ?? byKey.get(normKey(r.team));
-    return {...r, short: r.short ?? was?.short ?? clubShort(r.team), logo: r.logo ?? was?.logo ?? null};
+    return fillRow({...r, short: r.short ?? was?.short ?? clubShort(r.team), logo: r.logo ?? was?.logo ?? null});
   });
   return true;
 }
@@ -2292,6 +2598,8 @@ $("view").addEventListener("click", e => {
   else if (act === "round"){ window.scrollTo(0,0); go({view:"round", round: +el.dataset.round}); }
   else if (act === "match"){ window.scrollTo(0,0); go({lg: el.dataset.lg || state.lg, view:"match", match: el.dataset.ev}); }
   else if (act === "stat") go({stat: el.dataset.stat}, true);
+  else if (act === "sort") cycleSort(el.dataset.k);
+  else if (act === "unsort"){ state.sort = null; render(); }
   else if (act === "recomment"){ commentaryAt = 0; pullCommentary(); }
   else if (act === "allcomps") go({allComps: el.dataset.on === "1"}, true);
   else if (act === "fav") toggleFav(el.dataset.lg, el.dataset.club);

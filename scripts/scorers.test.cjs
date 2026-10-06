@@ -1,7 +1,7 @@
 // Unit-tests scorersFrom against the shape the probe recorded, including the
 // own-goal reconciliation, by evaluating the function straight out of the source.
 const fs = require("node:fs");
-const src = fs.readFileSync(__dirname + "/fulltime/scripts/update-standings.mjs", "utf8");
+const src = fs.readFileSync(__dirname + "/update-standings.mjs", "utf8");
 const start = src.indexOf("function scorersFrom(");
 const end = src.indexOf("\n}\n", start) + 3;
 const scorersFrom = eval("(" + src.slice(start, end).replace(/^function scorersFrom/, "function") + ")");

@@ -45,7 +45,9 @@ async function league(key, cfg) {
       const known = snapshot?.comps?.[key]?.rows ?? [];
       const rename = known.length ? renamer(known) : null;
       const byId = new Map(known.filter((r) => r.id != null).map((r) => [String(r.id), r.short]));
-      out.rows = parsed.rows.map((r) => ({
+      // This file is polled, so it carries only what cannot be worked out from
+      // what it already says: the logo URL is the id, and gd is gf minus ga.
+      out.rows = parsed.rows.map(({ logo, gd, ...r }) => ({
         ...r, short: byId.get(String(r.id)) ?? (rename ? rename(r.team) : r.short)
       }));
       out.matchday = parsed.matchday;

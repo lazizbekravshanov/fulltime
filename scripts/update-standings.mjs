@@ -4,11 +4,15 @@
 // here from match results — tiebreak approximated as pts, GD, GF).
 // No dependencies; requires Node 18+.
 
-import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "data.json");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const OUT = join(ROOT, "data.json");
+// The page never read this; only the next run does. Keeping it out of the
+// payload saves every visitor the download.
+const NAMES = join(ROOT, "athletes.json");
 
 // European seasons start in August; before July we are still in last year's season.
 const now = new Date();
@@ -530,15 +534,75 @@ async function leadersFromESPN(slug, year, rows, nameCache) {
   return Object.keys(out).length ? out : null;
 }
 
+/* The snapshot is refetched by every visitor and recommitted every hour, so its
+   size is worth caring about. Three things dominated the old file: every match
+   was stored twice, once under each club; every row repeated a logo URL that is
+   nothing but its own id; and the whole thing was pretty-printed. Matches are
+   stored once now against interned club, date and time tables, and the page
+   expands them back into the per-club shape it already understood. */
+// The one URL shape the rows stop carrying. Exported so a test can rebuild what
+// compact() strips and prove the page gets the same snapshot back.
+export const LOGO = (id) => `https://a.espncdn.com/i/teamlogos/soccer/500/${id}.png`;
+
+export function compact(c) {
+  if (!c.fixtures) return c;
+  const clubs = c.rows.map((r) => r.short);
+  const index = new Map(clubs.map((s, i) => [s, i]));
+  const clubId = (name) => {
+    if (!index.has(name)) { index.set(name, clubs.length); clubs.push(name); }
+    return index.get(name);
+  };
+  const dates = [], times = [];
+  const pool = (v, list) => {
+    if (v == null) return -1;
+    const at = list.indexOf(v);
+    return at >= 0 ? at : list.push(v) - 1;
+  };
+
+  // Both clubs carry every match, so fold the two copies into one and keep
+  // whichever of them knows the score.
+  const seen = new Map();
+  for (const [club, list] of Object.entries(c.fixtures)) {
+    for (const [md, date, time, opp, home, gf, ga, ev] of list) {
+      const m = home
+        ? { md, date, time, h: club, a: opp, hg: gf, ag: ga, ev }
+        : { md, date, time, h: opp, a: club, hg: ga, ag: gf, ev };
+      const key = `${m.h}|${m.a}|${m.date}`;
+      const had = seen.get(key);
+      if (had && (had.hg != null || m.hg == null)) {
+        if (!had.ev && m.ev) had.ev = m.ev;
+        continue;
+      }
+      seen.set(key, had ? { ...m, ev: m.ev ?? had.ev } : m);
+    }
+  }
+
+  const matches = [...seen.values()]
+    .sort((x, y) => String(x.date).localeCompare(String(y.date)) || (x.md ?? 0) - (y.md ?? 0))
+    .map((m) => {
+      // Trailing nulls are the common case on an unplayed fixture; drop them.
+      const t = [m.md ?? null, pool(m.date, dates), pool(m.time, times),
+                 clubId(m.h), clubId(m.a), m.hg ?? null, m.ag ?? null, m.ev ?? null];
+      while (t.length && t[t.length - 1] == null) t.pop();
+      return t;
+    });
+
+  const rows = c.rows.map(({ logo, gd, ...keep }) => keep);
+  const { fixtures, source, ...rest } = c;
+  return { ...rest, rows, clubs, dates, times, matches };
+}
+
 async function build() {
   const comps = {};
   // Athlete names are stable, so carry last run's lookups forward: a steady-state
   // refresh then fetches almost none.
   let nameCache = new Map();
-  try {
-    const previous = JSON.parse(readFileSync(OUT, "utf8"));
-    nameCache = new Map(Object.entries(previous.athletes ?? {}));
-  } catch { /* first run, or the file is unreadable */ }
+  for (const [file, pick] of [[NAMES, (j) => j], [OUT, (j) => j.athletes]]) {
+    try {
+      const names = pick(JSON.parse(readFileSync(file, "utf8")));
+      if (names && Object.keys(names).length) { nameCache = new Map(Object.entries(names)); break; }
+    } catch { /* first run, or the file is unreadable */ }
+  }
   for (const [key, cfg] of Object.entries(COMPS)) {
     let result = null;
     let source = null;
@@ -613,14 +677,15 @@ async function build() {
   }
 
   const out = {
+    v: 2,
     generated: new Date().toISOString(),
     season: seasonLabel,
-    comps,
-    athletes: Object.fromEntries(nameCache),
+    comps: Object.fromEntries(Object.entries(comps).map(([k, c]) => [k, compact(c)])),
   };
   mkdirSync(dirname(OUT), { recursive: true });
-  writeFileSync(OUT, JSON.stringify(out, null, 1) + "\n");
-  console.error(`wrote ${OUT}`);
+  writeFileSync(OUT, JSON.stringify(out) + "\n");
+  writeFileSync(NAMES, JSON.stringify(Object.fromEntries(nameCache)) + "\n");
+  console.error(`wrote ${OUT} (${(statSync(OUT).size / 1024).toFixed(1)}KB)`);
 }
 
 // Only run when invoked directly: the live job imports the helpers above.
