@@ -41,7 +41,17 @@ jobs:
           git add data.json athletes.json
           if git diff --cached --quiet; then
             echo "No changes."
-          else
-            git commit -m "chore: refresh standings and fixtures [skip ci]"
-            git push
+            exit 0
           fi
+          git commit -m "chore: refresh standings and fixtures [skip ci]"
+          # The live job commits to this same branch every few minutes, so a push
+          # can lose a race it did nothing wrong in. Take what landed and retry
+          # rather than failing a run whose data is perfectly good.
+          for i in 1 2 3 4 5; do
+            git push && exit 0
+            echo "push rejected, rebasing onto what landed (attempt $i)"
+            git pull --rebase --autostash -q origin main || exit 1
+            sleep $((i * 4))
+          done
+          echo "could not push after 5 attempts"
+          exit 1

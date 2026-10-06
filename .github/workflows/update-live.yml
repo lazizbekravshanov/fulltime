@@ -38,8 +38,16 @@ jobs:
           git add live.json commentary.json
           if git diff --cached --quiet; then
             echo "No change."
-          else
-            git commit -m "chore: refresh live data [skip ci]"
-            git pull --rebase --autostash -q origin main || true
-            git push
+            exit 0
           fi
+          git commit -m "chore: refresh live data [skip ci]"
+          # One rebase is not enough when the hourly job lands inside the window
+          # between the rebase and the push.
+          for i in 1 2 3 4 5; do
+            git push && exit 0
+            echo "push rejected, rebasing onto what landed (attempt $i)"
+            git pull --rebase --autostash -q origin main || exit 1
+            sleep $((i * 4))
+          done
+          echo "could not push after 5 attempts"
+          exit 1
