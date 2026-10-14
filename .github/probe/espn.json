@@ -1,0 +1,682 @@
+{
+ "generatedAt": "2026-10-14T18:04:47.779Z",
+ "seasonYear": 2026,
+ "runner": "38612069871",
+ "rows": [
+  {
+   "label": "eng.1 scoreboard: as the job calls it",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20260801-20260831&limit=500",
+   "status": 400,
+   "ms": 315,
+   "bytes": 55,
+   "contentType": "application/json;charset=UTF-8",
+   "body": "{\"code\":400,\"message\":\"Failed to get events endpoint.\"}"
+  },
+  {
+   "label": "eng.1 scoreboard: no parameters at all",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard",
+   "status": 200,
+   "ms": 30,
+   "bytes": 64799,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "season",
+    "day",
+    "events",
+    "provider"
+   ],
+   "events": 5,
+   "leagueName": "English Premier League",
+   "season": {
+    "year": 2026,
+    "type": 14308,
+    "start": "2026-06-01",
+    "end": "2027-06-01"
+   },
+   "calendar": {
+    "n": 70,
+    "first": "2026-08-21",
+    "last": "2027-05-30"
+   },
+   "sample": {
+    "id": "401878771",
+    "date": "2026-10-17T11:30",
+    "completed": false,
+    "teams": "Everton v Chelsea"
+   }
+  },
+  {
+   "label": "eng.1 scoreboard: date range, no limit",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20260801-20260831",
+   "status": 400,
+   "ms": 74,
+   "bytes": 55,
+   "contentType": "application/json;charset=UTF-8",
+   "body": "{\"code\":400,\"message\":\"Failed to get events endpoint.\"}"
+  },
+  {
+   "label": "eng.1 scoreboard: date range, limit=100",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20260801-20260831&limit=100",
+   "status": 400,
+   "ms": 74,
+   "bytes": 55,
+   "contentType": "application/json;charset=UTF-8",
+   "body": "{\"code\":400,\"message\":\"Failed to get events endpoint.\"}"
+  },
+  {
+   "label": "eng.1 scoreboard: a single day",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20260822",
+   "status": 200,
+   "ms": 70,
+   "bytes": 51600,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "events",
+    "provider"
+   ],
+   "events": 5,
+   "leagueName": "English Premier League",
+   "season": {
+    "year": 2026,
+    "type": 14308,
+    "start": "2026-06-01",
+    "end": "2027-06-01"
+   },
+   "calendar": {
+    "n": 70,
+    "first": "2026-08-21",
+    "last": "2027-05-30"
+   },
+   "sample": {
+    "id": "401879322",
+    "date": "2026-08-22T11:30",
+    "completed": true,
+    "teams": "Hull City v Manchester United"
+   }
+  },
+  {
+   "label": "eng.1 scoreboard: season + seasontype",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?season=2026&seasontype=1&limit=500",
+   "status": 200,
+   "ms": 64,
+   "bytes": 64799,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "season",
+    "day",
+    "events",
+    "provider"
+   ],
+   "events": 5,
+   "leagueName": "English Premier League",
+   "season": {
+    "year": 2026,
+    "type": 14308,
+    "start": "2026-06-01",
+    "end": "2027-06-01"
+   },
+   "calendar": {
+    "n": 70,
+    "first": "2026-08-21",
+    "last": "2027-05-30"
+   },
+   "sample": {
+    "id": "401878771",
+    "date": "2026-10-17T11:30",
+    "completed": false,
+    "teams": "Everton v Chelsea"
+   }
+  },
+  {
+   "label": "eng.1 scoreboard: the other path prefix",
+   "url": "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/scoreboard?dates=20260801-20260831&limit=500",
+   "status": 404,
+   "ms": 55,
+   "bytes": 12,
+   "contentType": null,
+   "body": "{\"code\":404}"
+  },
+  {
+   "label": "esp.1 scoreboard: as the job calls it",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard?dates=20260801-20260831&limit=500",
+   "status": 400,
+   "ms": 104,
+   "bytes": 55,
+   "contentType": "application/json;charset=UTF-8",
+   "body": "{\"code\":400,\"message\":\"Failed to get events endpoint.\"}"
+  },
+  {
+   "label": "esp.1 scoreboard: no parameters at all",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard",
+   "status": 200,
+   "ms": 25,
+   "bytes": 15399,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "season",
+    "day",
+    "events",
+    "provider"
+   ],
+   "events": 1,
+   "leagueName": "Spanish LALIGA",
+   "season": {
+    "year": 2026,
+    "type": 14357,
+    "start": "2026-06-01",
+    "end": "2027-06-01"
+   },
+   "calendar": {
+    "n": 77,
+    "first": "2026-08-15",
+    "last": "2027-05-30"
+   },
+   "sample": {
+    "id": "401882844",
+    "date": "2026-10-16T19:00",
+    "completed": false,
+    "teams": "Deportivo v Levante"
+   }
+  },
+  {
+   "label": "esp.1 scoreboard: date range, no limit",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard?dates=20260801-20260831",
+   "status": 400,
+   "ms": 63,
+   "bytes": 55,
+   "contentType": "application/json;charset=UTF-8",
+   "body": "{\"code\":400,\"message\":\"Failed to get events endpoint.\"}"
+  },
+  {
+   "label": "esp.1 scoreboard: date range, limit=100",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard?dates=20260801-20260831&limit=100",
+   "status": 400,
+   "ms": 70,
+   "bytes": 55,
+   "contentType": "application/json;charset=UTF-8",
+   "body": "{\"code\":400,\"message\":\"Failed to get events endpoint.\"}"
+  },
+  {
+   "label": "esp.1 scoreboard: a single day",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard?dates=20260822",
+   "status": 200,
+   "ms": 81,
+   "bytes": 46403,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "events",
+    "provider"
+   ],
+   "events": 3,
+   "leagueName": "Spanish LALIGA",
+   "season": {
+    "year": 2026,
+    "type": 14357,
+    "start": "2026-06-01",
+    "end": "2027-06-01"
+   },
+   "calendar": {
+    "n": 77,
+    "first": "2026-08-15",
+    "last": "2027-05-30"
+   },
+   "sample": {
+    "id": "401882916",
+    "date": "2026-08-22T15:00",
+    "completed": true,
+    "teams": "Athletic Club v Sevilla"
+   }
+  },
+  {
+   "label": "esp.1 scoreboard: season + seasontype",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard?season=2026&seasontype=1&limit=500",
+   "status": 200,
+   "ms": 65,
+   "bytes": 15399,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "season",
+    "day",
+    "events",
+    "provider"
+   ],
+   "events": 1,
+   "leagueName": "Spanish LALIGA",
+   "season": {
+    "year": 2026,
+    "type": 14357,
+    "start": "2026-06-01",
+    "end": "2027-06-01"
+   },
+   "calendar": {
+    "n": 77,
+    "first": "2026-08-15",
+    "last": "2027-05-30"
+   },
+   "sample": {
+    "id": "401882844",
+    "date": "2026-10-16T19:00",
+    "completed": false,
+    "teams": "Deportivo v Levante"
+   }
+  },
+  {
+   "label": "esp.1 scoreboard: the other path prefix",
+   "url": "https://site.api.espn.com/apis/v2/sports/soccer/esp.1/scoreboard?dates=20260801-20260831&limit=500",
+   "status": 404,
+   "ms": 75,
+   "bytes": 12,
+   "contentType": null,
+   "body": "{\"code\":404}"
+  },
+  {
+   "label": "uefa.champions scoreboard: as the job calls it",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?dates=20260801-20260831&limit=500",
+   "status": 400,
+   "ms": 52,
+   "bytes": 55,
+   "contentType": "application/json;charset=UTF-8",
+   "body": "{\"code\":400,\"message\":\"Failed to get events endpoint.\"}"
+  },
+  {
+   "label": "uefa.champions scoreboard: no parameters at all",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard",
+   "status": 200,
+   "ms": 28,
+   "bytes": 124637,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "season",
+    "day",
+    "events",
+    "provider"
+   ],
+   "events": 9,
+   "leagueName": "UEFA Champions League",
+   "season": {
+    "year": 2026,
+    "type": 14534,
+    "start": "2026-07-01",
+    "end": "2027-07-01"
+   },
+   "calendar": {
+    "n": 1,
+    "first": "[object Ob",
+    "last": "[object Ob"
+   },
+   "sample": {
+    "id": "401915416",
+    "date": "2026-10-14T16:45",
+    "completed": false,
+    "teams": "Feyenoord Rotterdam v Como"
+   }
+  },
+  {
+   "label": "uefa.champions scoreboard: date range, no limit",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?dates=20260801-20260831",
+   "status": 400,
+   "ms": 69,
+   "bytes": 55,
+   "contentType": "application/json;charset=UTF-8",
+   "body": "{\"code\":400,\"message\":\"Failed to get events endpoint.\"}"
+  },
+  {
+   "label": "uefa.champions scoreboard: date range, limit=100",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?dates=20260801-20260831&limit=100",
+   "status": 400,
+   "ms": 63,
+   "bytes": 55,
+   "contentType": "application/json;charset=UTF-8",
+   "body": "{\"code\":400,\"message\":\"Failed to get events endpoint.\"}"
+  },
+  {
+   "label": "uefa.champions scoreboard: a single day",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?dates=20260822",
+   "status": 200,
+   "ms": 57,
+   "bytes": 1786,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "events",
+    "provider"
+   ],
+   "events": 0,
+   "leagueName": "UEFA Champions League",
+   "season": {
+    "year": 2026,
+    "type": 14534,
+    "start": "2026-07-01",
+    "end": "2027-07-01"
+   },
+   "calendar": {
+    "n": 1,
+    "first": "[object Ob",
+    "last": "[object Ob"
+   }
+  },
+  {
+   "label": "uefa.champions scoreboard: season + seasontype",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?season=2026&seasontype=1&limit=500",
+   "status": 200,
+   "ms": 72,
+   "bytes": 124637,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "season",
+    "day",
+    "events",
+    "provider"
+   ],
+   "events": 9,
+   "leagueName": "UEFA Champions League",
+   "season": {
+    "year": 2026,
+    "type": 14534,
+    "start": "2026-07-01",
+    "end": "2027-07-01"
+   },
+   "calendar": {
+    "n": 1,
+    "first": "[object Ob",
+    "last": "[object Ob"
+   },
+   "sample": {
+    "id": "401915416",
+    "date": "2026-10-14T16:45",
+    "completed": false,
+    "teams": "Feyenoord Rotterdam v Como"
+   }
+  },
+  {
+   "label": "uefa.champions scoreboard: the other path prefix",
+   "url": "https://site.api.espn.com/apis/v2/sports/soccer/uefa.champions/scoreboard?dates=20260801-20260831&limit=500",
+   "status": 404,
+   "ms": 58,
+   "bytes": 12,
+   "contentType": null,
+   "body": "{\"code\":404}"
+  },
+  {
+   "label": "eng.1 standings (the job's control)",
+   "url": "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings?season=2026",
+   "status": 200,
+   "ms": 54,
+   "bytes": 68800,
+   "contentType": "application/json;charset=UTF-8",
+   "children": 1,
+   "entries": 20
+  },
+  {
+   "label": "eng.1 core-API leaders (feeds the leader boards, still populated)",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/seasons/2026/types/1/leaders",
+   "status": 200,
+   "ms": 240,
+   "bytes": 148594,
+   "contentType": "application/json;charset=utf-8",
+   "categories": 12
+  },
+  {
+   "label": "esp.1 standings (the job's control)",
+   "url": "https://site.api.espn.com/apis/v2/sports/soccer/esp.1/standings?season=2026",
+   "status": 200,
+   "ms": 54,
+   "bytes": 68365,
+   "contentType": "application/json;charset=UTF-8",
+   "children": 1,
+   "entries": 20
+  },
+  {
+   "label": "esp.1 core-API leaders (feeds the leader boards, still populated)",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/esp.1/seasons/2026/types/1/leaders",
+   "status": 200,
+   "ms": 38,
+   "bytes": 148533,
+   "contentType": "application/json;charset=utf-8",
+   "categories": 12
+  },
+  {
+   "label": "uefa.champions standings (the job's control)",
+   "url": "https://site.api.espn.com/apis/v2/sports/soccer/uefa.champions/standings?season=2026",
+   "status": 200,
+   "ms": 54,
+   "bytes": 143475,
+   "contentType": "application/json;charset=UTF-8",
+   "children": 1,
+   "entries": 36
+  },
+  {
+   "label": "uefa.champions core-API leaders (feeds the leader boards, still populated)",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/uefa.champions/seasons/2026/types/1/leaders",
+   "status": 200,
+   "ms": 38,
+   "bytes": 156516,
+   "contentType": "application/json;charset=utf-8",
+   "categories": 12
+  },
+  {
+   "label": "eng.1 core-API season events (page 1)",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/seasons/2026/events?limit=1000",
+   "status": 404,
+   "ms": 39,
+   "bytes": 52,
+   "contentType": null,
+   "body": "{\"error\":{\"message\":\"application error\",\"code\":404}}"
+  },
+  {
+   "label": "eng.1 core-API events, season type 1",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/seasons/2026/types/1/events?limit=1000",
+   "status": 200,
+   "ms": 264,
+   "bytes": 41487,
+   "contentType": "application/json;charset=utf-8",
+   "count": 380,
+   "pageCount": 1,
+   "items": 380
+  },
+  {
+   "label": "eng.1 core-API events, season type 2",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/seasons/2026/types/2/events?limit=1000",
+   "status": 200,
+   "ms": 42,
+   "bytes": 64,
+   "contentType": "application/json;charset=utf-8",
+   "count": 0,
+   "pageCount": 0,
+   "items": 0
+  },
+  {
+   "label": "eng.1 core-API events, season type 3",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/seasons/2026/types/3/events?limit=1000",
+   "status": 200,
+   "ms": 42,
+   "bytes": 64,
+   "contentType": "application/json;charset=utf-8",
+   "count": 0,
+   "pageCount": 0,
+   "items": 0
+  },
+  {
+   "label": "esp.1 core-API season events (page 1)",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/esp.1/seasons/2026/events?limit=1000",
+   "status": 404,
+   "ms": 41,
+   "bytes": 52,
+   "contentType": null,
+   "body": "{\"error\":{\"message\":\"application error\",\"code\":404}}"
+  },
+  {
+   "label": "esp.1 core-API events, season type 1",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/esp.1/seasons/2026/types/1/events?limit=1000",
+   "status": 200,
+   "ms": 48,
+   "bytes": 41487,
+   "contentType": "application/json;charset=utf-8",
+   "count": 380,
+   "pageCount": 1,
+   "items": 380
+  },
+  {
+   "label": "esp.1 core-API events, season type 2",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/esp.1/seasons/2026/types/2/events?limit=1000",
+   "status": 200,
+   "ms": 42,
+   "bytes": 64,
+   "contentType": "application/json;charset=utf-8",
+   "count": 0,
+   "pageCount": 0,
+   "items": 0
+  },
+  {
+   "label": "esp.1 core-API events, season type 3",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/esp.1/seasons/2026/types/3/events?limit=1000",
+   "status": 200,
+   "ms": 41,
+   "bytes": 64,
+   "contentType": "application/json;charset=utf-8",
+   "count": 0,
+   "pageCount": 0,
+   "items": 0
+  },
+  {
+   "label": "uefa.champions core-API season events (page 1)",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/uefa.champions/seasons/2026/events?limit=1000",
+   "status": 404,
+   "ms": 39,
+   "bytes": 52,
+   "contentType": null,
+   "body": "{\"error\":{\"message\":\"application error\",\"code\":404}}"
+  },
+  {
+   "label": "uefa.champions core-API events, season type 1",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/uefa.champions/seasons/2026/types/1/events?limit=1000",
+   "status": 200,
+   "ms": 44,
+   "bytes": 17059,
+   "contentType": "application/json;charset=utf-8",
+   "count": 144,
+   "pageCount": 1,
+   "items": 144
+  },
+  {
+   "label": "uefa.champions core-API events, season type 2",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/uefa.champions/seasons/2026/types/2/events?limit=1000",
+   "status": 200,
+   "ms": 42,
+   "bytes": 64,
+   "contentType": "application/json;charset=utf-8",
+   "count": 0,
+   "pageCount": 0,
+   "items": 0
+  },
+  {
+   "label": "uefa.champions core-API events, season type 3",
+   "url": "https://sports.core.api.espn.com/v2/sports/soccer/leagues/uefa.champions/seasons/2026/types/3/events?limit=1000",
+   "status": 200,
+   "ms": 47,
+   "bytes": 64,
+   "contentType": "application/json;charset=utf-8",
+   "count": 0,
+   "pageCount": 0,
+   "items": 0
+  },
+  {
+   "label": "eng.1 scoreboard for season 2025",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=202509&limit=500",
+   "status": 200,
+   "ms": 67,
+   "bytes": 329898,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "events",
+    "provider"
+   ],
+   "events": 30,
+   "leagueName": "English Premier League",
+   "season": {
+    "year": 2025,
+    "type": 13481,
+    "start": "2025-06-01",
+    "end": "2026-06-01"
+   },
+   "calendar": {
+    "n": 114,
+    "first": "2025-08-15",
+    "last": "2026-05-24"
+   },
+   "sample": {
+    "id": "740627",
+    "date": "2025-09-13T11:30",
+    "completed": true,
+    "teams": "Arsenal v Nottingham Forest"
+   }
+  },
+  {
+   "label": "eng.1 scoreboard for season 2026",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=202609&limit=500",
+   "status": 200,
+   "ms": 62,
+   "bytes": 331445,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "events",
+    "provider"
+   ],
+   "events": 30,
+   "leagueName": "English Premier League",
+   "season": {
+    "year": 2026,
+    "type": 14308,
+    "start": "2026-06-01",
+    "end": "2027-06-01"
+   },
+   "calendar": {
+    "n": 70,
+    "first": "2026-08-21",
+    "last": "2027-05-30"
+   },
+   "sample": {
+    "id": "401879288",
+    "date": "2026-09-04T19:00",
+    "completed": true,
+    "teams": "Ipswich Town v Liverpool"
+   }
+  },
+  {
+   "label": "eng.1 scoreboard for season 2027",
+   "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=202709&limit=500",
+   "status": 200,
+   "ms": 76,
+   "bytes": 2363,
+   "contentType": "application/json;charset=UTF-8",
+   "topKeys": [
+    "leagues",
+    "events",
+    "provider"
+   ],
+   "events": 0,
+   "leagueName": "English Premier League",
+   "season": {
+    "year": 2026,
+    "type": 14308,
+    "start": "2026-06-01",
+    "end": "2027-06-01"
+   },
+   "calendar": {
+    "n": 70,
+    "first": "2026-08-21",
+    "last": "2027-05-30"
+   }
+  }
+ ]
+}
