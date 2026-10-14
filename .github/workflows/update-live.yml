@@ -33,21 +33,6 @@ jobs:
         run: node scripts/update-live.mjs
       - name: Commit if changed
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add live.json commentary.json
-          if git diff --cached --quiet; then
-            echo "No change."
-            exit 0
-          fi
-          git commit -m "chore: refresh live data [skip ci]"
-          # One rebase is not enough when the hourly job lands inside the window
-          # between the rebase and the push.
-          for i in 1 2 3 4 5; do
-            git push && exit 0
-            echo "push rejected, rebasing onto what landed (attempt $i)"
-            git pull --rebase --autostash -q origin main || exit 1
-            sleep $((i * 4))
-          done
-          echo "could not push after 5 attempts"
-          exit 1
+          .github/scripts/commit-and-push.sh \
+            "chore: refresh live data [skip ci]" \
+            live.json commentary.json
