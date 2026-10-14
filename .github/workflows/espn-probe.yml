@@ -1,0 +1,42 @@
+name: ESPN probe
+
+# The scoreboard route stopped returning events on 2026-09-16 and the hourly job
+# has been quietly shipping a snapshot without event ids, goal scorers or any
+# Champions League fixtures ever since. This asks ESPN directly, from a runner
+# that can reach it, and commits the answer so it can be read without opening
+# the Actions log.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: espn-probe
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Ask ESPN what it is still willing to answer
+        run: node .github/scripts/espn-probe.mjs
+      - name: Commit the report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/probe/espn.json
+          if git diff --cached --quiet; then
+            echo "Report unchanged."
+            exit 0
+          fi
+          git commit -m "chore: record what the ESPN endpoints still answer [skip ci]"
+          for i in 1 2 3 4 5; do
+            git push && exit 0
+            git pull --rebase --autostash -q origin main || exit 1
+            sleep $((i * 4))
+          done
+          exit 1
