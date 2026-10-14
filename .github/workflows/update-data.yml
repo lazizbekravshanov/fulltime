@@ -29,7 +29,9 @@ jobs:
           node-version: "20"
 
       - name: Unit tests
-        run: node scripts/scorers.test.cjs
+        run: |
+          node scripts/scorers.test.cjs
+          node scripts/guard.test.cjs
 
       - name: Refresh standings and fixtures
         run: node scripts/update-standings.mjs

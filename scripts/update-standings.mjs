@@ -279,6 +279,32 @@ function roundsByDate(dates) {
 // returns matches already played, so it cannot carry a full season; this one
 // lists scheduled fixtures too, and is the only source that covers the
 // Champions League, which openfootball does not publish.
+// Which months to ask for. ESPN publishes the competition's own fixture calendar
+// on any scoreboard response, so take the months from that; fall back to a
+// August-to-June guess only if the calendar is missing.
+async function scoreboardMonths(slug, year) {
+  const months = new Set();
+  try {
+    const feed = await getJSON(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard`);
+    for (const day of feed?.leagues?.[0]?.calendar ?? []) {
+      const iso = String(day).slice(0, 7);                 // YYYY-MM
+      if (/^\d{4}-\d{2}$/.test(iso)) months.add(iso.replace("-", ""));
+    }
+  } catch (e) {
+    console.error(`[fixtures] ${slug} calendar: ${e.message}`);
+  }
+  if (months.size) {
+    console.error(`[fixtures] ${slug}: ${months.size} month(s) from ESPN's calendar`);
+    return [...months].sort();
+  }
+  console.error(`[fixtures] ${slug}: no calendar published, falling back to Aug-Jun`);
+  for (let i = 0; i < 11; i++) {
+    const d = new Date(Date.UTC(year, 7 + i, 1));
+    months.add(`${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
+  }
+  return [...months].sort();
+}
+
 async function fixturesFromESPN(slug, year, { cluster = false } = {}) {
   const out = {};
   // Goals, keyed by ESPN event id: [minute, scorer, home?1:0, kind] where kind is
@@ -291,12 +317,19 @@ async function fixturesFromESPN(slug, year, { cluster = false } = {}) {
     const n = Number(value);
     return Number.isFinite(n) ? n : null;
   };
-  for (let i = 0; i < 11; i++) {
-    const first = new Date(Date.UTC(year, 7 + i, 1));
-    const y = first.getUTCFullYear();
-    const mo = String(first.getUTCMonth() + 1).padStart(2, "0");
-    const last = new Date(Date.UTC(y, first.getUTCMonth() + 1, 0)).getUTCDate();
-    const range = `${y}${mo}01-${y}${mo}${last}`;
+  // ESPN began answering the YYYYMMDD-YYYYMMDD range form with
+  // {"code":400,"message":"Failed to get events endpoint."} on 2026-09-16. Every
+  // month failed, each failure was caught and skipped, and the job went on
+  // reporting success while shipping a snapshot with no event ids, no goal
+  // scorers and no Champions League fixtures at all — for 29 days. The bare
+  // YYYYMM form still works.
+  //
+  // The months themselves no longer come from arithmetic either. A bare call
+  // returns leagues[0].calendar: every date ESPN will answer for, which is the
+  // real season window. Deriving the months from that beats assuming eleven of
+  // them starting in August, which silently missed anything outside that guess.
+  const months = await scoreboardMonths(slug, year);
+  for (const range of months) {
     let feed;
     try {
       feed = await getJSON(
@@ -592,6 +625,53 @@ export function compact(c) {
   return { ...rest, rows, clubs, dates, times, matches };
 }
 
+/* What a snapshot is able to do, counted per competition. Shape-agnostic: it
+   reads the compact v2 form and the older per-club form alike, so a comparison
+   still works across a format change or a rollback. */
+export function capabilities(snapshot) {
+  const out = {};
+  for (const [lg, c] of Object.entries(snapshot?.comps ?? {})) {
+    const compact = Array.isArray(c.matches);
+    const tuples = compact ? c.matches : c.fixtures ? Object.values(c.fixtures).flat() : [];
+    // The older form stored every match under both clubs, so halve its counts:
+    // each of these has to mean "matches", or a change of format reads as a loss.
+    const per = compact ? 1 : 2;
+    const n = (f) => Math.round(tuples.filter(f).length / per);
+    out[lg] = {
+      rows: (c.rows ?? []).length,
+      fixtures: Math.round(tuples.length / per),
+      results: n((t) => t[5] != null),
+      eventIds: n((t) => t[7] != null),
+      scorers: Object.keys(c.events ?? {}).length,
+      leaders: Object.keys(c.leaders ?? {}).length,
+    };
+  }
+  return out;
+}
+
+/* The scoreboard started refusing our date format on 2026-09-16. Every month
+   failed, every failure was caught and skipped, and this job went on reporting
+   success for 29 days while shipping a snapshot that had quietly lost 1808
+   event ids, 102 sets of goal scorers and every Champions League fixture.
+   Nothing about the run looked wrong: standings parsed, so build() finished
+   happily and committed the result.
+   So before replacing the file, compare what we are about to write against what
+   is already there, and refuse to trade a capability for its absence. Losing
+   something outright is an error; losing most of it is worth saying out loud. */
+export function regressions(before, after) {
+  const errors = [], warnings = [];
+  for (const [lg, was] of Object.entries(before)) {
+    const now = after[lg];
+    if (!now) { errors.push(`${lg}: the competition is gone from the snapshot entirely`); continue; }
+    for (const [k, had] of Object.entries(was)) {
+      const got = now[k] ?? 0;
+      if (had > 0 && got === 0) errors.push(`${lg}.${k}: ${had} -> 0`);
+      else if (had >= 20 && got < had / 2) warnings.push(`${lg}.${k}: ${had} -> ${got}`);
+    }
+  }
+  return { errors, warnings };
+}
+
 async function build() {
   const comps = {};
   // Athlete names are stable, so carry last run's lookups forward: a steady-state
@@ -682,6 +762,26 @@ async function build() {
     season: seasonLabel,
     comps: Object.fromEntries(Object.entries(comps).map(([k, c]) => [k, compact(c)])),
   };
+  let previous = null;
+  try { previous = JSON.parse(readFileSync(OUT, "utf8")); } catch { /* first run */ }
+  if (previous) {
+    const before = capabilities(previous), after = capabilities(out);
+    // A new season legitimately resets everything, so only compare like with like.
+    const rollover = previous.season && previous.season !== out.season;
+    const { errors, warnings } = rollover ? { errors: [], warnings: [] } : regressions(before, after);
+    for (const w of warnings) console.error(`[guard] WARNING ${w}`);
+    if (rollover) console.error(`[guard] season ${previous.season} -> ${out.season}, not comparing`);
+    if (errors.length) {
+      console.error(`\n[guard] refusing to write: this snapshot loses what the last one had`);
+      for (const e of errors) console.error(`[guard]   ${e}`);
+      console.error(`[guard] the committed snapshot stays live and untouched.`);
+      console.error(`[guard] if this is genuinely expected, re-run with ALLOW_SNAPSHOT_REGRESSION=1.`);
+      if (process.env.ALLOW_SNAPSHOT_REGRESSION !== "1") process.exitCode = 1;
+      if (process.env.ALLOW_SNAPSHOT_REGRESSION !== "1") return;
+      console.error(`[guard] ALLOW_SNAPSHOT_REGRESSION=1 set, writing anyway.`);
+    }
+  }
+
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, JSON.stringify(out) + "\n");
   writeFileSync(NAMES, JSON.stringify(Object.fromEntries(nameCache)) + "\n");

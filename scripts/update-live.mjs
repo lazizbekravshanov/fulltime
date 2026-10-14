@@ -26,6 +26,17 @@ const stamp = (offsetDays) => {
   return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
 };
 
+// ESPN stopped accepting a YYYYMMDD-YYYYMMDD range on 2026-09-16 — it answers
+// {"code":400,"message":"Failed to get events endpoint."} — and this job caught
+// the error and carried on, so live.json has carried no matches at all since.
+// A bare YYYYMM is still accepted, so ask for the month (or the two months the
+// window straddles) and narrow to the days we want ourselves.
+const monthsAround = () => [...new Set([stamp(-1).slice(0, 6), stamp(0).slice(0, 6), stamp(1).slice(0, 6)])];
+const inWindow = (iso) => {
+  const day = String(iso ?? "").slice(0, 10).replace(/-/g, "");
+  return day >= stamp(-1) && day <= stamp(1);
+};
+
 let snapshot = null;
 try {
   snapshot = JSON.parse(readFileSync(SNAPSHOT, "utf8"));
@@ -58,13 +69,18 @@ async function league(key, cfg) {
 
   // Yesterday through tomorrow covers everything in play or just finished.
   let events = [];
-  try {
-    const feed = await getJSON(
-      `${SITE}/site/v2/sports/soccer/${cfg.espn}/scoreboard?dates=${stamp(-1)}-${stamp(1)}&limit=100`);
-    events = feed.events ?? [];
-  } catch (e) {
-    console.error(`[live] ${key} scoreboard: ${e.message}`);
+  for (const month of monthsAround()) {
+    try {
+      const feed = await getJSON(
+        `${SITE}/site/v2/sports/soccer/${cfg.espn}/scoreboard?dates=${month}&limit=500`);
+      events.push(...(feed.events ?? []));
+    } catch (e) {
+      console.error(`[live] ${key} scoreboard ${month}: ${e.message}`);
+    }
   }
+  const before = events.length;
+  events = events.filter((e) => inWindow(e.competitions?.[0]?.date ?? e.date));
+  console.error(`[live] ${key}: ${before} event(s) this month, ${events.length} in the window`);
 
   const wanted = [];
   for (const event of events) {

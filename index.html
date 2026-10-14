@@ -2216,9 +2216,21 @@ const fillRow = r => ({
   logo: r.logo ?? (r.id != null ? LOGO(r.id) : null)
 });
 
+/* An empty fixture map is not the same as no fixture map. `{}` is truthy, so
+   every `!c.fixtures` guard below reads it as "fixtures available" and goes on
+   to build a table out of nothing — which is how the Champions League came to
+   show a full 36-row table of zeroes, in alphabetical order, with qualification
+   colours and movement arrows, once the fixture feed stopped answering. Hand
+   those guards the absence they were written for. */
+const withFixtures = (rest, rows, fixtures) =>
+  fixtures && Object.keys(fixtures).length ? {...rest, rows, fixtures} : {...rest, rows};
+
 function expand(c){
   const rows = Array.isArray(c.rows) ? c.rows.map(fillRow) : c.rows;
-  if (!Array.isArray(c.matches)) return {...c, rows};
+  if (!Array.isArray(c.matches)){
+    const {fixtures, ...bare} = c;
+    return withFixtures(bare, rows, fixtures);
+  }
   const {clubs = [], dates = [], times = [], matches, ...rest} = c;
   const fixtures = {};
   const put = (club, t) => (fixtures[club] ??= []).push(t);
@@ -2230,7 +2242,7 @@ function expand(c){
     put(away, [md ?? null, date, time, home, 0, ag, hg, ev]);
   }
   for (const list of Object.values(fixtures)) list.sort((a, b) => String(a[1]).localeCompare(String(b[1])));
-  return {...rest, rows, fixtures};
+  return withFixtures(rest, rows, fixtures);
 }
 
 function normalise(snapshot){
