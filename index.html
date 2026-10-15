@@ -212,16 +212,20 @@
   .thead .r{text-align:right}
   /* The stat headings order the table. They stay the size of the label they
      replace so turning sorting on does not move the columns. */
-  .thead .th{
+  /* :where() so this weighs the same as a single class. As `.thead .th` it
+     outranked the `.col-*{display:none}` rules further down, and the headings
+     for hidden columns stayed on screen — labelling whichever value happened to
+     be underneath. */
+  :where(.thead) .th{
     font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;
     background:none;border:0;padding:0;margin:0;cursor:pointer;min-width:0;
     display:flex;align-items:center;gap:3px;border-radius:4px;
   }
-  .thead .th.c{justify-content:center}
-  .thead .th.r{justify-content:flex-end}
-  .thead .th:hover{color:var(--ink)}
-  .thead .th.on{color:var(--accent)}
-  .thead .th .ar{font-style:normal;font-size:7px;line-height:1}
+  :where(.thead) .th.c{justify-content:center}
+  :where(.thead) .th.r{justify-content:flex-end}
+  :where(.thead) .th:hover{color:var(--ink)}
+  :where(.thead) .th.on{color:var(--accent)}
+  :where(.thead) .th .ar{font-style:normal;font-size:7px;line-height:1}
   .trow{
     height:var(--row);width:100%;border:none;border-bottom:1px solid var(--line);
     border-left:3px solid transparent;padding-left:11px;
@@ -286,7 +290,6 @@
   @keyframes pulse{50%{opacity:.25}}
 
   .pin{display:flex;flex-direction:column;gap:6px}
-  .pin .tbl{--cols:32px minmax(0,1fr) repeat(4,28px) 46px 46px 62px 118px}
 
   .legend{display:flex;flex-wrap:wrap;gap:6px 14px}
   .legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--dim)}
