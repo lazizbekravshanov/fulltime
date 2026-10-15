@@ -1214,10 +1214,25 @@ function roundsOf(lg){
       || String(a.time).localeCompare(String(b.time)) || a.home.localeCompare(b.home));
   return rounds;
 }
+/* The round the competition is actually on: the furthest one that has had a
+   match played in it.
+
+   This used to ask for the earliest round with anything still unplayed, which a
+   single rescheduled fixture is enough to break — La Liga had one match of
+   matchday 6 moved to late October, so the table's own button offered
+   "Matchday 6" while the header chip two inches away said matchday 8, and it
+   dropped the reader six weeks into the past.
+
+   Deliberately keyed on a played match rather than a kicked-off one: taking the
+   furthest round means one stale kick-off date on a postponed fixture could
+   throw this to the end of the season, where a late result cannot. The cost is
+   that it advances when a round's first match finishes rather than when it
+   starts, which the live layer makes short. */
 function currentRound(rounds){
   const keys = [...rounds.keys()].sort((a,b) => a-b);
-  for (const k of keys) if (rounds.get(k).some(m => !m.done)) return k;
-  return keys[keys.length-1] ?? 1;
+  for (let i = keys.length - 1; i >= 0; i--)
+    if (rounds.get(keys[i]).some(m => m.done)) return keys[i];
+  return keys[0] ?? 1;   // nothing played yet: the season opens at its first round
 }
 
 /* ===================== matches ===================== */
