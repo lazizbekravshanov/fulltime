@@ -64,7 +64,7 @@ A browser cannot read ESPN directly. It answers `curl` with
 every cross-origin request from the page is blocked. Everything is therefore
 pulled by scheduled jobs, which have no such restriction, and committed here.
 
-**Every five minutes** `update-live.mjs` writes two files. `live.json` is small
+`update-live.mjs` writes two files. `live.json` is small
 — the current table, today's scores and goal scorers — and the page fetches it
 after first paint, applies it on top of the snapshot, and polls it once a minute
 while a match is in play. A finished match is written into the fixture list, so
@@ -72,13 +72,21 @@ the splits, records and season-shape chart all move with it. `commentary.json`
 holds the text commentary for the matches in play or just finished; it is bulky,
 so it is fetched only when you open a match, never on the way to a table.
 
-**Every hour** `update-standings.mjs` writes `data.json`: the full season of
+`update-standings.mjs` writes `data.json`: the full season of
 fixtures, the archive, competition leaders and crests. That is what gives the
 page its instant first paint and something to show when nothing else can be
 reached.
 
 Both files are asked for with a per-minute token, because GitHub caches them for
 ten minutes. The season rolls over automatically each August.
+
+**How often that actually happens.** The crons ask for every five minutes and
+every hour. GitHub does not oblige: scheduled workflows on a quiet public
+repository are throttled hard, and measured over 98 and 88 scheduled runs the
+median gap between them was 292 and 334 minutes — roughly five hours, never
+faster than two. So treat the committed files as a few hours old. The status
+pill beside the search box reports the real age rather than the intended one,
+and says which half of the page is stale when the two jobs disagree.
 
 Sources: ESPN's public feed for standings, crests, kick-off instants, goal
 scorers, commentary, competition leaders and Champions League fixtures;

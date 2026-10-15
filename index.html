@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FULLTIME · League Tables</title>
-<meta name="description" content="Premier League, La Liga and Champions League standings, fixtures and form — auto-updated every hour from open data.">
+<meta name="description" content="Premier League, La Liga and Champions League standings, fixtures and form, kept current from open data.">
 <meta name="theme-color" content="#0d1117">
 <link rel="canonical" href="https://lazizbekravshanov.github.io/fulltime/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="FULLTIME">
 <meta property="og:title" content="FULLTIME · League Tables">
-<meta property="og:description" content="Premier League, La Liga and Champions League standings, fixtures and form — auto-updated every hour from open data.">
+<meta property="og:description" content="Premier League, La Liga and Champions League standings, fixtures and form, kept current from open data.">
 <meta property="og:url" content="https://lazizbekravshanov.github.io/fulltime/">
 <meta property="og:image" content="https://lazizbekravshanov.github.io/fulltime/icon-512.png">
 <meta name="twitter:card" content="summary">
@@ -647,7 +647,7 @@
 
 <div class="wrap">
   <footer>
-    <b>FULLTIME</b> — standings, fixtures and form for three competitions, refreshed every hour by a
+    <b>FULLTIME</b> — standings, fixtures and form for three competitions, refreshed by a
     scheduled job that pulls the ESPN public feed and
     <a href="https://github.com/openfootball/football.json">openfootball</a> open data and commits a
     snapshot. The page reads that snapshot, so nothing here is typed by hand.<br>
@@ -1782,7 +1782,7 @@ function viewTable(){
   if (!c || c.notStarted){
     return head + `<div class="meta"><span class="chip"><b>${esc(LIVE.season)}</b></span><span class="chip">${esc(cfg.region)}</span></div>
       <div class="empty"><div class="big">The ${esc(LIVE.season)} ${esc(cfg.title)} hasn't kicked off yet</div>
-        <p>The refresh job checks every hour; the table appears here as soon as the first round is played. Last season's final standings are below.</p></div>`
+        <p>The refresh job keeps checking; the table appears here as soon as the first round is played. Last season's final standings are below.</p></div>`
       + viewFinal();
   }
 
@@ -2022,7 +2022,7 @@ function viewClub(){
     return head + `<div class="empty"><div class="big">No fixture list for ${esc(short)} yet</div>
       <p>${lg === "ucl"
         ? "Champions League fixtures appear here once the draw reaches the feed."
-        : "The schedule hasn't reached the feed for this club. The refresh job retries every hour."}</p></div>`;
+        : "The schedule hasn't reached the feed for this club. The refresh job keeps retrying."}</p></div>`;
   }
   return head + clubBody(lg, short, fx, multi);
 }
@@ -2300,7 +2300,7 @@ function load(){
 /* ===================== refresh on load =====================
    ESPN cannot be read from a browser — it sends no Access-Control-Allow-Origin to
    a real fetch, whatever it tells curl — so everything time-sensitive is pulled by
-   a job every five minutes into live.json, and the page reads that. It is fetched
+   a job into live.json, and the page reads that. It is fetched
    after the first paint, applied on top of the hourly snapshot, and polled while a
    match is in play. Every failure leaves the snapshot showing. */
 const LIVE_URLS = [
@@ -2553,7 +2553,12 @@ function scheduleLive(){
   clearTimeout(liveTimer);
   if (!LIVE) return;
   const inPlay = [...LIVE_NOW.values()].some(v => v.state === "in");
-  if (!inPlay && !matchesNear(3).length) return;
+  if (!inPlay && !matchesNear(3).length){
+    // Nothing worth polling for yet — but come back and look again, or a tab
+    // opened before kick-off and left in the foreground never updates at all.
+    liveTimer = setTimeout(scheduleLive, 15 * 60000);
+    return;
+  }
   liveTimer = setTimeout(() => {
     // The source is what moves during a match; the committed files move rarely.
     pullSources(state.lg);
@@ -2562,18 +2567,29 @@ function scheduleLive(){
 }
 
 /* One sentence about how fresh these numbers are, used by the chip beside the
-   table and by the status pill, so the two can never disagree. */
+   table and by the status pill, so the two can never disagree.
+
+   The table and the rest of the page age separately: the standings come from a
+   file refreshed every few minutes, while the fixtures, leader boards, season
+   and matchday come from one refreshed hourly, and only one of the two jobs has
+   to stall. Having read a fresh live file is no reason to call the rest of the
+   page current, so when the snapshot is old the label says so. */
+const SNAPSHOT_STALE = 6 * 3600e3;
+const snapshotStale = () =>
+  !LIVE?.generated || Date.now() - new Date(LIVE.generated).getTime() > SNAPSHOT_STALE;
+
 function freshnessLabel(){
   if (!refreshedAt) return `snapshot · ${esc(timeAgo(LIVE.generated))}`;
-  if (sourcesAt && Date.now() - sourcesAt < 90000) return "live · read just now";
+  const old = snapshotStale() ? ` · fixtures ${esc(timeAgo(LIVE.generated))}` : "";
+  if (sourcesAt && Date.now() - sourcesAt < 90000) return "live · read just now" + old;
   const secs = Math.round((Date.now() - refreshedAt) / 1000);
-  return secs < 90 ? "live · updated just now"
-    : `live · updated ${esc(timeAgo(new Date(refreshedAt).toISOString()))}`;
+  return (secs < 90 ? "live · updated just now"
+    : `live · updated ${esc(timeAgo(new Date(refreshedAt).toISOString()))}`) + old;
 }
 
 function markFresh(){
   if (!refreshedAt) return;
-  $("status").className = "status live";
+  $("status").className = "status " + (snapshotStale() ? "stale" : "live");
   $("status-txt").textContent = freshnessLabel().replace("updated ", "");
 }
 
