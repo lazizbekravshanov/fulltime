@@ -57,7 +57,11 @@ win and most clean sheets, per competition.
 yellow cards — the top eight in each, per competition, switchable in place.
 
 **Live scores.** Matches in play carry a running score and a LIVE badge, on the
-table, the matchday list and the club's season.
+table, the matchday list and the club's season. These come from the committed
+file, and from a direct call the page makes to TheSportsDB — which that host
+began refusing on CORS grounds in October 2026, so scores during a match are
+currently as fresh as the last committed refresh and no fresher. See *It updates
+itself* below.
 
 **Yours.** Star a club and it pins above its table and becomes the landing
 view. Search filters as you type (`/` focuses it, Enter opens the top hit).
@@ -78,12 +82,22 @@ every cross-origin request from the page is blocked. Anything that comes from
 ESPN is therefore pulled by scheduled jobs, which have no such restriction, and
 committed here.
 
-That is not the whole network story, though. TheSportsDB does allow a
-cross-origin read, so the page also calls it directly, on every load, for the
-scores of matches in play and recently finished — which is the one thing a file
-committed a few hours ago cannot carry. So a visitor's browser talks to three
-hosts: this repository's Pages origin, `raw.githubusercontent.com` for a
-possibly fresher copy of the same files, and `thesportsdb.com`.
+The page also tries TheSportsDB directly, on every load, for the scores of
+matches in play — the one thing a file committed hours ago cannot carry. That
+worked when it was written, in September 2026, because TheSportsDB did send the
+header ESPN withholds.
+
+**It does not any more.** As of 23 October 2026 the browser blocks those two
+calls for the same reason it blocks ESPN, and `.github/probe/live-check.json`
+records it from a real browser on the real origin. Nothing breaks: `pullSources`
+treats a reply it could not read as no reply, the committed files carry the page
+on their own, and the status pill reports their real age. But in-play scores are
+not currently reaching anybody, and the code that fetches them is, for now,
+doing nothing.
+
+So a visitor's browser talks to this repository's Pages origin, and
+`raw.githubusercontent.com` for a possibly fresher copy of the same files. It
+attempts `thesportsdb.com` and is refused.
 
 `update-live.mjs` writes two files. `live.json` is small
 — the current table, today's scores and goal scorers — and the page fetches it
@@ -124,8 +138,8 @@ and says which half of the page is stale when the two jobs disagree.
 Sources: ESPN's public feed for standings, crests, kick-off instants, goal
 scorers, commentary, competition leaders and Champions League fixtures;
 [openfootball](https://github.com/openfootball/football.json) open data for
-domestic fixtures and matchday numbers; and TheSportsDB, read by the page
-itself, for scores while a match is being played. Where ESPN and openfootball
+domestic fixtures and matchday numbers; and TheSportsDB, attempted by the page
+itself for scores during a match, currently blocked. Where ESPN and openfootball
 disagree on a club's name, fixtures are re-keyed onto the name the table shows;
 where they disagree on a result, ESPN wins, because openfootball posts scores
 about a week late.
