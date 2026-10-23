@@ -1,14 +1,19 @@
 {
- "checkedAt": "2026-10-23T04:32:46.849Z",
- "run": "39900847103",
+ "checkedAt": "2026-10-23T04:40:33.874Z",
+ "run": "39901536089",
+ "deployment": {
+  "matchesCheckout": true,
+  "wanted": "2108b2f6af96",
+  "got": "2108b2f6af96"
+ },
  "files": {
   "data": {
    "generated": "2026-10-23T01:38:28.117Z",
-   "age": "174m old"
+   "age": "182m old"
   },
   "live": {
    "generated": "2026-10-23T00:35:02.603Z",
-   "age": "238m old",
+   "age": "246m old",
    "kb": 2
   },
   "commentary": {
@@ -65,8 +70,5 @@
   "overflowPx": 0
  },
  "sources": [],
- "failures": [
-  "console: Access to fetch at 'https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=4328' from origin 'https://lazizbekravshanov.github.io' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.",
-  "console: Access to fetch at 'https://www.thesportsdb.com/api/v1/json/3/livescore.php?s=Soccer' from origin 'https://lazizbekravshanov.github.io' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled."
- ]
+ "failures": []
 }
