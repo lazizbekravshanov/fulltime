@@ -1,0 +1,72 @@
+{
+ "checkedAt": "2026-10-23T04:15:00.469Z",
+ "run": "39899262943",
+ "files": {
+  "data": {
+   "generated": "2026-10-23T01:38:28.117Z",
+   "age": "157m old"
+  },
+  "live": {
+   "generated": "2026-10-23T00:35:02.603Z",
+   "age": "220m old",
+   "kb": 2
+  },
+  "commentary": {
+   "generated": "2026-10-23T00:35:02.603Z",
+   "kb": 0.1
+  }
+ },
+ "page": {
+  "leader": "Man City 21",
+  "pill": "live · 4h ago",
+  "chip": "live · updated 4h ago",
+  "rows": 20,
+  "crests": 136,
+  "crestTotal": 136,
+  "performers": 8,
+  "stats": "goals, assists, on target, passes, saves, yellows",
+  "firstPaint": "Man City 21",
+  "liveShouldBe": "Man City 21"
+ },
+ "perCompetition": {
+  "epl": {
+   "badges": 0,
+   "strip": null,
+   "leader": "Man City 21",
+   "note": "Straight from the competition's own table, tiebreaks included. Tap a club for its full season. Read "
+  },
+  "liga": {
+   "badges": 0,
+   "strip": null,
+   "leader": "Barcelona 27",
+   "note": "Straight from the competition's own table, tiebreaks included. Tap a club for its full season. Read "
+  },
+  "ucl": {
+   "badges": 0,
+   "strip": null,
+   "leader": "PSG 9",
+   "note": "Straight from the competition's own table, tiebreaks included. Tap a club for its full season. Read "
+  }
+ },
+ "match": {
+  "teams": "Hull v Man United",
+  "score": "2–0",
+  "goals": [
+   "S. Ajayi 17'",
+   "N. Mendy 38'"
+  ],
+  "lines": 0,
+  "first": null,
+  "lg": "epl",
+  "ev": "401879322",
+  "inCommentaryFile": false
+ },
+ "phone": {
+  "overflowPx": 0
+ },
+ "sources": [],
+ "failures": [
+  "console: Access to fetch at 'https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=4328' from origin 'https://lazizbekravshanov.github.io' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.",
+  "console: Access to fetch at 'https://www.thesportsdb.com/api/v1/json/3/livescore.php?s=Soccer' from origin 'https://lazizbekravshanov.github.io' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled."
+ ]
+}
