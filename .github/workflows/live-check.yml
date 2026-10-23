@@ -26,17 +26,15 @@ jobs:
           npm install --no-save --prefix "$RUNNER_TEMP/pw" playwright@1.49.1
           "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
       - name: Check the live site
+        id: check
         run: node .github/scripts/live-check.mjs
         env:
           PW_MODULE: ${{ runner.temp }}/pw/node_modules/playwright
-      - name: Commit the screenshots
+      # A failed check is exactly when its report and its screenshots are worth
+      # having, so commit them either way and let the step above decide the run.
+      - name: Commit the screenshots and the report
+        if: always()
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs
-          if git diff --cached --quiet; then
-            echo "Screenshots unchanged."
-          else
-            git commit -m "docs: refresh live screenshots [skip ci]"
-            git push
-          fi
+          .github/scripts/commit-and-push.sh \
+            "docs: refresh live screenshots [skip ci]" \
+            docs .github/probe/live-check.json

@@ -23,6 +23,19 @@ files=("$@")
 
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+# A caller may name a file its job was supposed to produce and did not, because
+# the job failed early. That is not a reason for the commit step to fail too and
+# bury whatever the run did manage to write.
+present=()
+for f in "${files[@]}"; do
+  if [ -e "$f" ]; then present+=("$f"); else echo "skipping $f — not written by this run"; fi
+done
+if [ ${#present[@]} -eq 0 ]; then
+  echo "Nothing to commit."
+  exit 0
+fi
+files=("${present[@]}")
 git add -- "${files[@]}"
 
 if git diff --cached --quiet; then

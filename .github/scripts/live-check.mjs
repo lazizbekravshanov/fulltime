@@ -1,5 +1,9 @@
 // Drives the published site in a real browser and reports what it renders.
-import { mkdirSync } from "node:fs";
+//
+// The report also goes to a committed file. Actions logs are not readable from
+// every environment this repo gets worked on, and a run that says only "exit
+// code 1" tells you nothing about which page threw what.
+import { mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 // Playwright is installed outside the repo, so resolve it by path: NODE_PATH does
 // not apply to ES module imports.
@@ -34,6 +38,10 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: "dark", timezoneId: "Europe/London" });
 const seen = [];
 const failures = [];
+const report = { checkedAt: new Date().toISOString(), run: process.env.GITHUB_RUN_ID ?? null,
+  files: {}, page: {}, perCompetition: {}, match: null, phone: {}, sources: [], failures };
+// Say it once, to the log and to the report.
+const say = (line) => { console.log(line); return line; };
 page.on("response", (r) => {
   const u = r.url();
   if (/espn\.com|thesportsdb/.test(u)) seen.push(`${r.status()} ${u.replace(/https:\/\/[^/]+/, "").slice(0, 70)}`);
@@ -42,6 +50,11 @@ page.on("pageerror", (e) => failures.push("pageerror: " + e.message));
 page.on("console", (m) => { if (m.type() === "error" && !/net::|Failed to load resource/.test(m.text())) failures.push("console: " + m.text()); });
 
 const age = (iso) => Math.round((Date.now() - new Date(iso).getTime()) / 60000) + "m old";
+report.files = {
+  data: { generated: snapshot.generated, age: age(snapshot.generated) },
+  live: { generated: liveFile.json.generated, age: age(liveFile.json.generated), kb: +(liveFile.bytes / 1024).toFixed(1) },
+  commentary: { generated: commentaryFile.json.generated, kb: +(commentaryFile.bytes / 1024).toFixed(1) },
+};
 console.log("=== files on the server");
 console.log(`  data.json       ${age(snapshot.generated)}`);
 console.log(`  live.json       ${age(liveFile.json.generated)}  ${(liveFile.bytes / 1024).toFixed(1)}KB`);
@@ -75,6 +88,8 @@ console.log("  first paint (the hourly snapshot): " + beforeRefresh);
 console.log("  after the live file lands:         " + after.leader);
 console.log("  live.json says it should be:       "
   + (liveLeader ? liveLeader.short + " " + liveLeader.pts : "(no table in live.json)"));
+report.page = { ...after, firstPaint: beforeRefresh,
+  liveShouldBe: liveLeader ? `${liveLeader.short} ${liveLeader.pts}` : null };
 console.log("  status pill: " + after.pill + "   chip: " + after.chip);
 console.log("  rows: " + after.rows + " · crest images loaded: " + after.crests + "/" + after.crestTotal);
 console.log("  top performers: " + after.performers + " rows · tabs: " + after.stats);
@@ -100,6 +115,7 @@ if (match) {
   console.log("  scorers: " + (m.goals.join(" · ") || "(none)"));
   console.log("  commentary lines: " + m.lines
     + (match.commented ? " (this match is in commentary.json)" : " (not a match the live file covers)"));
+  report.match = { ...m, lg: match.lg, ev: match.ev, inCommentaryFile: match.commented };
   if (m.first) console.log("  latest line: " + m.first);
   await page.screenshot({ path: `${SHOTS}/screenshot-match.png` });
 }
@@ -118,6 +134,7 @@ for (const lg of ["epl", "liga", "ucl"]) {
       + " " + document.querySelector(".trow .pts")?.textContent.trim(),
     note: document.querySelector(".note")?.textContent.replace(/\s+/g, " ").trim().slice(0, 100)
   }));
+  report.perCompetition[lg] = seen;
   console.log(`  ${lg}: leader ${seen.leader} · ${seen.badges} club(s) in play`
     + (seen.strip ? `\n     ${seen.strip}` : ""));
   if (seen.badges) await page.screenshot({ path: `${SHOTS}/screenshot-live.png` });
@@ -129,9 +146,15 @@ await phone.waitForSelector(".trow[data-club]", { timeout: 20000 });
 await phone.waitForTimeout(3500);
 const over = await phone.evaluate(() => document.scrollingElement.scrollWidth - document.scrollingElement.clientWidth);
 console.log("\n=== phone at 390px: horizontal overflow " + over + "px");
+report.phone = { overflowPx: over };
 await phone.screenshot({ path: `${SHOTS}/screenshot-phone.png` });
 
 await browser.close();
+report.sources = [...new Set(seen)];
 console.log("\n=== " + (failures.length ? failures.length + " page error(s)" : "no page errors"));
 for (const f of failures) console.log("  " + f);
+
+mkdirSync(".github/probe", { recursive: true });
+writeFileSync(".github/probe/live-check.json", JSON.stringify(report, null, 1) + "\n");
+console.log("wrote .github/probe/live-check.json");
 process.exit(failures.length ? 1 : 0);
