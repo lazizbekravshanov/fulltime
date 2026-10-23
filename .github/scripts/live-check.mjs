@@ -3,15 +3,71 @@
 // The report also goes to a committed file. Actions logs are not readable from
 // every environment this repo gets worked on, and a run that says only "exit
 // code 1" tells you nothing about which page threw what.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 // Playwright is installed outside the repo, so resolve it by path: NODE_PATH does
 // not apply to ES module imports.
 const { chromium } = createRequire(import.meta.url)(process.env.PW_MODULE ?? "playwright");
 
-const SITE = "https://lazizbekravshanov.github.io/fulltime/";
+// Overridable so this script can be run against a local copy. CI leaves it unset.
+const SITE = process.env.SITE ?? "https://lazizbekravshanov.github.io/fulltime/";
 const SHOTS = "docs";
 mkdirSync(SHOTS, { recursive: true });
+
+const seen = [];
+const failures = [];
+const report = { checkedAt: new Date().toISOString(), run: process.env.GITHUB_RUN_ID ?? null,
+  deployment: null, files: {}, page: {}, perCompetition: {}, match: null, phone: {}, sources: [], failures };
+
+// However this run ends — including on a throw nothing here anticipated — the
+// report is the only thing that explains it afterwards, so always write it.
+let flushed = false;
+const flush = () => {
+  if (flushed) return;
+  flushed = true;
+  report.sources = [...new Set(seen)];
+  mkdirSync(".github/probe", { recursive: true });
+  writeFileSync(".github/probe/live-check.json", JSON.stringify(report, null, 1) + "\n");
+  console.log("wrote .github/probe/live-check.json");
+};
+process.on("exit", flush);
+for (const sig of ["uncaughtException", "unhandledRejection"]) process.on(sig, (e) => {
+  failures.push(`${sig}: ${e && e.message ? String(e.message).split("\n")[0] : e}`);
+  flush();
+  process.exit(1);
+});
+
+/* Pages takes a minute or so to publish, and this job is usually started by the
+   same push that triggers the build. Judging whatever happens to be deployed at
+   that moment produces a verdict on the previous commit wearing this one's sha,
+   which is worse than no verdict: on 2026-10-23 it reported a call as still
+   being made 40 seconds before the deploy that removed it went live. So wait
+   until the deployed page is the one in this checkout. */
+const sha256 = (t) => createHash("sha256").update(t).digest("hex");
+const wantHash = sha256(readFileSync("index.html", "utf8"));
+let deployed = null;
+for (let i = 0; i < 40; i++) {
+  try {
+    const got = await (await fetch(SITE + "index.html?v=" + Date.now(),
+      { headers: { "cache-control": "no-cache" } })).text();
+    deployed = sha256(got);
+    if (deployed === wantHash) break;
+  } catch { /* the deploy may be mid-swap */ }
+  if (i === 0) console.log("waiting for Pages to publish this commit...");
+  await new Promise((r) => setTimeout(r, 15000));
+}
+const onTheRightBuild = deployed === wantHash;
+report.deployment = { matchesCheckout: onTheRightBuild, wanted: wantHash.slice(0, 12), got: (deployed ?? "none").slice(0, 12) };
+if (!onTheRightBuild) {
+  // Say so loudly and stop, rather than grading the wrong page.
+  failures.push("the deployed index.html is not the one in this checkout after 10 minutes"
+    + ` (wanted ${wantHash.slice(0, 12)}, served ${(deployed ?? "nothing").slice(0, 12)})`);
+  console.log("=== " + failures[0]);
+  flush();
+  process.exit(1);
+}
+console.log(`=== the deployed page is this commit (${wantHash.slice(0, 12)})`);
 
 const grab = async (name) => {
   const res = await fetch(SITE + name + "?v=" + Date.now(), { headers: { "cache-control": "no-cache" } });
@@ -36,12 +92,6 @@ const pick = () => {
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: "dark", timezoneId: "Europe/London" });
-const seen = [];
-const failures = [];
-const report = { checkedAt: new Date().toISOString(), run: process.env.GITHUB_RUN_ID ?? null,
-  files: {}, page: {}, perCompetition: {}, match: null, phone: {}, sources: [], failures };
-// Say it once, to the log and to the report.
-const say = (line) => { console.log(line); return line; };
 page.on("response", (r) => {
   const u = r.url();
   if (/espn\.com|thesportsdb/.test(u)) seen.push(`${r.status()} ${u.replace(/https:\/\/[^/]+/, "").slice(0, 70)}`);
@@ -102,9 +152,14 @@ const match = pick();
 if (match) {
   console.log(`\n=== a real match page (${match.lg} ${match.ev}, ${match.goals.length} goal(s) in the snapshot)`);
   await page.goto(`${SITE}#${match.lg}/match/${match.ev}`, { waitUntil: "load" });
-  await page.waitForSelector(".mhead", { timeout: 20000 });
-  await page.waitForSelector(".feed .line", { timeout: 20000 }).catch(() => {});
-  const m = await page.evaluate(() => ({
+  // commentary.json is refreshed far more often than the snapshot, so it can
+  // name a match the snapshot has not caught up with. Worth reporting; not
+  // worth killing the run and losing the screenshots over.
+  const rendered = await page.waitForSelector(".mhead", { timeout: 20000 }).then(() => true).catch(() => false);
+  if (!rendered) failures.push(`the match page for ${match.lg}/${match.ev} never rendered`
+    + " — the snapshot probably does not carry that fixture yet");
+  if (rendered) await page.waitForSelector(".feed .line", { timeout: 20000 }).catch(() => {});
+  const m = !rendered ? { teams: null, score: null, goals: [], lines: 0, first: null } : await page.evaluate(() => ({
     teams: [...document.querySelectorAll(".team .nm")].map(e => e.textContent.trim()).join(" v "),
     score: document.querySelector(".bigscore")?.textContent.trim(),
     goals: [...document.querySelectorAll(".sheet .goal")].map(e => e.textContent.replace(/\s+/g, " ").trim()),
@@ -150,11 +205,6 @@ report.phone = { overflowPx: over };
 await phone.screenshot({ path: `${SHOTS}/screenshot-phone.png` });
 
 await browser.close();
-report.sources = [...new Set(seen)];
 console.log("\n=== " + (failures.length ? failures.length + " page error(s)" : "no page errors"));
 for (const f of failures) console.log("  " + f);
-
-mkdirSync(".github/probe", { recursive: true });
-writeFileSync(".github/probe/live-check.json", JSON.stringify(report, null, 1) + "\n");
-console.log("wrote .github/probe/live-check.json");
 process.exit(failures.length ? 1 : 0);
