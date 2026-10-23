@@ -2011,6 +2011,13 @@ function viewClub(){
     </div>${acts}`;
 
   if (archive){
+    // openfootball publishes no Champions League season, so there is nothing to
+    // go and fetch. Say that, rather than offering a spinner that resolves into
+    // a connection error for a file that was never going to exist.
+    if (!OF_FILES[lg]) return head + `<div class="empty"><div class="big">No 2025/26 match list for the ${esc(cfg.title)}</div>
+      <p>Last season's matches come from openfootball, which publishes the domestic leagues
+         but not this competition. The final table is still here.</p>
+      <p><button class="tbtn" data-act="table" style="margin-top:10px">${ICON.left} ${esc(cfg.title)} 25/26 table</button></p></div>`;
     // The 25/26 archive isn't in the snapshot; its fixtures load on demand.
     const token = ++renderToken;
     loadArchive(lg, short, token);
@@ -2110,9 +2117,19 @@ function fxRow(lg, short, f, isNext, showComp){
 /* The 25/26 archive: fetched only when a club from that table is opened. */
 const ARCHIVE = new Map();
 async function loadArchive(lg, short, token){
+  // viewClub calls this and *then* returns the HTML holding #arch, so anything
+  // written before that string is assigned lands in the previous render's slot
+  // and is wiped a moment later. Two paths used to run to completion without
+  // ever suspending — a season already in ARCHIVE, and the missing-file check,
+  // which is why the 25/26 club page sat on "Loading…" for good on every visit
+  // after the first. Yielding here puts every path, including a throw, after
+  // the caller has placed #arch.
+  await null;
   const slot = () => token === renderToken ? $("arch") : null;
   try {
-    if (!OF_FILES[lg]) throw new Error("no archive file");
+    // viewClub turns this case away before calling, but a caller that did not
+    // would otherwise fetch ".../2025-26/undefined".
+    if (!OF_FILES[lg]) throw new Error("no archive file for " + lg);
     const key = lg + ":2025-26";
     let matches = ARCHIVE.get(key);
     if (!matches){
