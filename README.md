@@ -94,7 +94,9 @@ The consequence is honest rather than hidden: a score during a match is only as
 fresh as the last committed refresh, and the status pill says how old that is.
 If you add another direct source, verify from the deployed origin that it really
 answers a cross-origin fetch. Both hosts tried so far looked fine to `curl` and
-refused a browser.
+refused a browser, which is a thing only the deployed page can tell you — run
+the live check, which loads the real site in a real browser and records every
+console error, CORS refusals included, to `.github/probe/live-check.json`.
 
 `update-live.mjs` writes two files. `live.json` is small
 — the current table, today's scores and goal scorers — and the page fetches it
