@@ -203,4 +203,5 @@ node scripts/update-live.mjs        # refresh live.json by hand
 node scripts/scorers.test.cjs       # the scorer parser
 node scripts/guard.test.cjs         # the snapshot regression guard
 node scripts/round.test.cjs         # which round counts as current
+node scripts/snapshot.test.cjs      # compact() and expand() are still inverses
 ```

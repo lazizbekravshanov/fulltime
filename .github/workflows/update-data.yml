@@ -33,6 +33,7 @@ jobs:
           node scripts/scorers.test.cjs
           node scripts/guard.test.cjs
           node scripts/round.test.cjs
+          node scripts/snapshot.test.cjs
 
       - name: Refresh standings and fixtures
         run: node scripts/update-standings.mjs
